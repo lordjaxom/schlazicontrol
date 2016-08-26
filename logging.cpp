@@ -1,0 +1,116 @@
+#include <cstring>
+#include <ctime>
+#include <chrono>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "logging.hpp"
+
+using namespace std;
+
+namespace sc {
+
+	namespace detail {
+
+		ostream& logTimestamp( ostream& os )
+		{
+			auto timestamp = chrono::high_resolution_clock::now().time_since_epoch();
+			auto seconds = chrono::duration_cast< chrono::seconds >( timestamp );
+			auto micros = chrono::duration_cast< chrono::microseconds >( timestamp - seconds );
+			time_t tt = seconds.count();
+			tm tm; ::localtime_r( &tt, &tm );
+
+			return os
+					<< setw( 2 ) << setfill( '0' ) << tm.tm_hour << ":"
+					<< setw( 2 ) << setfill( '0' ) << tm.tm_min << ":"
+					<< setw( 2 ) << setfill( '0' ) << tm.tm_sec << "."
+					<< setw( 6 ) << setfill( '0' ) << micros.count();
+		}
+
+		ostream& logPid( ostream& os )
+		{
+			return os << setw( 5 ) << setfill( ' ' ) << getpid();
+		}
+
+		template< size_t L >
+		string buildTag( char const* tag )
+		{
+			string s( tag );
+			if ( s.length() == L ) {
+				return s;
+			}
+
+			string result;
+			result.reserve( L );
+			if ( s.length() < L ) {
+				result.append( ( L - s.length() ) / 2, ' ' );
+				result.append( s );
+				result.append( ( L - s.length() ) - ( L - s.length() ) / 2, ' ' );
+			}
+			else {
+				result.append( "..." );
+				result.append( s.substr( s.length() - L + 3, L - 3 ) );
+			}
+			return result;
+		}
+
+	} // namespace detail
+
+	Logger::Level const Logger::Debug   { "DEBUG", 3 };
+	Logger::Level const Logger::Info    { "INFO ", 2 };
+	Logger::Level const Logger::Warning { "WARN ", 1 };
+	Logger::Level const Logger::Error   { "ERROR", 0 };
+
+	bool Logger::active_;
+	Logger::Level const* Logger::level_ = &Logger::Debug;
+	shared_ptr< ostream > Logger::output_( &cerr, []( ostream const* ) {} );
+
+	bool Logger::is( Logger::Level const& level )
+	{
+		return active_ && level_->level >= level.level;
+	}
+
+	void Logger::level( Logger::Level const& level )
+	{
+		level_ = &level;
+	}
+
+	void Logger::output( ostream& output )
+	{
+		output_.reset( &output, []( ostream const* ) {} );
+	}
+
+	void Logger::output( char const* output )
+	{
+		output_.reset( new ofstream( output, ios::out | ios::app ) );
+	}
+
+	Logger::Logger( char const* tag )
+		: tag_( detail::buildTag< tagLength >( tag ) )
+	{
+	}
+
+	LoggerScope::LoggerScope()
+		: owned_( true )
+	{
+		Logger::active_ = true;
+	}
+
+	LoggerScope::LoggerScope( LoggerScope&& other )
+		: LoggerScope()
+	{
+		other.owned_ = false;
+	}
+
+	LoggerScope::~LoggerScope()
+	{
+		if ( owned_ ) {
+			Logger::active_ = false;
+		}
+	}
+
+} // namespace sc
