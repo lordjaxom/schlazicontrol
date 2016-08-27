@@ -19,8 +19,8 @@ namespace sc {
 
 	class Manager
 	{
-		using ReadyEvent = Event<>;
-		using PollEvent = Event< std::chrono::microseconds >;
+		using ReadyEvent = Event< void () >;
+		using PollEvent = Event< void ( std::chrono::microseconds ) >;
 
 	public:
 		Manager( CmdLine const& cmdLine );
@@ -42,8 +42,8 @@ namespace sc {
 			return *result;
 		}
 
-		EventConnection subscribeReadyEvent( ReadyEvent::slot_function_type&& handler );
-		EventConnection subscribePollEvent( PollEvent::slot_function_type&& handler );
+		void subscribeReadyEvent( ReadyEvent::Handler handler );
+		void subscribePollEvent( PollEvent::Handler handler );
 
 		void run();
 
@@ -54,7 +54,7 @@ namespace sc {
 		asio::io_service service_;
 		asio::signal_set signals_;
 		asio::steady_timer pollingTimer_;
-		std::map< std::string, std::unique_ptr< Component > > components_;
+        std::map< std::string, std::unique_ptr< Component > > components_;
 		ReadyEvent readyEvent_;
 		PollEvent pollEvent_;
 	};

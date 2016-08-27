@@ -25,7 +25,7 @@ namespace sc {
 		: public Standalone
 	{
 	public:
-		Vdcd( Manager& manager, std::string const& id, PropertyNode const& properties );
+		Vdcd( Manager& manager, std::string id, PropertyNode const& properties );
 
 		void add( VdcdDevice* device );
 		void remove( VdcdDevice* device );

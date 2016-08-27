@@ -1,9 +1,7 @@
-#include <functional>
+#include <utility>
 
-#include "events.hpp"
-#include "manager.hpp"
 #include "output_ws281x.hpp"
-#include "types.hpp"
+#include "properties.hpp"
 
 using namespace std;
 using namespace asio;
@@ -13,8 +11,8 @@ namespace sc {
 
 	static PropertyKey const ws281xProperty( "ws281x" );
 
-	Ws281xOutput::Ws281xOutput( Manager& manager, string const& id, PropertyNode const& properties )
-		: Output( id )
+	Ws281xOutput::Ws281xOutput( Manager& manager, string id, PropertyNode const& properties )
+		: Output( move( id ) )
 		, manager_( manager )
 		, device_( manager_, properties[ ws281xProperty ].as< string >() )
 	{

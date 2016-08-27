@@ -50,18 +50,24 @@ namespace sc {
 	{
 	}
 
+    /**
+     * class PropertyNode
+     */
+
     namespace detail {
 
-        PropertyNodeTransformer::PropertyNodeTransformer( std::string const& path )
-            : path_( &path )
+        PropertyNodeIterator::PropertyNodeIterator(
+                string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it )
+            : PropertyNodeIterator::iterator_adaptor_( it )
+            , path_( &path )
+            , first_( first )
         {
-
         }
 
-        PropertyNode PropertyNodeTransformer::operator()(
-                boost::tuple< Json::Value const&, size_t const& > const& value ) const
+        PropertyNodeIterator::reference PropertyNodeIterator::dereference() const
         {
-            return { str( *path_, '[', get< 1 >( value ), ']' ), get< 0 >( value ) };
+            auto const& it = base_reference();
+            return { str( *path_, '[', distance( first_, it ), ']' ), *it };
         }
 
         string PropertyConverter< string >::convert( PropertyNode const& node )
@@ -75,10 +81,6 @@ namespace sc {
         }
 
     } // namespace detail
-
-    /**
-     * class PropertyNode
-     */
 
     static char const* valueType( Json::ValueType type )
     {
@@ -116,17 +118,12 @@ namespace sc {
 
     PropertyNode::const_iterator PropertyNode::begin() const
     {
-        return iter( value_->begin(), 0 );
+        return { path_, value_->begin(), value_->begin() };
     }
 
     PropertyNode::const_iterator PropertyNode::end() const
     {
-        return iter( value_->end(), numeric_limits< size_t >::max() );
-    }
-
-    PropertyNode::const_iterator PropertyNode::iter( Json::Value::const_iterator it, size_t index ) const
-    {
-        return const_iterator( boost::make_tuple( it, boost::make_counting_iterator( index ) ), detail::PropertyNodeTransformer( path_ ) );
+        return { path_, value_->begin(), value_->end() };
     }
 
     PropertyNode PropertyNode::operator[]( string const& key ) const

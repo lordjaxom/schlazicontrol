@@ -19,7 +19,7 @@ namespace sc {
 		: public Component
 	{
 	public:
-		Connection( Manager& manager, std::string const& id, PropertyNode const& properties );
+		Connection( Manager& manager, std::string id, PropertyNode const& properties );
 
         virtual std::size_t channels() const override;
         virtual bool acceptsChannels( std::size_t channels ) const override;

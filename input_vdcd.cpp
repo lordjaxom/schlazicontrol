@@ -1,4 +1,4 @@
-#include <functional>
+#include <utility>
 
 #include "input_vdcd.hpp"
 #include "manager.hpp"
@@ -12,15 +12,16 @@ namespace sc {
 	static PropertyKey const dsuidProperty( "dsuid" );
 	static PropertyKey const groupProperty( "group" );
 	static PropertyKey const outputTypeProperty( "outputType", "" );
-	static PropertyKey const dimmableProperty( "dimmable", "false" );
+	static PropertyKey const dimmableProperty( "dimmable", false );
 
-	VdcdInput::VdcdInput( Manager& manager, string const& id, PropertyNode const& properties )
-		: Input( id )
+	VdcdInput::VdcdInput( Manager& manager, string id, PropertyNode const& properties )
+		: Input( move( id ) )
 		, manager_( manager )
 		, device_(
-				manager, properties[ vdcdProperty].as< string >(), id, properties[ dsuidProperty ].as< string >(),
-				properties[ groupProperty ].as< int >(), properties[ outputTypeProperty ].as< string >(),
-				properties[ dimmableProperty ].as< bool >(), [this]( double value ) { set( value ); } )
+				manager_, properties[ vdcdProperty].as< string >(), this->id(),
+                properties[ dsuidProperty ].as< string >(), properties[ groupProperty ].as< int >(),
+                properties[ outputTypeProperty ].as< string >(), properties[ dimmableProperty ].as< bool >(),
+                [this]( double value ) { set( value ); } )
 	{
 	}
 

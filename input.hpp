@@ -1,6 +1,7 @@
 #ifndef SCHLAZICONTROL_INPUT_HPP
 #define SCHLAZICONTROL_INPUT_HPP
 
+#include <cstddef>
 #include <string>
 
 #include "component.hpp"
@@ -14,12 +15,12 @@ namespace sc {
 	class Input
 		: public Component
 	{
-        using InputChangeEvent = Event< ChannelValue const& >;
+        using InputChangeEvent = Event< void ( ChannelValue const& ) >;
 
 	public:
-        explicit Input( std::string const& id );
+        explicit Input( std::string id );
 
-		EventConnection subscribeInputChange( InputChangeEvent::slot_function_type&& handler );
+		void subscribeInputChange( InputChangeEvent::Handler handler );
 
 		virtual bool acceptsChannels( std::size_t channels ) const final;
 

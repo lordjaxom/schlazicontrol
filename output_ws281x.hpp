@@ -17,7 +17,7 @@ namespace sc {
 		: public Output
 	{
 	public:
-		Ws281xOutput( Manager& manager, std::string const& id, PropertyNode const& properties );
+		Ws281xOutput( Manager& manager, std::string id, PropertyNode const& properties );
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return device_.channelCount() == channels; }
 

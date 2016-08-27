@@ -7,14 +7,14 @@ using namespace std;
 
 namespace sc {
 
-    Input::Input( string const& id )
-        : Component( "input", id )
+    Input::Input( string id )
+        : Component( "input", move( id ) )
     {
     }
 
-    EventConnection Input::subscribeInputChange( Input::InputChangeEvent::slot_function_type&& handler )
+    void Input::subscribeInputChange( Input::InputChangeEvent::Handler handler )
     {
-        return inputChangeEvent_.connect( std::move( handler ) );
+        return inputChangeEvent_.subscribe( move( handler ) );
     }
 
     void Input::raiseInputChange( ChannelValue const& value ) const

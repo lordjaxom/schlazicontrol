@@ -16,7 +16,7 @@ namespace sc {
 	class Component
 	{
 	public:
-		Component( std::string const& category, std::string const& id );
+		Component( std::string category, std::string id );
         Component( Component const& ) = delete;
         virtual ~Component();
 
@@ -34,7 +34,7 @@ namespace sc {
     class Standalone : public Component
     {
     public:
-        explicit Standalone( std::string const& id );
+        explicit Standalone( std::string id );
 
         virtual std::size_t channels() const final;
         virtual bool acceptsChannels( std::size_t channels ) const final;
@@ -47,7 +47,7 @@ namespace sc {
 	{
 		friend class StaticInstance< ComponentFactory >;
 
-		using FactoryFunction = std::unique_ptr< Component > (*)( Manager&, std::string, PropertyNode const& );
+		using Factory = Component* ( Manager&, std::string, PropertyNode const& );
 
 	public:
 		static StaticInstance< ComponentFactory > instance;
@@ -55,13 +55,21 @@ namespace sc {
 		std::unique_ptr< Component > create(
 				Manager& manager, std::string const& name, std::string id, PropertyNode const& properties );
 
-        void put( std::string name, FactoryFunction factory );
+		template< typename Type >
+		void put( std::string name )
+		{
+			put( std::move( name ), []( Manager& manager, std::string id, PropertyNode const& properties ) {
+				return static_cast< Component* >( new Type( manager, std::move( id ), properties ) );
+			} );
+		}
 
 	private:
 		ComponentFactory() = default;
 		ComponentFactory( ComponentFactory const& ) = delete;
 
-		std::map< std::string, FactoryFunction > components_;
+		void put( std::string name, Factory* factory );
+
+		std::map< std::string, Factory* > components_;
 	};
 
 	template< typename Type >
@@ -70,10 +78,7 @@ namespace sc {
 	public:
 		ComponentRegistry( std::string name )
 		{
-			ComponentFactory::instance->put(
-                    std::move( name ), []( Manager& manager, std::string id, PropertyNode const& properties ) {
-                        return std::unique_ptr< Component >( new Type( manager, std::move( id ), properties ) );
-                    } );
+			ComponentFactory::instance->put< Type >( std::move( name ) );
 		}
 	};
 

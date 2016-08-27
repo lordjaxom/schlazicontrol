@@ -1,7 +1,7 @@
 #ifndef SCHLAZICONTROL_INPUT_GPIO_HPP
 #define SCHLAZICONTROL_INPUT_GPIO_HPP
 
-#include <cstdint>
+#include <cstddef>
 #include <chrono>
 #include <string>
 
@@ -17,7 +17,7 @@ namespace sc {
 		: public Input
 	{
 	public:
-		GpioInput( Manager& manager, std::string const& id, PropertyNode const& properties );
+		GpioInput( Manager& manager, std::string id, PropertyNode const& properties );
 
 		bool get() const { return value_; }
 

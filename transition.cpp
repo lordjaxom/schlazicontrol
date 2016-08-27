@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "connection.hpp"
 #include "transition.hpp"
 
@@ -8,8 +10,8 @@ namespace sc {
     TransitionInstance::TransitionInstance() = default;
     TransitionInstance::~TransitionInstance() = default;
 
-    Transition::Transition( string const& id )
-            : Component( "transition", id )
+    Transition::Transition( string id )
+            : Component( "transition", move( id ) )
     {
     }
 

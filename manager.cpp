@@ -1,50 +1,38 @@
 #include <csignal>
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/iterator/transform_iterator.hpp>
-
 #include "component.hpp"
 #include "cmdline.hpp"
-#include "events.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
-#include "properties.hpp"
 
 using namespace std;
 using namespace asio;
-using namespace boost::algorithm;
 
 namespace sc {
 
 	static Logger logger( "manager" );
 
-	static map< string, unique_ptr< Component > > parseComponents( Manager& manager, PropertyNode const& components )
-    {
-        map< string, unique_ptr< Component > > result;
-        for ( auto const& component : components ) {
-            auto name = component[ "type" ].as< string >();
-            auto id = component[ "id" ].as< string >();
-            unique_ptr< Component > ptr( ComponentFactory::instance->create( manager, name, id, component ) );
-            auto it = result.emplace( id, move( ptr ) );
-            if ( !it.second ) {
-                throw runtime_error( str( "duplicate component id ", id ) );
-            }
-
-            logger.info( "added component ", name, " with id ", id );
-        }
-        return result;
-    }
-
-    static PropertyKey const pollingIntervalProperty( "pollingInterval", "40" );
+    static PropertyKey const pollingIntervalProperty( "pollingInterval", 40 );
     static PropertyKey const componentsProperty( "components" );
 
     Manager::Manager( CmdLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
 		, signals_( service_, SIGINT, SIGTERM )
 		, pollingTimer_( service_ )
-        , components_( parseComponents( *this, properties_[ componentsProperty ] ) )
 	{
+        for ( auto component : properties_[ componentsProperty ] ) {
+            auto name = component[ "type" ].as< string >();
+            auto ptr = ComponentFactory::instance->create(
+                    *this, name, component[ "id" ].as< string >(), component );
+            auto it = components_.emplace( ptr->id(), move( ptr ) );
+            if ( !it.second ) {
+                throw runtime_error( str(
+                        "unable to create component \"", it.first->first,
+                        "\": another component with the same id exists" ) );
+            }
+            logger.info( "component \"", it.first->first, "\" of type \"", name, "\" created" );
+        }
+
 		signals_.async_wait( [this] ( error_code ec, int ) {
 			logger.info( "received signal, shutting down" );
 			service_.stop();
@@ -64,18 +52,19 @@ namespace sc {
 		} );
 	}
 
-    EventConnection Manager::subscribeReadyEvent( Manager::ReadyEvent::slot_function_type&& handler )
+    void Manager::subscribeReadyEvent( Manager::ReadyEvent::Handler handler )
     {
-        return readyEvent_.connect( std::move( handler ) );
+        readyEvent_.subscribe( move( handler ) );
     }
 
-    EventConnection Manager::subscribePollEvent( Manager::PollEvent::slot_function_type&& handler )
+    void Manager::subscribePollEvent( Manager::PollEvent::Handler handler )
     {
-        return pollEvent_.connect( std::move( handler ) );
+        pollEvent_.subscribe( move( handler ) );
     }
 
     void Manager::run()
 	{
+		logger.info( "running..." );
         readyEvent_();
 		startPolling( chrono::milliseconds(
 				properties_[ pollingIntervalProperty ].as< chrono::milliseconds::rep >() ) );

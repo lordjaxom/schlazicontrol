@@ -22,7 +22,7 @@ namespace sc {
 	}
 
 	CmdLine::CmdLine( char* const *argv, int argc )
-		: propertiesFile_( "/etc/schlazicontrol.ini" )
+		: propertiesFile_( "/etc/schlazicontrol.json" )
 		, daemon_()
 	{
 		struct option options[] = {

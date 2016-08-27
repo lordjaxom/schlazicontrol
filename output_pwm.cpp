@@ -1,6 +1,6 @@
 #include <algorithm>
+#include <utility>
 
-#include "events.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
 #include "output_pwm.hpp"
@@ -14,10 +14,10 @@ namespace sc {
 
 	static PropertyKey const gpioPinsProperty( "gpioPins" );
 
-	SoftPwmOutput::SoftPwmOutput( Manager& manager, string const& id, PropertyNode const& properties )
-		: Output( id )
+	SoftPwmOutput::SoftPwmOutput( Manager& manager, string id, PropertyNode const& properties )
+		: Output( move( id ) )
 		, manager_( manager )
-		, device_( manager )
+		, device_( manager_ )
 	{
 		auto gpioPins = properties[ gpioPinsProperty ].as< uint16_t[] >();
 		transform(

@@ -26,8 +26,8 @@ namespace sc {
 	static PropertyKey const transitionsProperty( "transitions" );
 	static PropertyKey const outputProperty( "output" );
 
-	Connection::Connection( Manager& manager, string const& id, PropertyNode const& properties )
-		: Component( "connection", id )
+	Connection::Connection( Manager& manager, string id, PropertyNode const& properties )
+		: Component( "connection", move( id ) )
         , manager_( manager )
 		, output_( manager_.get< Output >( properties[ outputProperty ].as< string >() ) )
 	{
@@ -38,7 +38,7 @@ namespace sc {
 			auto& transition = manager_.get< Transition >( transitionId );
             checkReveiverAcceptsChannels( *sender, transition );
             sender = &transition;
-			transitions_.emplace_back( transition.instantiate() );
+			transitions_.push_back( transition.instantiate() );
 		}
 
         checkReveiverAcceptsChannels( *sender, output_ );

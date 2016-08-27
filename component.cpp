@@ -1,5 +1,4 @@
 #include <stdexcept>
-#include <utility>
 
 #include "component.hpp"
 
@@ -7,16 +6,16 @@ using namespace std;
 
 namespace sc {
 
-	Component::Component( string const& category, string const& id )
-		: category_( category )
-        , id_( id )
+	Component::Component( string category, string id )
+		: category_( move( category ) )
+        , id_( move( id ) )
 	{
 	}
 
     Component::~Component() = default;
 
-    Standalone::Standalone( string const& id )
-        : Component( "standalone", id )
+    Standalone::Standalone( string id )
+        : Component( "standalone", move( id ) )
     {
     }
 
@@ -30,23 +29,24 @@ namespace sc {
         throw invalid_argument( "standalone components don't accept channels" );
     }
 
+	StaticInstance< ComponentFactory > ComponentFactory::instance;
+
     unique_ptr< Component > ComponentFactory::create(
 			Manager& manager, string const& name, string id, PropertyNode const& properties )
 	{
 		auto it = components_.find( name );
 		if ( it == components_.end() ) {
-			throw runtime_error( str( "component type \"", name, "\" for component \"", id, "\" not found" ) );
+			throw runtime_error( str(
+					"unable to create component \"", id, "\": type \"", name, "\" is not registered" ) );
 		}
-		return ( *it->second )( manager, move( id ), properties );
+		return unique_ptr< Component > { ( *it->second )( manager, move( id ), properties ) };
 	}
 
-	StaticInstance< ComponentFactory > ComponentFactory::instance;
-
-	void ComponentFactory::put( string name, FactoryFunction factory )
+	void ComponentFactory::put( string name, Factory* factory )
 	{
 		auto it = components_.emplace( move( name ), factory );
 		if ( !it.second ) {
-			throw runtime_error( str( "duplicate component ", it.first->first ) );
+            throw invalid_argument( "multiple registration of same component type" );
 		}
 	}
 

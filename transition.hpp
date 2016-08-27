@@ -26,7 +26,7 @@ namespace sc {
         : public Component
     {
     public:
-        explicit Transition( std::string const& id );
+        explicit Transition( std::string id );
 
         virtual std::unique_ptr< TransitionInstance > instantiate() const = 0;
     };

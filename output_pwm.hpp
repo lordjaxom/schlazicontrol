@@ -18,7 +18,7 @@ namespace sc {
 		: public Output
 	{
 	public:
-		SoftPwmOutput( Manager& manager, std::string const& id, PropertyNode const& properties );
+		SoftPwmOutput( Manager& manager, std::string id, PropertyNode const& properties );
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return gpioPins_.size() == channels; }
 

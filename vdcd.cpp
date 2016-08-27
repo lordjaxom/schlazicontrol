@@ -23,18 +23,20 @@ namespace sc {
 	static PropertyKey const hostProperty( "host" );
 	static PropertyKey const portProperty( "port", 8999 );
 
-	Vdcd::Vdcd( Manager& manager, string const& id, PropertyNode const& properties )
-		: Standalone( id )
+	Vdcd::Vdcd( Manager& manager, string id, PropertyNode const& properties )
+		: Standalone( move( id ) )
 		, manager_( manager )
 		, host_( properties[ hostProperty ].as< string >() )
 		, port_( properties[ portProperty ].as< string >() )
-		, socket_( manager.service() )
+		, socket_( manager_.service() )
 	{
 		Json::StreamWriterBuilder builder;
 		builder[ "indentation" ] = "";
 		jsonWriter_.reset( builder.newStreamWriter() );
 
+		logger.debug( "component vdcd created" );
 		manager_.subscribeReadyEvent( [this] { connect(); } );
+		logger.debug( "and subscribed" );
 	}
 
 	void Vdcd::add( VdcdDevice* device )

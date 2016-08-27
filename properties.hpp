@@ -6,9 +6,8 @@
 #include <string>
 #include <tuple>
 
-#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <boost/iterator/zip_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 #include <json/value.h>
 
@@ -48,7 +47,7 @@ namespace sc {
             static Type convert( PropertyNode const& node );
         };
 
-        struct PropertyNodeTransformer;
+        struct PropertyNodeIterator;
 
     } // namespace detail
 
@@ -58,10 +57,7 @@ namespace sc {
         friend struct detail::PropertyConverter;
 
     public:
-        using const_iterator = boost::transform_iterator<
-                detail::PropertyNodeTransformer,
-                boost::zip_iterator<
-                        boost::tuple< Json::Value::const_iterator, boost::counting_iterator< std::size_t > > > >;
+        using const_iterator = detail::PropertyNodeIterator;
 
         PropertyNode();
         PropertyNode( std::string path, Json::Value const& value );
@@ -91,7 +87,7 @@ namespace sc {
                 std::string const& key, Json::Value const& defaultValue = {},
                 std::initializer_list< Json::ValueType > allowedTypes = {}) const;
 
-        const_iterator iter( Json::Value::const_iterator it, std::size_t index ) const;
+        //const_iterator iter( Json::Value::const_iterator it, std::size_t index ) const;
 
         std::string path_;
         Json::Value const* value_;
@@ -99,14 +95,21 @@ namespace sc {
 
 	namespace detail {
 
-        struct PropertyNodeTransformer
+        struct PropertyNodeIterator
+                : public boost::iterator_adaptor<
+                        PropertyNodeIterator,
+                        Json::Value::const_iterator,
+                        PropertyNode,
+                        boost::use_default,
+                        PropertyNode >
         {
-            explicit PropertyNodeTransformer( std::string const& path );
-
-            PropertyNode operator()( boost::tuple< Json::Value const&, std::size_t const& > const& value ) const;
-
+            friend class boost::iterator_core_access;
+            PropertyNodeIterator(
+                    std::string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it );
+            reference dereference() const;
         private:
             std::string const* path_;
+            Json::Value::const_iterator first_;
         };
 
         template<>
@@ -159,7 +162,7 @@ namespace sc {
     {
     public:
         using const_iterator = boost::transform_iterator<
-                detail::PropertyListTransformer< Type >, PropertyNode::const_iterator, boost::use_default, boost::use_default >;
+                detail::PropertyListTransformer< Type >, PropertyNode::const_iterator >;
 
         explicit PropertyList( PropertyNode const& node )
             : node_( &node ) {}

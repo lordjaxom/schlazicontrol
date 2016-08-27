@@ -125,8 +125,8 @@ namespace sc {
         return { first, last };
     }
 
-    TriggersTransition::TriggersTransition( Manager& manager, string const& id, PropertyNode const& properties )
-        : Transition( id )
+    TriggersTransition::TriggersTransition( Manager& manager, string id, PropertyNode const& properties )
+        : Transition( move( id ) )
         , manager_( manager )
         , actions_( parseActions( properties[ actionsProperty ] ) )
     {

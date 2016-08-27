@@ -81,3 +81,6 @@ add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
 target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES})
 
+add_custom_command(TARGET schlazicontrol
+        POST_BUILD
+        COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` osmc@schlazicontrol:')

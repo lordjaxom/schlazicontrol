@@ -1,6 +1,5 @@
-#include <algorithm>
+#include <utility>
 
-#include "events.hpp"
 #include "input_gpio.hpp"
 #include "manager.hpp"
 #include "types.hpp"
@@ -12,8 +11,8 @@ namespace sc {
 	static PropertyKey const gpioPinProperty( "gpioPin" );
 	static PropertyKey const pullProperty( "pull", "off" );
 
-	GpioInput::GpioInput( Manager& manager, string const& id, PropertyNode const& properties )
-		: Input( id )
+	GpioInput::GpioInput( Manager& manager, string id, PropertyNode const& properties )
+		: Input( move( id ) )
         , manager_( manager )
 		, device_( manager_ )
 		, gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )

@@ -15,7 +15,7 @@ namespace sc {
 		: public Component
 	{
 	public:
-		explicit Output( std::string const& id );
+		explicit Output( std::string id );
 
 		virtual std::size_t channels() const final;
 

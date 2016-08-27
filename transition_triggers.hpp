@@ -21,7 +21,7 @@ namespace sc {
         : public Transition
     {
     public:
-        TriggersTransition( Manager& manager, std::string const& id, PropertyNode const& properties );
+        TriggersTransition( Manager& manager, std::string id, PropertyNode const& properties );
 
         virtual std::size_t channels() const override { return 1; }
         virtual bool acceptsChannels( std::size_t channels ) const override { return channels == 1; }

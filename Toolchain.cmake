@@ -8,15 +8,22 @@ SET(CMAKE_SYSTEM_VERSION 1)
 # always use mingw makefiles
 SET(CMAKE_GENERATOR "MinGW Makefiles" CACHE INTERNAL "" FORCE)
 
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+
 SET(MAKE_ROOT "${TOOLCHAIN_HOME}/mingw-make")
 SET(TOOLCHAIN_ROOT "${TOOLCHAIN_HOME}/arm-linux-gnueabihf")
 
 # set the search path for toolchain
-SET(ENV{PATH} "${MAKE_ROOT};${TOOLCHAIN_ROOT}/bin")
+#SET(ENV{PATH} "${MAKE_ROOT};${TOOLCHAIN_ROOT}/bin")
+
+# specify the make tool
+SET(CMAKE_MAKE_PROGRAM "${MAKE_ROOT}/make.exe" CACHE FILEPATH "")
 
 # specify the cross compiler
-SET(CMAKE_C_COMPILER "arm-linux-gnueabihf-gcc.exe")
-SET(CMAKE_CXX_COMPILER "arm-linux-gnueabihf-g++.exe")
+SET(CMAKE_C_COMPILER "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-gcc.exe")
+SET(CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-g++.exe")
+SET(CMAKE_AR "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-gcc-ar.exe" CACHE FILEPATH "")
+SET(CMAKE_RANLIB "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-gcc-ranlib.exe" CACHE FILEPATH "")
 
 # where is the target environment
 SET(CMAKE_FIND_ROOT_PATH "${TOOLCHAIN_ROOT}")

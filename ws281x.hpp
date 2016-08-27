@@ -35,7 +35,7 @@ namespace sc {
 		: public Standalone
 	{
 	public:
-		Ws281x( Manager& manager, std::string const& id, PropertyNode const& properties );
+		Ws281x( Manager& manager, std::string id, PropertyNode const& properties );
 
 		std::size_t channelCount() const { return ledCount_ * 3; }
 
