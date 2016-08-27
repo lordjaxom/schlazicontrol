@@ -126,7 +126,6 @@ namespace sc {
 
 #include <iostream>
 
-#include "config.hpp"
 #include "connection.hpp"
 #include "cmdline.hpp"
 #include "input_gpio.hpp"

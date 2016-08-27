@@ -1,21 +1,34 @@
 cmake_minimum_required(VERSION 3.5)
 project(schlazicontrol)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(THIRDPARTY ${CMAKE_SOURCE_DIR}/../__THIRDPARTY)
 
-set(RASPBERRY_HOME ${CMAKE_SOURCE_DIR}/../..)
-set(TOOLCHAIN_HOME ${RASPBERRY_HOME}/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian)
+set(BOOST_ROOT ${THIRDPARTY}/boost_1_61_0)
+include_directories(${BOOST_ROOT})
 
-set(SSH_HOST speedstar)
-set(SSH_USER lordjaxom)
-set(SSH_SCRIPT
-    export LANG=de_DE@euro $<SEMICOLON>
-    source \\$$HOME/etc/raspirc $<SEMICOLON>
-    cd src/schlazicontrol $<SEMICOLON>
-    make -j5)
+set(ASIO_ROOT ${THIRDPARTY}/asio-1.10.6)
+set(asio_DEFINITIONS ASIO_STANDALONE)
+include_directories(${ASIO_ROOT}/include)
 
-set(
-    SOURCE_FILES
+set(JSONCPP_ROOT ${THIRDPARTY}/jsoncpp-master)
+set(jsoncpp_LIBRARIES jsoncpp)
+include_directories(${JSONCPP_ROOT}/include)
+link_directories(${JSONCPP_ROOT}/src/lib_json)
+
+set(WIRINGPI_ROOT ${THIRDPARTY}/wiringPi)
+set(wiringPi_LIBRARIES wiringPi)
+include_directories(${WIRINGPI_ROOT}/wiringPi)
+link_directories(${WIRINGPI_ROOT}/wiringPi)
+
+set(RPIWS281X_ROOT ${THIRDPARTY}/rpi_ws281x)
+set(rpiWS281X_LIBRARIES rpi_ws281x)
+include_directories(${RPIWS281X_ROOT})
+link_directories(${RPIWS281X_ROOT})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -flto")
+
+set(SOURCE_FILES
         component.cpp
         component.hpp
         connection.cpp
@@ -62,24 +75,6 @@ set(
         triggers.cpp
         triggers.hpp)
 
-include_directories(
-        SYSTEM
-        ${TOOLCHAIN_HOME}/arm-linux-gnueabihf/libc/usr/include
-        ${TOOLCHAIN_HOME}/arm-linux-gnueabihf/include/c++/4.8.3)
-
-include_directories(
-        ${RASPBERRY_HOME}/src/wiringPi/wiringPi
-        ${RASPBERRY_HOME}/src/rpi_ws281x
-        ${RASPBERRY_HOME}/src/asio/include
-        ${RASPBERRY_HOME}/src/boost
-        ${RASPBERRY_HOME}/src/jsoncpp/include)
-
-add_compile_options(-std=c++11)
-
-add_custom_target(
-    schlazicontrol
-    COMMAND bash -c 'ssh ${SSH_USER}@${SSH_HOST} \"${SSH_SCRIPT}\"'
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    SOURCES ${SOURCE_FILES})
-
-add_executable(dummy ${SOURCE_FILES})
+add_executable(schlazicontrol ${SOURCE_FILES})
+target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
+target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES})
