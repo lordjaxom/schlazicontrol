@@ -1,4 +1,5 @@
 #include <functional>
+#include <stdexcept>
 #include <utility>
 
 #include "connection.hpp"

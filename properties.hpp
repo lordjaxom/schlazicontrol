@@ -1,6 +1,7 @@
 #ifndef SCHLAZICONTROL_PROPERTIES_HPP
 #define SCHLAZICONTROL_PROPERTIES_HPP
 
+#include <initializer_list>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -22,14 +23,14 @@ namespace sc {
 	class PropertyKey
 	{
 	public:
-		explicit PropertyKey( std::string name, std::string defaultValue = {} );
+		explicit PropertyKey( std::string name, Json::Value defaultValue = {} );
 
 		std::string const& name() const { return name_; }
-		std::string const& defaultValue() const { return defaultValue_; }
+        Json::Value const& defaultValue() const { return defaultValue_; }
 
 	private:
 		std::string name_;
-		std::string defaultValue_;
+        Json::Value defaultValue_;
 	};
 
     /**
@@ -79,16 +80,18 @@ namespace sc {
             return detail::PropertyConverter< Type >::convert( *this );
         }
 
-        PropertyNode operator[]( std::string const& key ) const;
-        PropertyNode operator[]( PropertyKey const& key ) const;
-
         const_iterator begin() const;
         const_iterator end() const;
 
-    private:
-        PropertyNode get( std::string const& key, std::string const& defaultValue = "" ) const;
+        PropertyNode operator[]( std::string const& key ) const;
+        PropertyNode operator[]( PropertyKey const& key ) const;
 
-        const_iterator iter( Json::Value::const_iterator const& it, std::size_t index );
+    private:
+        PropertyNode get(
+                std::string const& key, Json::Value const& defaultValue = {},
+                std::initializer_list< Json::ValueType > allowedTypes = {}) const;
+
+        const_iterator iter( Json::Value::const_iterator it, std::size_t index ) const;
 
         std::string path_;
         Json::Value const* value_;
@@ -117,6 +120,12 @@ namespace sc {
 		{
 			static bool convert( PropertyNode const& node );
 		};
+
+        template< typename Type >
+        struct PropertyConverter< Type, EnableIf< IsIntegral< Type >() > >
+        {
+            static Type convert( PropertyNode const& node ) { return (Type) node.value_->asInt64(); }
+        };
 
         template< typename Type, typename Enable >
         Type PropertyConverter< Type, Enable >::convert( PropertyNode const& node )

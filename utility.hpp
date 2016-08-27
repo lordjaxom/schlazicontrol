@@ -1,13 +1,25 @@
 #ifndef SCHLAZICONTROL_UTILITY_HPP
 #define SCHLAZICONTROL_UTILITY_HPP
 
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <utility>
 
 namespace sc {
+
+	template< bool Cond, typename Result = void > using EnableIf = typename std::enable_if< Cond, Result >::type;
+
+	template< typename Type > using Decay = typename std::decay< Type >::type;
+	template< typename Type > using RemoveReference = typename std::remove_reference< Type >::type;
+	template< typename Type > using RemoveCv = typename std::remove_cv< Type >::type;
+
+	template< typename Type > constexpr bool IsIntegral() { return std::is_integral< Type >::value; }
+	template< typename Type > constexpr bool IsEnum() { return std::is_enum< Type >::value; }
 
 	template< typename Type >
 	class StaticInstance
@@ -61,15 +73,13 @@ namespace sc {
 	
 	namespace detail {
 
-		inline std::ostream& strWrite( std::ostream& os )
-		{
-			return os;
-		}
+		inline void strWrite( std::ostream& os ) {}
 
 		template< typename Arg0, typename ...Args >
-		std::ostream& strWrite( std::ostream& os, Arg0&& arg0, Args&&... args )
+		void strWrite( std::ostream& os, Arg0&& arg0, Args&&... args )
 		{
-			return strWrite( os << std::forward< Arg0 >( arg0 ), std::forward< Args >( args )... );
+			os << std::forward< Arg0 >( arg0 );
+			strWrite( os, std::forward< Args >( args )... );
 		}
 
 	} // namespace detail
@@ -82,12 +92,43 @@ namespace sc {
 		return os.str();
 	}
 
-	template< bool Cond, typename Result = void > using EnableIf = typename std::enable_if< Cond, Result >::type;
+    namespace detail {
 
-    template< typename Type > using Decay = typename std::decay< Type >::type;
+        template< typename Delim, typename Iter >
+        struct Joiner
+        {
+            Joiner( Delim&& delimiter, Iter first, Iter last )
+                    : delimiter_( std::move( delimiter ) ), first_( first ), last_( last ) {}
 
-	template< typename Type > constexpr bool IsIntegral() { return std::is_integral< Type >::value; }
-	template< typename Type > constexpr bool IsEnum() { return std::is_enum< Type >::value; }
+            friend std::ostream& operator<<( std::ostream& os, Joiner const& joiner )
+            {
+                using ValueType = typename std::iterator_traits< Iter >::value_type;
+                std::copy(
+                        joiner.first_, joiner.last_,
+                        std::ostream_iterator< ValueType >( os, joiner.delimiter_ ) );
+                return os;
+            }
+
+        private:
+            Delim delimiter_;
+            Iter first_;
+            Iter last_;
+        };
+
+    } // namespace detail
+
+    template< typename Delim, typename Iter >
+    detail::Joiner< Delim, Iter > join( Delim delimiter, Iter first, Iter last )
+    {
+        return detail::Joiner< Delim, Iter >( std::move( delimiter ), first, last );
+    }
+
+    template< typename Delim, typename Range >
+    detail::Joiner< Delim, typename Range::const_iterator > join( Delim delimiter, Range const& range )
+    {
+        return detail::Joiner< Delim, typename Range::const_iterator >(
+                std::move( delimiter ), range.begin(), range.end() );
+    }
 
 } // namespace sc
 

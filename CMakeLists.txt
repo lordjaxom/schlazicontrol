@@ -1,29 +1,31 @@
+#
+# for the project to work, THIRDPARTY_HOME must be set to the path where dependencies are located
+#
+
 cmake_minimum_required(VERSION 3.5)
 project(schlazicontrol)
 
-set(THIRDPARTY ${CMAKE_SOURCE_DIR}/../__THIRDPARTY)
+set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_61_0")
+include_directories("${BOOST_ROOT}")
 
-set(BOOST_ROOT ${THIRDPARTY}/boost_1_61_0)
-include_directories(${BOOST_ROOT})
-
-set(ASIO_ROOT ${THIRDPARTY}/asio-1.10.6)
+set(ASIO_ROOT "${THIRDPARTY_HOME}/asio-1.10.6")
 set(asio_DEFINITIONS ASIO_STANDALONE)
-include_directories(${ASIO_ROOT}/include)
+include_directories("${ASIO_ROOT}/include")
 
-set(JSONCPP_ROOT ${THIRDPARTY}/jsoncpp-master)
+set(JSONCPP_ROOT "${THIRDPARTY_HOME}/jsoncpp-master")
 set(jsoncpp_LIBRARIES jsoncpp)
-include_directories(${JSONCPP_ROOT}/include)
-link_directories(${JSONCPP_ROOT}/src/lib_json)
+include_directories("${JSONCPP_ROOT}/include")
+link_directories("${JSONCPP_ROOT}/src/lib_json")
 
-set(WIRINGPI_ROOT ${THIRDPARTY}/wiringPi)
+set(WIRINGPI_ROOT "${THIRDPARTY_HOME}/wiringPi")
 set(wiringPi_LIBRARIES wiringPi)
-include_directories(${WIRINGPI_ROOT}/wiringPi)
-link_directories(${WIRINGPI_ROOT}/wiringPi)
+include_directories("${WIRINGPI_ROOT}/wiringPi")
+link_directories("${WIRINGPI_ROOT}/wiringPi")
 
-set(RPIWS281X_ROOT ${THIRDPARTY}/rpi_ws281x)
+set(RPIWS281X_ROOT "${THIRDPARTY_HOME}/rpi_ws281x")
 set(rpiWS281X_LIBRARIES rpi_ws281x)
-include_directories(${RPIWS281X_ROOT})
-link_directories(${RPIWS281X_ROOT})
+include_directories("${RPIWS281X_ROOT}")
+link_directories("${RPIWS281X_ROOT}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -flto")
@@ -78,3 +80,4 @@ set(SOURCE_FILES
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
 target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES})
+

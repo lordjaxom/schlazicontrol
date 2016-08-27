@@ -21,7 +21,7 @@ namespace sc {
 	static Logger logger( "vdcd" );
 
 	static PropertyKey const hostProperty( "host" );
-	static PropertyKey const portProperty( "port", "8999" );
+	static PropertyKey const portProperty( "port", 8999 );
 
 	Vdcd::Vdcd( Manager& manager, string const& id, PropertyNode const& properties )
 		: Standalone( id )
