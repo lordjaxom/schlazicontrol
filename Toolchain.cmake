@@ -21,7 +21,9 @@ SET(CMAKE_MAKE_PROGRAM "${MAKE_ROOT}/make.exe" CACHE FILEPATH "")
 
 # specify the cross compiler
 SET(CMAKE_C_COMPILER "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-gcc.exe")
+SET(CMAKE_CXX_STANDARD_LIBRARIES "")
 SET(CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-g++.exe")
+SET(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 SET(CMAKE_AR "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-gcc-ar.exe" CACHE FILEPATH "")
 SET(CMAKE_RANLIB "${TOOLCHAIN_ROOT}/bin/arm-linux-gnueabihf-gcc-ranlib.exe" CACHE FILEPATH "")
 

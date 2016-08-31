@@ -5,6 +5,11 @@
 cmake_minimum_required(VERSION 3.5)
 project(schlazicontrol)
 
+set(TOOLCHAIN_HOME "C:/Users/lordjaxom/Programme/gcc-4.9.2-glibc-2.19")
+set(THIRDPARTY_HOME "C:/Users/lordjaxom/Projekte/_RASPI_THIRDPARTY")
+
+include(Toolchain.cmake)
+
 set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_61_0")
 include_directories("${BOOST_ROOT}")
 
