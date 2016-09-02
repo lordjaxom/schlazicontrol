@@ -5,6 +5,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(schlazicontrol)
 
+set(TOOLCHAIN_INCLUDED ON CACHE BOOL "" FORCE)
 set(TOOLCHAIN_HOME "C:/Users/lordjaxom/Programme/gcc-4.9.2-glibc-2.19")
 set(THIRDPARTY_HOME "C:/Users/lordjaxom/Projekte/_RASPI_THIRDPARTY")
 
