@@ -2,7 +2,9 @@
 #define SCHLAZICONTROL_EXPRESSION_HPP
 
 #include <cstdint>
+#include <algorithm>
 #include <chrono>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -100,6 +102,50 @@ namespace sc {
                 return detail::Value< Type >( value );
             }
 
+            namespace detail {
+
+                template< typename ...Values >
+                struct Strings
+                {
+                    Strings( char const* quote, char const* delim )
+                            : quote_( quote ), delim_( delim ) {}
+
+                    friend std::ostream& operator<<( std::ostream& os, Strings const& strings )
+                    {
+                        write( os, strings.quote_, strings.delim_, Values()... );
+                        return os;
+                    }
+
+                private:
+                    static void write( std::ostream& os, char const* quote, char const* delim )
+                    {
+                    }
+
+                    template< typename Arg0, typename ...Args >
+                    static void write(
+                            std::ostream& os, char const* quote, char const* delim, Arg0 value0, Args... values )
+                    {
+                        os << quote;
+                        std::copy( Arg0::cbegin(), Arg0::cend(), std::ostream_iterator< char >( os ) );
+                        os << quote;
+                        if ( sizeof...( Args ) > 0 ) {
+                            os << delim;
+                        }
+                        write( os, quote, delim, values... );
+                    }
+
+                    char const* quote_;
+                    char const* delim_;
+                };
+
+            } // namespace detail
+
+            template< typename ...Values >
+            detail::Strings< Values... > strings( char const* quote, char const* delim )
+            {
+                return detail::Strings< Values... >( quote, delim );
+            }
+
         } // namespace diagnostics
 
         template< typename Result, Result Minimum, Result Maximum >
@@ -120,9 +166,13 @@ namespace sc {
         struct Enumeration
         {
             using Type = Result;
-            static void validate( std::string const& function, std::size_t index, Result const& value )
+
+            template< typename ...Args >
+            static void validate( std::string const& function, std::size_t index, Result const& value, Args... )
             {
-                throw diagnostics::invalidArgument( function, index, "TODO: expected enumeration" );
+                throw diagnostics::invalidArgument(
+                        function, index, "expected one out of enumeration ",
+                        diagnostics::strings< Args... >( "\"", ", " ), " instead of \"", value, "\"" );
             }
         };
 
@@ -130,11 +180,19 @@ namespace sc {
         struct Enumeration< Result, Value0, Values... >
         {
             using Type = Result;
+
             static void validate( std::string const& function, std::size_t index, Result const& value )
+            {
+                validate( function, index, value, Value0(), Values()... );
+            }
+
+            template< typename ...Args >
+            static void validate(
+                    std::string const& function, std::size_t index, Result const& value, Args... args )
             {
                 if ( value.size() != Value0::size() ||
                         !std::equal( Value0::cbegin(), Value0::cend(), value.cbegin() ) ) {
-                    Enumeration< Result, Values... >::validate( function, index, value );
+                    Enumeration< Result, Values... >::validate( function, index, value, args... );
                 }
             }
         };
