@@ -10,29 +10,8 @@ using namespace std;
 namespace sc {
 
     /**
-     * class MultiplyTransitionInstance
+     * class MultiplyTransition
      */
-
-    class MultiplyTransitionInstance : public TransitionInstance
-    {
-    public:
-        MultiplyTransitionInstance( size_t factor ) : factor_( factor ) {}
-
-        virtual bool transform( Connection& connection, ChannelBuffer& values ) override
-        {
-            size_t oldSize = values.size();
-            size_t newSize = oldSize * factor_;
-            values.resize( newSize );
-
-            for ( auto it = next( values.begin(), oldSize ) ; it != values.end() ; ) {
-                it = copy_n( values.begin(), oldSize, it );
-            }
-            return true;
-        }
-
-    private:
-        size_t factor_;
-    };
 
     static PropertyKey factorProperty( "factor" );
 
@@ -42,9 +21,21 @@ namespace sc {
     {
     }
 
-    std::unique_ptr< TransitionInstance > MultiplyTransition::instantiate() const
+    unique_ptr< TransitionStateBase > MultiplyTransition::instantiate() const
     {
-        return unique_ptr< TransitionInstance > { new MultiplyTransitionInstance( factor_ ) };
+        return unique_ptr< TransitionStateBase >( new TransitionState< MultiplyTransition >( *this ) );
+    }
+
+    bool MultiplyTransition::transform( Connection& connection, ChannelBuffer& values ) const
+    {
+        size_t oldSize = values.size();
+        size_t newSize = oldSize * factor_;
+        values.resize( newSize );
+
+        for ( auto it = next( values.begin(), oldSize ) ; it != values.end() ; ) {
+            it = copy_n( values.begin(), oldSize, it );
+        }
+        return true;
     }
 
     __attribute__(( unused )) static TransitionRegistry< MultiplyTransition > registry( "multiply" );

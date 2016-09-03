@@ -16,35 +16,6 @@ namespace sc {
     using namespace triggers;
 
     /**
-     * class TriggersTransitionInstance
-     */
-
-    class TriggersTransitionInstance : public TransitionInstance
-    {
-    public:
-        TriggersTransitionInstance( Manager& manager, vector< Action > const& actions )
-            : manager_( manager )
-            , actions_( actions )
-        {
-        }
-
-        virtual bool transform( Connection& connection, ChannelBuffer& values ) override
-        {
-            Context context { connection, manager_, state_, values[ 0 ] };
-            bool result = false;
-            for ( auto const& action : actions_ ) {
-                result |= action.invoke( context );
-            }
-            return result;
-        }
-
-    private:
-        Manager& manager_;
-        vector< Action > const& actions_;
-        State state_;
-    };
-
-    /**
      * class TriggersTransition
      */
 
@@ -112,9 +83,19 @@ namespace sc {
     {
     }
 
-    unique_ptr< TransitionInstance > TriggersTransition::instantiate() const
+    unique_ptr< TransitionStateBase > TriggersTransition::instantiate() const
     {
-        return unique_ptr< TransitionInstance > { new TriggersTransitionInstance( manager_, actions_ ) };
+        return unique_ptr< TransitionStateBase > { new TransitionState< TriggersTransition, State >( *this ) };
+    }
+
+    bool TriggersTransition::transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const
+    {
+        Context context { connection, manager_, state, values[ 0 ] };
+        bool result = false;
+        for ( auto const& action : actions_ ) {
+            result |= action.invoke( context );
+        }
+        return result;
     }
 
     __attribute__(( unused )) static TransitionRegistry< TriggersTransition > registry( "triggers" );

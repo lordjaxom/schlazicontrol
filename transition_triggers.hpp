@@ -15,6 +15,7 @@ namespace sc {
 
     namespace triggers {
         class Action;
+        struct State;
     } // namespace triggers
 
     class TriggersTransition
@@ -26,7 +27,9 @@ namespace sc {
         virtual std::size_t channels( std::size_t channels ) const override { return 1; }
         virtual bool acceptsChannels( std::size_t channels ) const override { return channels == 1; }
 
-        virtual std::unique_ptr< TransitionInstance > instantiate() const override;
+        virtual std::unique_ptr< TransitionStateBase > instantiate() const override;
+
+        bool transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const;
 
     private:
         Manager& manager_;

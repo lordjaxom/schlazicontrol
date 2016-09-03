@@ -26,7 +26,7 @@ namespace sc {
 	private:
 		Manager& manager_;
 		Output& output_;
-		std::vector< std::unique_ptr< TransitionInstance > > transitions_;
+		std::vector< std::unique_ptr< TransitionStateBase > > transitions_;
 	};
 
 } // namespace sc

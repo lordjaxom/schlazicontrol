@@ -12,14 +12,56 @@ namespace sc {
     class ChannelBuffer;
     class Connection;
 
-    class TransitionInstance
+    namespace detail {
+
+        struct EmptyTransitionState {};
+
+    } // namespace detail
+
+    /**
+     * class TransitionStateBase
+     */
+
+    class TransitionStateBase
     {
     public:
-        TransitionInstance();
-        TransitionInstance( TransitionInstance const& ) = delete;
-        virtual ~TransitionInstance();
+        TransitionStateBase();
+        TransitionStateBase( TransitionStateBase const& ) = delete;
+        virtual ~TransitionStateBase();
 
         virtual bool transform( Connection& connection, ChannelBuffer& values ) = 0;
+    };
+
+    /**
+     * class TransitionState
+     */
+
+    template< typename Transition, typename State = detail::EmptyTransitionState >
+    class TransitionState
+            : public TransitionStateBase
+    {
+    public:
+        TransitionState( Transition const& transition ) : transition_( transition ) {}
+
+        virtual bool transform( Connection& connection, ChannelBuffer& values ) override
+        {
+            return transform( connection, values, state_ );
+        }
+
+    private:
+        bool transform( Connection& connection, ChannelBuffer& values, detail::EmptyTransitionState )
+        {
+            return transition_.transform( connection, values );
+        }
+
+        template< typename Other >
+        bool transform( Connection& connection, ChannelBuffer& values, Other& state )
+        {
+            return transition_.transform( state, connection, values );
+        }
+
+        Transition const& transition_;
+        State state_;
     };
 
     class Transition
@@ -31,7 +73,7 @@ namespace sc {
         virtual std::size_t channels( std::size_t channels ) const = 0;
         virtual bool acceptsChannels( std::size_t channels ) const = 0;
 
-        virtual std::unique_ptr< TransitionInstance > instantiate() const = 0;
+        virtual std::unique_ptr< TransitionStateBase > instantiate() const = 0;
     };
 
     template< typename Type >

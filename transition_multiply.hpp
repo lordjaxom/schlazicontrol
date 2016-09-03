@@ -8,6 +8,8 @@
 
 namespace sc {
 
+    class ChannelBuffer;
+    class Connection;
     class Manager;
     class PropertyNode;
 
@@ -20,7 +22,9 @@ namespace sc {
         virtual std::size_t channels( std::size_t channels ) const override { return channels * factor_; }
         virtual bool acceptsChannels( std::size_t channels ) const override { return true; }
 
-        virtual std::unique_ptr< TransitionInstance > instantiate() const override;
+        virtual std::unique_ptr< TransitionStateBase > instantiate() const override;
+
+        bool transform( Connection& connection, ChannelBuffer& values ) const;
 
     private:
         std::size_t factor_;
