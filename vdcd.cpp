@@ -24,7 +24,7 @@ namespace sc {
 	static PropertyKey const portProperty( "port", 8999 );
 
 	Vdcd::Vdcd( Manager& manager, string id, PropertyNode const& properties )
-		: Standalone( move( id ) )
+		: Component( "vdcd", move( id ) )
 		, manager_( manager )
 		, host_( properties[ hostProperty ].as< string >() )
 		, port_( properties[ portProperty ].as< string >() )

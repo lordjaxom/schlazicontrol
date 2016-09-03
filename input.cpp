@@ -22,9 +22,4 @@ namespace sc {
         inputChangeEvent_( value );
     }
 
-    bool Input::acceptsChannels( std::size_t channels ) const
-    {
-        throw invalid_argument( "input components don't accept channels" );
-    }
-
 } // namespace sc

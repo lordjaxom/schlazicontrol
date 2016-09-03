@@ -12,9 +12,4 @@ namespace sc {
     {
     }
 
-    std::size_t Output::channels() const
-    {
-        throw invalid_argument( "output components don't send channels" );
-    }
-
 } // namespace sc

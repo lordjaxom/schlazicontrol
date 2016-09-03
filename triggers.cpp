@@ -1,7 +1,7 @@
 #include <algorithm>
-#include <unordered_map>
 #include <utility>
 
+#include "logging.hpp"
 #include "manager.hpp"
 #include "timer.hpp"
 #include "triggers.hpp"
@@ -9,60 +9,10 @@
 using namespace std;
 
 namespace sc {
+
+    static Logger logger( "triggers" );
+
     namespace triggers {
-
-        namespace detail {
-
-            /**
-             * class Context
-             */
-
-            class Context
-            {
-            public:
-                Context( Manager& manager, State& state, ChannelValue& value )
-                        : manager_( manager )
-                        , state_( state )
-                        , value_( value )
-                {
-                }
-
-                ~Context()
-                {
-                    state_.lastInput = move( value_ );
-                    value_ = state_.output;
-                }
-
-                ChannelValue const& input() const { return value_; }
-                ChannelValue const& lastInput() const { return state_.lastInput; }
-
-                bool output( ChannelValue const& value )
-                {
-                    if ( state_.output != value ) {
-                        state_.output = value;
-                        return true;
-                    }
-                    return false;
-                }
-
-                void startTimer( size_t timer, chrono::microseconds timeout )
-                {
-                    stopTimer( timer );
-                    state_.timers.emplace( piecewise_construct, forward_as_tuple( timer ), forward_as_tuple( manager_, timeout, [] {} ) );
-                }
-
-                void stopTimer( size_t timer )
-                {
-                    state_.timers.erase( timer );
-                }
-
-            private:
-                Manager& manager_;
-                State& state_;
-                ChannelValue& value_;
-            };
-
-        } // namespace detail
 
         /*
          * class Value
@@ -73,9 +23,9 @@ namespace sc {
         {
         }
 
-        Value::Value( ChannelValue const& value, function< bool ( ChannelValue const& other ) > const& condition )
+        Value::Value( ChannelValue const& value, function< bool ( ChannelValue const& other ) > condition )
             : value_( value )
-            , condition_( condition )
+            , condition_( move( condition ) )
         {
         }
 
@@ -94,8 +44,8 @@ namespace sc {
          * class ChangeEvent
          */
 
-        ChangeEvent::ChangeEvent( Value const& value )
-            : value_( value )
+        ChangeEvent::ChangeEvent( Value value )
+            : value_( move( value ) )
         {
         }
 
@@ -103,7 +53,12 @@ namespace sc {
         {
             bool old = value_.matches( context.lastInput() );
             bool current = value_.matches( context.input() );
-            return !old && current;
+            if ( !old && current ) {
+                logger.debug(
+                        "change event applies, changed from ", context.lastInput().get(), " to ", context.input().get() );
+                return true;
+            }
+            return false;
         }
 
         /*
@@ -117,6 +72,10 @@ namespace sc {
 
         bool TimeoutEvent::applies( Context const& context ) const
         {
+            if ( context.timerExpired( timer_ ) ) {
+                logger.debug( "timer ", timer_, " expired" );
+                return true;
+            }
             return false;
         }
 
@@ -130,13 +89,15 @@ namespace sc {
          * class SetOutcome
          */
 
-        SetOutcome::SetOutcome( Value const& value )
-            : value_( value )
+        SetOutcome::SetOutcome( Value value )
+            : value_( move( value ) )
         {
         }
 
         bool SetOutcome::invoke( Context& context ) const
         {
+            logger.debug( "set outcome triggered with value ", value_.get().get() );
+
             return context.set( value_.get() );
         }
 
@@ -144,7 +105,7 @@ namespace sc {
          * class StartTimerOutcome
          */
 
-        StartTimerOutcome::StartTimerOutcome( size_t timer, chrono::microseconds timeout )
+        StartTimerOutcome::StartTimerOutcome( size_t timer, chrono::nanoseconds const& timeout )
             : timer_( timer )
             , timeout_( timeout )
         {
@@ -152,6 +113,7 @@ namespace sc {
 
         bool StartTimerOutcome::invoke( Context& context ) const
         {
+            logger.debug( "starting timer ", timer_, " with ", timeout_.count(), "ns" );
             context.startTimer( timer_, timeout_ );
             return false;
         }
@@ -167,6 +129,7 @@ namespace sc {
 
         bool StopTimerOutcome::invoke( Context& context ) const
         {
+            logger.debug( "explicitly stopping timer ", timer_ );
             context.stopTimer( timer_ );
             return false;
         }
@@ -194,15 +157,18 @@ namespace sc {
          * class Context
          */
 
-        Context::Context( Manager& manager, State& state, ChannelValue& value )
-            : manager_( manager )
-            , state_( state )
-            , value_( value )
+        Context::Context( Connection& connection, Manager& manager, State& state, ChannelValue& value )
+                : connection_( connection )
+                , manager_( manager )
+                , state_( state )
+                , value_( value )
         {
+            logger.debug( "context create" );
         }
 
         Context::~Context()
         {
+            logger.debug( "context destroy" );
             state_.lastInput = move( value_ );
             value_ = state_.output;
         }
@@ -216,16 +182,33 @@ namespace sc {
             return false;
         }
 
-        void Context::startTimer( size_t timer, chrono::microseconds timeout )
+        void Context::startTimer( size_t timer, chrono::nanoseconds const& timeout )
         {
             stopTimer( timer );
+
+            Connection* safeConnection = &connection_;
+            State* safeState = &state_;
             state_.timers.emplace(
-                    piecewise_construct, forward_as_tuple( timer ), forward_as_tuple( manager_, timeout, [] {} ) );
+                    timer, unique_ptr< Timer >( new Timer( manager_, timeout, [timer, safeConnection, safeState] {
+                        logger.debug( "timeout handler fired" );
+
+                        auto it = safeState->timers.find( timer );
+                        __attribute__(( unused )) unique_ptr< Timer > ptr = move( it->second );
+                        safeState->timers.erase( it );
+
+                        safeState->expiredTimers.insert( timer );
+                        safeConnection->transfer( safeState->lastInput );
+                    } ) ) );
         }
 
         void Context::stopTimer( size_t timer )
         {
             state_.timers.erase( timer );
+        }
+
+        bool Context::timerExpired( std::size_t timer ) const
+        {
+            return state_.expiredTimers.erase( timer ) > 0;
         }
 
     } // namespace triggers

@@ -19,7 +19,7 @@ namespace sc {
         TransitionInstance( TransitionInstance const& ) = delete;
         virtual ~TransitionInstance();
 
-        virtual bool transform( Connection const& connection, ChannelBuffer& values ) = 0;
+        virtual bool transform( Connection& connection, ChannelBuffer& values ) = 0;
     };
 
     class Transition
@@ -27,6 +27,9 @@ namespace sc {
     {
     public:
         explicit Transition( std::string id );
+
+        virtual std::size_t channels( std::size_t channels ) const = 0;
+        virtual bool acceptsChannels( std::size_t channels ) const = 0;
 
         virtual std::unique_ptr< TransitionInstance > instantiate() const = 0;
     };

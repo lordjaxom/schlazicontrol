@@ -33,6 +33,9 @@ set(rpiWS281X_LIBRARIES rpi_ws281x)
 include_directories("${RPIWS281X_ROOT}")
 link_directories("${RPIWS281X_ROOT}")
 
+set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring")
+include_directories("${TYPESTRING_ROOT}")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -flto")
 
@@ -81,7 +84,9 @@ set(SOURCE_FILES
         timer.cpp
         timer.hpp
         triggers.cpp
-        triggers.hpp)
+        triggers.hpp
+        transition_multiply.cpp
+        transition_multiply.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

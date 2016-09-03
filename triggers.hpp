@@ -6,10 +6,12 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "timer.hpp"
 #include "types.hpp"
+#include "connection.hpp"
 
 namespace sc {
 
@@ -27,7 +29,7 @@ namespace sc {
         {
         public:
             Value( double value );
-            Value( ChannelValue const& value, std::function< bool ( ChannelValue const& ) > const& condition );
+            Value( ChannelValue const& value, std::function< bool ( ChannelValue const& ) > condition );
 
             ChannelValue const& get() const { return value_; }
             bool matches( ChannelValue const& value ) const;
@@ -56,7 +58,7 @@ namespace sc {
         class ChangeEvent : public Event
         {
         public:
-            explicit ChangeEvent( Value const& value );
+            explicit ChangeEvent( Value value );
 
             virtual bool applies( Context const& context ) const override;
 
@@ -97,7 +99,7 @@ namespace sc {
         class SetOutcome : public Outcome
         {
         public:
-            explicit SetOutcome( Value const& value );
+            explicit SetOutcome( Value value );
 
             virtual bool invoke( Context& context ) const override;
 
@@ -112,13 +114,13 @@ namespace sc {
         class StartTimerOutcome : public Outcome
         {
         public:
-            StartTimerOutcome( std::size_t timer, std::chrono::microseconds timeout );
+            StartTimerOutcome( std::size_t timer, std::chrono::nanoseconds const& timeout );
 
             virtual bool invoke( Context& context ) const override;
 
         private:
             std::size_t timer_;
-            std::chrono::microseconds timeout_;
+            std::chrono::nanoseconds timeout_;
         };
 
         /*
@@ -160,7 +162,8 @@ namespace sc {
         {
             ChannelValue lastInput;
             ChannelValue output;
-            std::unordered_map< std::size_t, Timer > timers;
+            std::unordered_map< std::size_t, std::unique_ptr< Timer > > timers;
+            std::unordered_set< std::size_t > expiredTimers;
         };
 
         /**
@@ -170,7 +173,7 @@ namespace sc {
         class Context
         {
         public:
-            Context( Manager& manager, State& state, ChannelValue& value );
+            Context( Connection& connection, Manager& manager, State& state, ChannelValue& value );
             ~Context();
 
             ChannelValue const& input() const { return value_; }
@@ -178,10 +181,12 @@ namespace sc {
 
             bool set( ChannelValue const& value );
 
-            void startTimer( std::size_t timer, std::chrono::microseconds timeout );
+            void startTimer( std::size_t timer, std::chrono::nanoseconds const& timeout );
             void stopTimer( std::size_t timer );
+            bool timerExpired( std::size_t timer ) const;
 
         private:
+            Connection& connection_;
             Manager& manager_;
             State& state_;
             ChannelValue& value_;

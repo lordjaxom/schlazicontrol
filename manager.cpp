@@ -39,15 +39,15 @@ namespace sc {
 		} );
 	}
 
-	void Manager::startPolling( std::chrono::microseconds interval )
+	void Manager::startPolling( std::chrono::microseconds const& interval )
 	{
 		pollingTimer_.expires_from_now( interval );
 		pollingTimer_.async_wait( [this, interval]( error_code ec ) {
-			if ( ec == errc::operation_canceled ) {
+			if ( ec.value() == (int) errc::operation_canceled ) {
 				return;
 			}
 
-            pollEvent_( chrono::duration_cast< chrono::microseconds >( interval ) );
+            pollEvent_( interval );
 			startPolling( interval );
 		} );
 	}

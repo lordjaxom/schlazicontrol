@@ -8,9 +8,11 @@
 #include <utility>
 #include <vector>
 
+#include <boost/fusion/container/set.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant/static_visitor.hpp>
 #include <boost/variant/variant.hpp>
+#include <typestring.hh>
 
 #include "utility.hpp"
 
@@ -30,73 +32,261 @@ namespace sc {
             std::string name_;
         };
 
-        template< typename Base, typename ...Factories >
-        std::unique_ptr< Base > parseCall( std::string const& text, Factories&&... factories );
+        namespace diagnostics {
 
-        std::chrono::microseconds parseDuration( std::string const& text );
-
-        template< typename ...Args >
-        std::runtime_error invalidArgument( std::string const& function, std::size_t index, Args&&... args )
-        {
-            return std::runtime_error( str(
-                    "invalid argument ", index + 1, " in call to ", function, ": ", std::forward< Args >( args )... ) );
-        }
-
-        template< typename Type, typename Enable = void >
-        struct ArgumentConverter;
-
-        template<>
-        struct ArgumentConverter< std::string >
-        {
-            static std::string const& parse( std::string const& function, std::size_t index, std::string const& value )
+            template< typename ...Args >
+            std::runtime_error invalidArgument( std::string const& function, std::size_t index, Args&&... args )
             {
-                return value;
+                return std::runtime_error( str(
+                        "invalid argument ", index + 1, " in call to ", function, ": ", std::forward< Args >( args )... ) );
             }
 
-            static std::string const& parse( std::string const& function, std::size_t index, std::intmax_t const& value )
+            namespace detail {
+
+                template< typename S > struct TypeString { using String = S; };
+
+                template< typename Type, typename Enable = void > struct TypeName;
+                template<> struct TypeName< std::string > : TypeString< typestring_is( "identifier" ) > {};
+                template< typename Type > struct TypeName< Type, EnableIf< IsIntegral< Type >() > >
+                        : TypeString< typestring_is( "number" ) > {};
+                template< typename Rep, typename Period > struct TypeName< std::chrono::duration< Rep, Period > >
+                        : TypeString< typestring_is( "duration" ) > {};
+
+            } // namespace detail
+
+            template< typename Type >
+            std::ostream& typeName( std::ostream& os )
             {
-                throw invalidArgument( function, index, "expected string, got number" );
+                using TypeName = detail::TypeName< Decay< Type > >;
+                std::copy( TypeName::String::cbegin(), TypeName::String::cend(), std::ostream_iterator< char >( os ) );
+                return os;
+            }
+
+            namespace detail {
+
+                template< typename Type >
+                struct ValueHolder
+                {
+                    ValueHolder( Type const& value ) : value_( &value ) {}
+                    Type const* value_;
+                };
+
+                template< typename Type >
+                struct Value : ValueHolder< Type >
+                {
+                    using ValueHolder< Type >::ValueHolder;
+                    friend std::ostream& operator<<( std::ostream& os, Value const& value )
+                    {
+                        return os << *value.value_;
+                    }
+                };
+
+                template< typename Rep, typename Period >
+                struct Value< std::chrono::duration< Rep, Period > >
+                        : ValueHolder< std::chrono::duration< Rep, Period > >
+                {
+                    using ValueHolder< std::chrono::duration< Rep, Period > >::ValueHolder;
+                    friend std::ostream& operator<<( std::ostream& os, Value const& value )
+                    {
+                        return os << std::chrono::duration_cast< std::chrono::nanoseconds >( *value.value_ ).count() << "ns";
+                    }
+                };
+
+            } // namespace detail
+
+            template< typename Type >
+            detail::Value< Type > value( Type const& value )
+            {
+                return detail::Value< Type >( value );
+            }
+
+        } // namespace diagnostics
+
+        template< typename Result, Result Minimum, Result Maximum >
+        struct Range
+        {
+            using Type = Result;
+            static void validate( std::string const& function, std::size_t index, Type const& value )
+            {
+                if ( value < Minimum || value > Maximum ) {
+                    throw diagnostics::invalidArgument(
+                            function, index, "expected numeric value between ", Minimum, " and ", Maximum,
+                            " instead of ", value );
+                }
             }
         };
 
-        template< typename Type >
-        struct ArgumentConverter< Type, EnableIf< IsIntegral< Type >() > >
+        template< typename Result, typename ...Values >
+        struct Enumeration
         {
-            static Type parse( std::string const& function, std::size_t index, std::string const& value )
+            using Type = Result;
+            static void validate( std::string const& function, std::size_t index, Result const& value )
             {
-                throw invalidArgument( function, index, "expected number, got string" );
-            }
-
-            static Type parse( std::string const& function, std::size_t index, std::intmax_t const& value )
-            {
-                return (Type) value;
+                throw diagnostics::invalidArgument( function, index, "TODO: expected enumeration" );
             }
         };
 
-        template<>
-        struct ArgumentConverter< std::chrono::microseconds >
+        template< typename Result, typename Value0, typename ...Values >
+        struct Enumeration< Result, Value0, Values... >
         {
-            static std::chrono::microseconds parse(
-                    std::string const& function, std::size_t index, std::string const& value )
+            using Type = Result;
+            static void validate( std::string const& function, std::size_t index, Result const& value )
             {
-                return parseDuration( value );
-            }
-
-            static std::chrono::microseconds parse(
-                    std::string const& function, std::size_t index, std::intmax_t const& value )
-            {
-                throw invalidArgument( function, index, "expected duration specification, got number" );
+                if ( value.size() != Value0::size() ||
+                        !std::equal( Value0::cbegin(), Value0::cend(), value.cbegin() ) ) {
+                    Enumeration< Result, Values... >::validate( function, index, value );
+                }
             }
         };
 
         namespace detail {
 
-            using CallArgument = boost::variant< std::string, std::intmax_t >;
+            template< typename Derived, typename Types >
+            struct ArgParserInvoker
+            {
+                template< typename Other >
+                static Derived parse( std::string const& function, std::size_t index, Other&& value )
+                {
+                    throw std::runtime_error( "TODO: no parser for this type" );
+                }
+            };
+
+            template< typename Derived, typename Type0, typename ...Types >
+            struct ArgParserInvoker< Derived, boost::fusion::set< Type0, Types... > >
+                    : ArgParserInvoker< Derived, boost::fusion::set< Types... > >
+            {
+                using ArgParserInvoker< Derived, boost::fusion::set< Types... > >::parse;
+                static Derived parse( std::string const& function, std::size_t index, Type0 const& value )
+                {
+                    Derived::validate( function, index, value );
+                    return Derived( value );
+                }
+            };
+
+            template< typename Derived, typename ...Types >
+            struct ArgParserValidator
+            {
+                template< typename Other >
+                static void validate( std::string const& function, std::size_t index, Other&& value ) {}
+            };
+
+            template< typename Derived, typename Type0, typename ...Types >
+            struct ArgParserValidator< Derived, Type0, Types... >
+                    : ArgParserValidator< Derived, Types... >
+            {
+                using ArgParserValidator< Derived, Types... >::validate;
+                static void validate( std::string const& function, std::size_t index, typename Type0::Type const& value )
+                {
+                    Type0::validate( function, index, value );
+                    ArgParserValidator< Derived, Types... >::validate( function, index, value );
+                }
+            };
+
+            struct ArgParserTag {};
+
+        } // namespace detail
+
+        template< typename Derived, typename Result, typename ...Args >
+        struct ArgParser : detail::ArgParserTag
+        {
+            using BaseType = ArgParser< Derived, Result, Args... >;
+
+            template< typename Type >
+            static Derived parse( std::string const& function, std::size_t index, Type&& value )
+            {
+                return detail::ArgParserInvoker< Derived, boost::fusion::set< typename Args::Type... > >::parse(
+                        function, index, std::forward< Type >( value ) );
+            }
+
+            template< typename Type >
+            static void validate( std::string const& function, std::size_t index, Type&& value )
+            {
+                detail::ArgParserValidator< Derived, Args... >::validate(
+                        function, index, std::forward< Type >( value ) );
+            }
+
+            ArgParser( Result&& result ) : result_( std::move( result ) ) {}
+
+            operator Result&&() { return std::move( result_ ); }
+
+        private:
+            Result result_;
+        };
+
+        template< typename Base, typename ...Factories >
+        std::unique_ptr< Base > parse( std::string const& text, Factories&&... factories );
+
+        namespace detail {
+
+            using CallArgument = boost::variant< std::string, std::intmax_t, std::chrono::nanoseconds >;
 
             struct Call
             {
                 std::string function;
                 std::vector< CallArgument > arguments;
+            };
+
+            template< typename Type >
+            struct ArgumentVisitorFallback
+            {
+                template< typename Other >
+                static Type invoke( std::string const& function, std::size_t index, Other&& value )
+                {
+                    throw diagnostics::invalidArgument(
+                            function, index, "got ", diagnostics::typeName< Other >, " \"",
+                            diagnostics::value( std::forward< Other >( value ) ), "\" instead of ",
+                            diagnostics::typeName< Type > );
+                }
+            };
+
+            template< typename Type, typename Enable = void >
+            struct ArgumentVisitorImpl;
+
+            template<>
+            struct ArgumentVisitorImpl< std::string >
+                    : ArgumentVisitorFallback< std::string >
+            {
+                static std::string invoke( std::string const& function, std::size_t index, std::string const& value )
+                {
+                    return value;
+                }
+
+                using ArgumentVisitorFallback< std::string >::invoke;
+            };
+
+            template< typename Type >
+            struct ArgumentVisitorImpl< Type, EnableIf< IsIntegral< Type >() > >
+                    : ArgumentVisitorFallback< Type >
+            {
+                static Type invoke( std::string const& function, std::size_t index, std::intmax_t value )
+                {
+                    return value;
+                }
+
+                using ArgumentVisitorFallback< Type >::invoke;
+            };
+
+            template< typename Rep, typename Period >
+            struct ArgumentVisitorImpl< std::chrono::duration< Rep, Period > >
+                    : ArgumentVisitorFallback< std::chrono::duration< Rep, Period > >
+            {
+                static std::chrono::duration< Rep, Period > invoke(
+                        std::string const& function, std::size_t index, std::chrono::nanoseconds value )
+                {
+                    return std::chrono::duration_cast< std::chrono::duration< Rep, Period > >( value );
+                }
+
+                using ArgumentVisitorFallback< std::chrono::duration< Rep, Period > >::invoke;
+            };
+
+            template< typename Type >
+            struct ArgumentVisitorImpl< Type, EnableIf< IsBaseOf< ArgParserTag, Type >() > >
+            {
+                template< typename Other >
+                static Type invoke( std::string const& function, std::size_t index, Other&& value )
+                {
+                    return Type::parse( function, index, std::forward< Other >( value ) );
+                }
             };
 
             template< typename Type >
@@ -108,12 +298,10 @@ namespace sc {
                 {
                 }
 
-                Type operator()( Type const& value ) const { return value; }
-
                 template< typename Other >
-                Type operator()( Other const& value ) const
+                Type operator()( Other&& value ) const
                 {
-                    return ArgumentConverter< Type >::parse( function_, index_, value );
+                    return ArgumentVisitorImpl< Type >::invoke( function_, index_, std::forward< Other >( value ) );
                 }
 
             private:
@@ -151,14 +339,14 @@ namespace sc {
                         new Derived( expand< Args >( call, index++ )... ) );
             }
 
-            Call parseCall( std::string const& text );
+            Call parse( std::string const& text );
 
         } // namespace detail
 
         template< typename Base, typename ...Factories >
-        std::unique_ptr< Base > parseCall( std::string const& text, Factories&&... factories )
+        std::unique_ptr< Base > parse( std::string const& text, Factories&&... factories )
         {
-            return detail::create< Base >( detail::parseCall( text ), std::forward< Factories >( factories )... );
+            return detail::create< Base >( detail::parse( text ), std::forward< Factories >( factories )... );
         }
 
     } // namespace expression

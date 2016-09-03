@@ -32,7 +32,7 @@ namespace sc {
 	};
 
 	class Ws281x
-		: public Standalone
+		: public Component
 	{
 	public:
 		Ws281x( Manager& manager, std::string id, PropertyNode const& properties );

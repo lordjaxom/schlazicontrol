@@ -22,7 +22,7 @@ namespace sc {
 
 		void subscribeInputChange( InputChangeEvent::Handler handler );
 
-		virtual bool acceptsChannels( std::size_t channels ) const final;
+		virtual std::size_t channels() const = 0;
 
 	protected:
 		void raiseInputChange( ChannelValue const& value ) const;

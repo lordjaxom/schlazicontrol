@@ -17,7 +17,7 @@ namespace sc {
 	public:
 		explicit Output( std::string id );
 
-		virtual std::size_t channels() const final;
+		virtual bool acceptsChannels( std::size_t channels ) const = 0;
 
         virtual void set( ChannelBuffer const& values ) = 0;
 	};

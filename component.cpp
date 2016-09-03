@@ -12,22 +12,7 @@ namespace sc {
 	{
 	}
 
-    Component::~Component() = default;
-
-    Standalone::Standalone( string id )
-        : Component( "standalone", move( id ) )
-    {
-    }
-
-    size_t Standalone::channels() const
-    {
-        throw invalid_argument( "standalone components don't send channels" );
-    }
-
-    bool Standalone::acceptsChannels( size_t channels ) const
-    {
-        throw invalid_argument( "standalone components don't accept channels" );
-    }
+	Component::~Component() = default;
 
 	StaticInstance< ComponentFactory > ComponentFactory::instance;
 

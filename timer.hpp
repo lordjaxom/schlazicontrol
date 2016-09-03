@@ -13,7 +13,8 @@ namespace sc {
     class Timer
     {
     public:
-        Timer( Manager& manager, std::chrono::microseconds timeout, std::function< void () > const& handler );
+        Timer( Manager& manager, std::chrono::nanoseconds const& timeout, std::function< void () > handler );
+        ~Timer();
 
     private:
         asio::steady_timer timer_;

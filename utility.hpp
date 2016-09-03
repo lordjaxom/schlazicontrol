@@ -21,6 +21,9 @@ namespace sc {
 	template< typename Type > constexpr bool IsIntegral() { return std::is_integral< Type >::value; }
 	template< typename Type > constexpr bool IsEnum() { return std::is_enum< Type >::value; }
 
+    template< typename Type, typename Other > constexpr bool IsSame() { return std::is_same< Type, Other >::value; }
+	template< typename Base, typename Derived > constexpr bool IsBaseOf() { return std::is_base_of< Base, Derived >::value; }
+
 	template< typename Type >
 	class StaticInstance
 	{

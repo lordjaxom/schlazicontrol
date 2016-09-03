@@ -327,7 +327,7 @@ namespace sc {
 	static PropertyKey const ledCountProperty( "ledCount" );
 
 	Ws281x::Ws281x( Manager& manager, string id, PropertyNode const& properties )
-		: Standalone( move( id ) )
+		: Component( "ws281x", move( id ) )
 		, manager_( manager )
 		, gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
 		, ledCount_( properties[ ledCountProperty ].as< size_t >() )

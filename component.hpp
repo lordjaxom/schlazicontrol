@@ -23,22 +23,10 @@ namespace sc {
         std::string const& category() const { return category_; }
         std::string const& id() const { return id_; }
 
-		virtual std::size_t channels() const = 0;
-		virtual bool acceptsChannels( std::size_t channels ) const = 0;
-
     private:
         std::string category_;
         std::string id_;
 	};
-
-    class Standalone : public Component
-    {
-    public:
-        explicit Standalone( std::string id );
-
-        virtual std::size_t channels() const final;
-        virtual bool acceptsChannels( std::size_t channels ) const final;
-    };
 
     template< typename Type >
 	class ComponentRegistry;

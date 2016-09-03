@@ -28,9 +28,9 @@ namespace sc {
         {
         }
 
-        virtual bool transform( Connection const& connection, ChannelBuffer& values ) override
+        virtual bool transform( Connection& connection, ChannelBuffer& values ) override
         {
-            Context context { manager_, state_, values[ 0 ] };
+            Context context { connection, manager_, state_, values[ 0 ] };
             bool result = false;
             for ( auto const& action : actions_ ) {
                 result |= action.invoke( context );
@@ -44,39 +44,6 @@ namespace sc {
         State state_;
     };
 
-    namespace expression {
-
-        template<>
-        struct ArgumentConverter< Value >
-        {
-            static Value parse( string const& function, size_t index, std::intmax_t value )
-            {
-                if ( value < ChannelValue::minimum || value > ChannelValue::maximum ) {
-                    invalidArgument(
-                            function, index, "value must be between ", (int) ChannelValue::minimum, " and ",
-                            (int) ChannelValue::maximum );
-                }
-                return { (double) value };
-            }
-
-            static Value parse( string const& function, size_t index, string const& value )
-            {
-                if ( value == "off" ) {
-                    return { ChannelValue::offValue(), &ChannelValue::off };
-                }
-                if ( value == "on" ) {
-                    return { ChannelValue::fullOnValue(), &ChannelValue::on };
-                }
-                if ( value == "fullOn" ) {
-                    return { ChannelValue::fullOnValue(), &ChannelValue::fullOn };
-                }
-                throw invalidArgument(
-                        function, index, "value must be numeric or one of \"off\", \"on\" or \"fullOn\"" );
-            }
-        };
-
-    } // namespace expression
-
     /**
      * class TriggersTransition
      */
@@ -85,22 +52,35 @@ namespace sc {
     static PropertyKey const outcomesProperty( "outcomes" );
     static PropertyKey const actionsProperty( "actions" );
 
+    struct ValueParser
+            : expression::ArgParser< ValueParser, Value,
+                    expression::Range< intmax_t, (intmax_t) ChannelValue::minimum, (intmax_t) ChannelValue::maximum >,
+                    expression::Enumeration< string, typestring_is( "off" ), typestring_is( "on" ), typestring_is( "fullOn" ) >
+            >
+    {
+        ValueParser( intmax_t value ) : BaseType( (double) value ) {}
+        ValueParser( string const& value ) : BaseType(
+                value == "off" ? Value { ChannelValue::offValue(), &ChannelValue::off } :
+                value == "on" ? Value { ChannelValue::fullOnValue(), &ChannelValue::on } :
+                Value { ChannelValue::fullOnValue(), &ChannelValue::fullOn } ) {}
+    };
+
     static unique_ptr< triggers::Event > parseEvent( string const& event )
     {
         using namespace expression;
-        return parseCall< triggers::Event >(
+        return parse< triggers::Event >(
                 event,
-                Factory< ChangeEvent, Value >( "change" ),
+                Factory< ChangeEvent, ValueParser >( "change" ),
                 Factory< TimeoutEvent, size_t >( "timeout" ) );
     }
 
     static unique_ptr< Outcome > parseOutcome( string const& outcome )
     {
         using namespace expression;
-        return parseCall< Outcome >(
+        return parse< Outcome >(
                 outcome,
-                Factory< SetOutcome, Value >( "set" ),
-                Factory< StartTimerOutcome, size_t, chrono::microseconds >( "startTimer" ),
+                Factory< SetOutcome, ValueParser >( "set" ),
+                Factory< StartTimerOutcome, size_t, chrono::nanoseconds >( "startTimer" ),
                 Factory< StopTimerOutcome, size_t >( "stopTimer" ) );
     }
 

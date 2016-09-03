@@ -22,7 +22,7 @@ namespace sc {
 	class VdcdDevice;
 
 	class Vdcd
-		: public Standalone
+		: public Component
 	{
 	public:
 		Vdcd( Manager& manager, std::string id, PropertyNode const& properties );

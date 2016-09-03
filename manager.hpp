@@ -48,7 +48,7 @@ namespace sc {
 		void run();
 
 	private:
-		void startPolling( std::chrono::microseconds interval );
+		void startPolling( std::chrono::microseconds const& interval );
 
 		Properties properties_;
 		asio::io_service service_;

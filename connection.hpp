@@ -21,12 +21,9 @@ namespace sc {
 	public:
 		Connection( Manager& manager, std::string id, PropertyNode const& properties );
 
-        virtual std::size_t channels() const override;
-        virtual bool acceptsChannels( std::size_t channels ) const override;
-
-	private:
 		void transfer( ChannelValue const& value );
 
+	private:
 		Manager& manager_;
 		Output& output_;
 		std::vector< std::unique_ptr< TransitionInstance > > transitions_;
