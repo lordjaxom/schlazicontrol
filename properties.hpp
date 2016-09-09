@@ -87,8 +87,6 @@ namespace sc {
                 std::string const& key, Json::Value const& defaultValue = {},
                 std::initializer_list< Json::ValueType > allowedTypes = {}) const;
 
-        //const_iterator iter( Json::Value::const_iterator it, std::size_t index ) const;
-
         std::string path_;
         Json::Value const* value_;
 	};
