@@ -27,7 +27,7 @@ namespace sc {
 
 	void VdcdInput::set( double value )
 	{
-		raiseInputChange( { value, 0.0, 100.0 } );
+		inputChangeEvent_( ChannelValue( value, 0.0, 100.0 ) );
 	}
 
 	__attribute__(( unused )) static InputRegistry< VdcdInput > registry( "vdcd" );

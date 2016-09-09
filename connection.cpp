@@ -44,7 +44,7 @@ namespace sc {
 		}
         checkReveiverAcceptsChannels( *sender, output_, channels, output_.acceptsChannels( channels ) );
 
-        input.subscribeInputChange( [this]( ChannelValue const& value ) { transfer( value ); } );
+        input.inputChangeEvent().subscribe( [this]( ChannelValue const& value ) { transfer( value ); } );
 	}
 
     void Connection::transfer( ChannelValue const& value )

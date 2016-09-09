@@ -88,7 +88,7 @@ namespace sc {
 		channel_->strip_type = stripType;
 		channel_->brightness = 255;
 
-		logger.debug( "initializing ws281x hardware on pin ", gpioPin );
+		logger.debug( "initializing ws281x api on pin ", gpioPin );
 
 		if ( ws2811_init( &wrapped_ ) ) {
 			throw runtime_error( str( "couldn't initialize ws2811 api on pin ", gpioPin ) );
@@ -345,10 +345,7 @@ namespace sc {
             , internals_( new Ws281xInternals( manager_.service() ) )
             , values_( ledCount_ * 3 )
 	{
-		manager_.subscribeReadyEventEx( [this] ( boost::signals2::connection const& conn ) {
-            conn.disconnect();
-            connect();
-        } );
+		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
     Ws281x::~Ws281x() = default;

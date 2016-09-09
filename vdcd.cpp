@@ -33,9 +33,7 @@ namespace sc {
 		builder[ "indentation" ] = "";
 		jsonWriter_.reset( builder.newStreamWriter() );
 
-		logger.debug( "component vdcd created" );
-		manager_.subscribeReadyEvent( [this] { connect(); } );
-		logger.debug( "and subscribed" );
+		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
 	void Vdcd::add( VdcdDevice* device )

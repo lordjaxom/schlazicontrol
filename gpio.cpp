@@ -148,17 +148,17 @@ namespace sc {
 
 	void GpioDevice::pinMode( uint16_t gpioPin, GpioMode mode )
 	{
-		manager_.subscribeReadyEvent( [gpioPin, mode] { gpioPinMode( gpioPin, mode ); } );
+		manager_.readyEvent().subscribe( [gpioPin, mode] { gpioPinMode( gpioPin, mode ); }, true );
 	}
 
 	void GpioDevice::pullUpDnControl( uint16_t gpioPin, GpioPull pull )
 	{
-		manager_.subscribeReadyEvent( [gpioPin, pull] { gpioPullUpDnControl( gpioPin, pull ); } );
+		manager_.readyEvent().subscribe( [gpioPin, pull] { gpioPullUpDnControl( gpioPin, pull ); }, true );
 	}
 
 	void GpioDevice::softPwmCreate( uint16_t gpioPin )
 	{
-		manager_.subscribeReadyEvent( [gpioPin] { gpioSoftPwmCreate( gpioPin ); } );
+		manager_.readyEvent().subscribe( [gpioPin] { gpioSoftPwmCreate( gpioPin ); }, true );
 	}
 
 	bool GpioDevice::digitalRead( uint16_t gpioPin ) const

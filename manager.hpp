@@ -7,8 +7,7 @@
 #include <string>
 #include <utility>
 
-#include <boost/signals2/signal.hpp>
-
+#include "event.hpp"
 #include "properties.hpp"
 
 namespace asio {
@@ -24,10 +23,10 @@ namespace sc {
 
 	class Manager
 	{
-	public:
-        using ReadyEvent = boost::signals2::signal< void () >;
-        using PollEvent = boost::signals2::signal< void ( std::chrono::nanoseconds ) >;
+        using ReadyEvent = Event< void () >;
+        using PollEvent = Event< void ( std::chrono::nanoseconds ) >;
 
+    public:
         Manager( CommandLine const& commandLine );
 		Manager( Manager const& ) = delete;
         ~Manager();
@@ -42,10 +41,8 @@ namespace sc {
 			return *result;
 		}
 
-        void subscribeReadyEvent( ReadyEvent::slot_type const& handler );
-        void subscribeReadyEventEx( ReadyEvent::extended_slot_type const& handler );
-        void subscribePollEvent( PollEvent::slot_type const& handler );
-        void subscribePollEventEx( PollEvent::extended_slot_type const& handler );
+        ReadyEvent::Interface& readyEvent() { return readyEvent_.interface(); }
+        PollEvent::Interface& pollEvent() { return pollEvent_.interface(); }
 
 		void run();
 

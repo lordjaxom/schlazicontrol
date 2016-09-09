@@ -44,6 +44,8 @@ set(SOURCE_FILES
         component.hpp
         connection.cpp
         connection.hpp
+        event.hpp
+        event.cpp
         gpio.cpp
         gpio.hpp
         input_gpio.cpp

@@ -4,9 +4,8 @@
 #include <cstddef>
 #include <string>
 
-#include <boost/signals2/signal.hpp>
-
 #include "component.hpp"
+#include "event.hpp"
 #include "utility.hpp"
 
 namespace sc {
@@ -17,19 +16,15 @@ namespace sc {
 		: public Component
 	{
 	public:
-		using InputChangeEvent = boost::signals2::signal< void ( ChannelValue const& ) >;
+		using InputChangeEvent = Event< void ( ChannelValue const& ) >;
 
 		explicit Input( std::string id );
 
-		void subscribeInputChange( InputChangeEvent::slot_type const& handler );
-		void subscribeInputChangeEx( InputChangeEvent::extended_slot_type const& handler );
+        InputChangeEvent::Interface inputChangeEvent() { return inputChangeEvent_.interface(); }
 
 		virtual std::size_t channels() const = 0;
 
 	protected:
-		void raiseInputChange( ChannelValue const& value ) const;
-
-	private:
         InputChangeEvent inputChangeEvent_;
 	};
 

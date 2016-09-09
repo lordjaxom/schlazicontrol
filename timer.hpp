@@ -4,7 +4,7 @@
 #include <chrono>
 #include <functional>
 
-#include <asio.hpp>
+#include "event.hpp"
 
 namespace sc {
 
@@ -13,12 +13,16 @@ namespace sc {
     class Timer
     {
     public:
-        Timer( Manager& manager, std::chrono::nanoseconds const& timeout, std::function< void () > handler );
+        Timer( Manager& manager, std::chrono::nanoseconds timeout, std::function< void () > handler );
+        Timer( Timer const& ) = delete;
         ~Timer();
 
     private:
-        asio::steady_timer timer_;
+        void poll( std::chrono::nanoseconds elapsed );
+
+        std::chrono::nanoseconds remaining_;
         std::function< void () > handler_;
+        EventScope pollEventScope_;
     };
 
 } // namespace sc

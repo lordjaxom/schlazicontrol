@@ -12,19 +12,4 @@ namespace sc {
     {
     }
 
-    void Input::subscribeInputChange( InputChangeEvent::slot_type const& handler )
-    {
-        inputChangeEvent_.connect( handler );
-    }
-
-    void Input::subscribeInputChangeEx( InputChangeEvent::extended_slot_type const& handler )
-    {
-        inputChangeEvent_.connect_extended( handler );
-    }
-
-    void Input::raiseInputChange( ChannelValue const& value ) const
-    {
-        inputChangeEvent_( value );
-    }
-
 } // namespace sc

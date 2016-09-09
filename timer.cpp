@@ -10,24 +10,23 @@ namespace sc {
 
     static Logger logger( "timer" );
 
-    Timer::Timer( Manager& manager, chrono::nanoseconds const& timeout, function< void () > handler )
-        : timer_( manager.service() )
-        , handler_( move( handler ) )
+    Timer::Timer( Manager& manager, chrono::nanoseconds timeout, function< void () > handler )
+            : remaining_( timeout )
+            , handler_( move( handler ) )
+            , pollEventScope_(
+                    manager.pollEvent().subscribe( [this]( chrono::nanoseconds elapsed ) { poll( elapsed ); } ) )
     {
-        timer_.expires_from_now( timeout );
-        timer_.async_wait( [this]( error_code ec ) {
-            if ( ec.value() == (int) errc::operation_canceled ) {
-                logger.debug( "timer canceled" );
-                return;
-            }
-            logger.debug( "timer fired, ec = ", ec, " (canceled is ", (int) errc::operation_canceled, ")" );
-            handler_();
-        } );
     }
 
-    Timer::~Timer()
+    void Timer::poll( chrono::nanoseconds elapsed )
     {
-        logger.debug( "timer destructing" );
+        if ( elapsed < remaining_ ) {
+            remaining_ -= elapsed;
+            return;
+        }
+
+        __attribute__(( unused )) EventScope scope( pollEventScope_.release() );
+        handler_();
     }
 
 } // namespace sc

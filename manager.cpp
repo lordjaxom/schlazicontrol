@@ -69,27 +69,7 @@ namespace sc {
         return internals_->service;
     }
 
-	void Manager::subscribeReadyEvent( ReadyEvent::slot_type const& handler )
-    {
-        readyEvent_.connect( handler );
-    }
-
-	void Manager::subscribeReadyEventEx( ReadyEvent::extended_slot_type const& handler )
-    {
-        readyEvent_.connect_extended( handler );
-    }
-
-	void Manager::subscribePollEvent( PollEvent::slot_type const& handler )
-    {
-        pollEvent_.connect( handler );
-    }
-
-	void Manager::subscribePollEventEx( PollEvent::extended_slot_type const& handler )
-    {
-        pollEvent_.connect_extended( handler );
-    }
-
-	void Manager::run()
+    void Manager::run()
 	{
 		logger.info( "running..." );
 		readyEvent_();

@@ -24,7 +24,7 @@ namespace sc {
 		device_.pinMode( gpioPin_, GpioMode::input );
 		device_.pullUpDnControl( gpioPin_, properties[ pullProperty ].as< GpioPull >() );
 
-		manager_.subscribePollEvent( [this]( chrono::nanoseconds elapsed ) { poll(); } );
+		manager_.pollEvent().subscribe( [this]( chrono::nanoseconds elapsed ) { poll(); } );
 	}
 
 	void GpioInput::poll()
@@ -33,7 +33,7 @@ namespace sc {
 		value_ = device_.digitalRead( gpioPin_ );
 		if ( lastValue != value_ ) {
             logger.debug( "gpio on pin ", gpioPin_, " changed to ", value_ );
-			raiseInputChange( { value_ } );
+			inputChangeEvent_( ChannelValue( value_ ) );
 		}
 	}
 
