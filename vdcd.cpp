@@ -7,7 +7,6 @@
 #include <boost/range.hpp>
 #include <json/json.h>
 
-#include "event.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
 #include "vdcd.hpp"
@@ -80,7 +79,7 @@ namespace sc {
 		auto timer = make_shared< steady_timer >( manager_.service() );
 		timer->expires_from_now( chrono::milliseconds( retryMs ) );
 		timer->async_wait( [this, timer] ( error_code ec ) {
-			if ( ec == errc::operation_canceled ) {
+			if ( ec.value() == (int) errc::operation_canceled ) {
 				return;
 			}
 			connect();

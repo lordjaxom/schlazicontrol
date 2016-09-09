@@ -7,7 +7,8 @@
 #include <string>
 #include <utility>
 
-#include "event.hpp"
+#include <boost/signals2/signal.hpp>
+
 #include "properties.hpp"
 
 namespace asio {
@@ -23,11 +24,11 @@ namespace sc {
 
 	class Manager
 	{
-		using ReadyEvent = Event< void () >;
-		using PollEvent = Event< void () >;
-
 	public:
-		Manager( CommandLine const& commandLine );
+        using ReadyEvent = boost::signals2::signal< void () >;
+        using PollEvent = boost::signals2::signal< void ( std::chrono::nanoseconds ) >;
+
+        Manager( CommandLine const& commandLine );
 		Manager( Manager const& ) = delete;
         ~Manager();
 
@@ -41,8 +42,10 @@ namespace sc {
 			return *result;
 		}
 
-		EventConnection subscribeReadyEvent( ReadyEvent::Handler handler );
-		EventConnection subscribePollEvent( PollEvent::Handler handler );
+        void subscribeReadyEvent( ReadyEvent::slot_type const& handler );
+        void subscribeReadyEventEx( ReadyEvent::extended_slot_type const& handler );
+        void subscribePollEvent( PollEvent::slot_type const& handler );
+        void subscribePollEventEx( PollEvent::extended_slot_type const& handler );
 
 		void run();
 
@@ -50,7 +53,7 @@ namespace sc {
         Component* findComponent( std::string const& requester, std::string const& name ) const;
         void checkValidComponent( std::string const& requester, std::string const& name, void* component ) const;
 
-		void startPolling( std::chrono::nanoseconds const& interval );
+		void startPolling( std::chrono::nanoseconds interval );
 
 		Properties properties_;
         std::unique_ptr< ManagerInternals > internals_;

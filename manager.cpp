@@ -69,15 +69,25 @@ namespace sc {
         return internals_->service;
     }
 
-	EventConnection Manager::subscribeReadyEvent( Manager::ReadyEvent::Handler handler )
-	{
-		return readyEvent_.subscribe( move( handler ) );
-	}
+	void Manager::subscribeReadyEvent( ReadyEvent::slot_type const& handler )
+    {
+        readyEvent_.connect( handler );
+    }
 
-	EventConnection Manager::subscribePollEvent( Manager::PollEvent::Handler handler )
-	{
-		return pollEvent_.subscribe( move( handler ) );
-	}
+	void Manager::subscribeReadyEventEx( ReadyEvent::extended_slot_type const& handler )
+    {
+        readyEvent_.connect_extended( handler );
+    }
+
+	void Manager::subscribePollEvent( PollEvent::slot_type const& handler )
+    {
+        pollEvent_.connect( handler );
+    }
+
+	void Manager::subscribePollEventEx( PollEvent::extended_slot_type const& handler )
+    {
+        pollEvent_.connect_extended( handler );
+    }
 
 	void Manager::run()
 	{
@@ -104,7 +114,7 @@ namespace sc {
         }
 	}
 
-	void Manager::startPolling( std::chrono::nanoseconds const& interval )
+	void Manager::startPolling( chrono::nanoseconds interval )
 	{
         internals_->pollingTimer.expires_from_now( interval );
         internals_->pollingTimer.async_wait( [this, interval]( error_code ec ) {
@@ -112,7 +122,7 @@ namespace sc {
 				return;
 			}
 
-            pollEvent_();
+            pollEvent_( interval );
 			startPolling( interval );
 		} );
 	}

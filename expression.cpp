@@ -91,14 +91,12 @@ namespace sc {
 
             Call parse( std::string const& text )
             {
-                logger.debug( "parsing ", text );
                 auto first = text.begin();
                 auto last = text.end();
                 Call result;
                 if ( !qi::phrase_parse( first, last, CallGrammar(), ascii::space, result ) || first != last ) {
                     throw runtime_error( str( "unable to parse function expression \"", text, "\"" ) );
                 }
-                logger.debug( "parsing finished" );
                 return result;
             }
 

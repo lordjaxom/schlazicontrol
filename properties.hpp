@@ -123,7 +123,7 @@ namespace sc {
 		};
 
         template< typename Type >
-        struct PropertyConverter< Type, EnableIf< IsIntegral< Type >() > >
+        struct PropertyConverter< Type, sc::EnableIf< IsIntegral< Type >() > >
         {
             static Type convert( PropertyNode const& node ) { return (Type) node.value_->asInt64(); }
         };
@@ -162,11 +162,13 @@ namespace sc {
         using const_iterator = boost::transform_iterator<
                 detail::PropertyListTransformer< Type >, PropertyNode::const_iterator >;
 
-        explicit PropertyList( PropertyNode const& node )
-            : node_( &node ) {}
+        explicit PropertyList( PropertyNode&& node )
+            : node_( std::move( node ) )
+        {
+        }
 
-        const_iterator begin() const { return iter( node_->begin() ); }
-        const_iterator end() const { return iter( node_->end() ); }
+        const_iterator begin() const { return iter( node_.begin() ); }
+        const_iterator end() const { return iter( node_.end() ); }
 
     private:
         const_iterator iter( PropertyNode::const_iterator const& it ) const
@@ -174,7 +176,7 @@ namespace sc {
             return { it, detail::PropertyListTransformer< Type >() };
         }
 
-        PropertyNode const* node_;
+        PropertyNode node_;
     };
 
     namespace detail {
@@ -182,9 +184,9 @@ namespace sc {
         template< typename Type >
         struct PropertyConverter< Type[] >
         {
-            static PropertyList< Type > convert( PropertyNode const& node )
+            static PropertyList< Type > convert( PropertyNode node )
             {
-                return PropertyList< Type > { node };
+                return PropertyList< Type >( std::move( node ) );
             }
         };
 

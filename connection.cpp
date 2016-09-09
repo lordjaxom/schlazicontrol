@@ -3,7 +3,6 @@
 #include <utility>
 
 #include "connection.hpp"
-#include "event.hpp"
 #include "input.hpp"
 #include "manager.hpp"
 #include "output.hpp"

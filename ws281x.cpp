@@ -14,7 +14,6 @@
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "event.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
 #include "types.hpp"
@@ -346,7 +345,10 @@ namespace sc {
             , internals_( new Ws281xInternals( manager_.service() ) )
             , values_( ledCount_ * 3 )
 	{
-		manager_.subscribeReadyEvent( [this] { connect(); } );
+		manager_.subscribeReadyEventEx( [this] ( boost::signals2::connection const& conn ) {
+            conn.disconnect();
+            connect();
+        } );
 	}
 
     Ws281x::~Ws281x() = default;

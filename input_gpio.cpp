@@ -24,7 +24,7 @@ namespace sc {
 		device_.pinMode( gpioPin_, GpioMode::input );
 		device_.pullUpDnControl( gpioPin_, properties[ pullProperty ].as< GpioPull >() );
 
-		manager_.subscribePollEvent( [this] { poll(); } );
+		manager_.subscribePollEvent( [this]( chrono::nanoseconds elapsed ) { poll(); } );
 	}
 
 	void GpioInput::poll()
