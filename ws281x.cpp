@@ -3,7 +3,6 @@
 #include <iomanip>
 #include <iterator>
 #include <ostream>
-#include <system_error>
 #include <thread>
 #include <utility>
 
@@ -15,7 +14,7 @@
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "events.hpp"
+#include "event.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
 #include "types.hpp"
@@ -90,11 +89,10 @@ namespace sc {
 		channel_->strip_type = stripType;
 		channel_->brightness = 255;
 
-		logger.debug( "initializing ws281x hardware" );
+		logger.debug( "initializing ws281x hardware on pin ", gpioPin );
 
 		if ( ws2811_init( &wrapped_ ) ) {
-			logger.error( "couldn't initialize ws2811 api" );
-			throw runtime_error( "couldn't initialize ws2811 api" );
+			throw runtime_error( str( "couldn't initialize ws2811 api on pin ", gpioPin ) );
 		}
 
 		fill_n( channel_->leds, channel_->count, 0 );
@@ -323,39 +321,52 @@ namespace sc {
 		Ws281xServer( gpioPin_, ledCount_ ).run();
 	}
 
-	static PropertyKey const gpioPinProperty( "gpioPin" );
+
+    struct Ws281xInternals
+    {
+        Ws281xInternals( io_service& service )
+                : socket( service )
+        {
+        }
+
+        ip::tcp::socket socket;
+        asio::streambuf incoming;
+        asio::streambuf outgoing;
+    };
+
+    static PropertyKey const gpioPinProperty( "gpioPin" );
 	static PropertyKey const ledCountProperty( "ledCount" );
 
 	Ws281x::Ws281x( Manager& manager, string id, PropertyNode const& properties )
-		: Component( "ws281x", move( id ) )
-		, manager_( manager )
-		, gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
-		, ledCount_( properties[ ledCountProperty ].as< size_t >() )
-		, launcher_( new Ws281xLauncher( manager_, gpioPin_, ledCount_ ) )
-		, socket_( manager_.service() )
+            : Component( "ws281x", move( id ) )
+            , manager_( manager )
+            , gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
+            , ledCount_( properties[ ledCountProperty ].as< size_t >() )
+            , launcher_( new Ws281xLauncher( manager_, gpioPin_, ledCount_ ) )
+            , internals_( new Ws281xInternals( manager_.service() ) )
+            , values_( ledCount_ * 3 )
 	{
 		manager_.subscribeReadyEvent( [this] { connect(); } );
 	}
 
-	void Ws281x::send( ChannelBuffer const& values )
+    Ws281x::~Ws281x() = default;
+
+	void Ws281x::send( size_t start, ChannelBuffer const& values )
 	{
-		if ( !socket_.is_open() ) {
+        copy( values.begin(), values.end(), next( values_.begin(), start * 3 ) );
+
+		if ( !internals_->socket.is_open() ) {
 			return;
 		}
 
-		if ( values.size() != ledCount_ * 3 ) {
-			logger.warning( "wx281x output called with ", values.size(), " but has ", ledCount_ * 3, " channels" );
-		}
-
-		ostream os( &outgoing_ );
-		for ( size_t i = 0 ; i < ledCount_ * 3 ; ++i ) {
-			auto const& value = values[ i % values.size() ];
-			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) value.scale( 0, 255 );
+		ostream os( &internals_->outgoing );
+        for ( auto it = values_.begin() ; it != values_.end() ; ++it ) {
+			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) it->scale( 0, 255 );
 		}
 		os << ws281xSeparator << flush;
 
 		async_write(
-				socket_, outgoing_,
+                internals_->socket, internals_->outgoing,
 				[this] ( error_code ec, size_t ) {
 					handleError( ec );
 				} );
@@ -367,7 +378,7 @@ namespace sc {
 
 		tcp::resolver resolver( manager_.service() );
 		async_connect(
-				socket_, resolver.resolve( tcp::resolver::query( "localhost", "9999" ) ),
+                internals_->socket, resolver.resolve( tcp::resolver::query( "localhost", "9999" ) ),
 				[this] ( error_code ec, tcp::resolver::iterator ) {
 					if ( handleError( ec ) ) {
 						return;
@@ -379,9 +390,9 @@ namespace sc {
 
 	void Ws281x::reconnect()
 	{
-		socket_.close();
-		incoming_.consume( incoming_.size() );
-		outgoing_.consume( outgoing_.size() );
+        internals_->socket.close();
+        internals_->incoming.consume( internals_->incoming.size() );
+        internals_->outgoing.consume( internals_->outgoing.size() );
 		retryConnect();
 	}
 
@@ -392,7 +403,7 @@ namespace sc {
 		auto timer = make_shared< steady_timer >( manager_.service() );
 		timer->expires_from_now( chrono::milliseconds( retryMs ) );
 		timer->async_wait( [this, timer] ( error_code ec ) {
-			if ( ec == errc::operation_canceled ) {
+			if ( ec.value() == (int) errc::operation_canceled ) {
 				return;
 			}
 			connect();
@@ -402,14 +413,14 @@ namespace sc {
 	void Ws281x::receiveInitMessage()
 	{
 		async_read_until(
-				socket_, incoming_, ws281xSeparator,
+                internals_->socket, internals_->incoming, ws281xSeparator,
 				[this] ( error_code ec, size_t ) {
 					if ( handleError( ec ) ) {
 						return;
 					}
 
-					auto begin = buffers_begin( incoming_.data() );
-					auto end = buffers_end( incoming_.data() );
+					auto begin = buffers_begin( internals_->incoming.data() );
+					auto end = buffers_end( internals_->incoming.data() );
 					auto it = search( begin, end, ws281xSeparator, ws281xSeparator + 2 );
 
 					size_t count;
@@ -428,7 +439,7 @@ namespace sc {
 						return;
 					}
 
-					incoming_.consume( distance( begin, next( it, 2 ) ) );
+                    internals_->incoming.consume( distance( begin, next( it, 2 ) ) );
 
 					logger.info( "connection to ws281xsrv established" );
 				} );
@@ -444,11 +455,31 @@ namespace sc {
 		return false;
 	}
 
-	Ws281xDevice::Ws281xDevice( Manager& manager, string const& ws281xId )
-		: ws281x_( manager.get< Ws281x >( ws281xId ) )
+	Ws281xDevice::Ws281xDevice(
+            Manager& manager, string const& requester, string const& ws281xId, size_t start, size_t count )
+	    	: ws281x_( manager.get< Ws281x >( requester, ws281xId ) )
+	        , start_( start )
+            , count_( count != maxCount ? count : ws281x_.ledCount() - start )
 	{
+        if ( start_ > ws281x_.ledCount() ) {
+            throw runtime_error( str(
+                    "component \"", requester, "\" requested partial led chain beginning at ", start_,
+                    ", but ws281x \"", ws281xId, "\" has only ", ws281x_.ledCount(), " leds" ) );
+        }
+        if ( start_ + count_ > ws281x_.ledCount() ) {
+            throw runtime_error( str(
+                    "component \"", requester, "\" requested partial led chain of ", count_, " leds, but ws281x \"",
+                    ws281xId, "\" has only ", ws281x_.ledCount() - start, " leds beginning at ", start_ ) );
+        }
 	}
 
-	__attribute__(( unused )) static ComponentRegistry< Ws281x > registry( "ws281x" );
+    void Ws281xDevice::send( ChannelBuffer const& values )
+    {
+        assert( values.size() == count_ * 3 );
+
+        ws281x_.send( start_, values );
+    }
+
+    __attribute__(( unused )) static ComponentRegistry< Ws281x > registry( "ws281x" );
 
 } // namespace sc

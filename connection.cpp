@@ -3,7 +3,7 @@
 #include <utility>
 
 #include "connection.hpp"
-#include "events.hpp"
+#include "event.hpp"
 #include "input.hpp"
 #include "manager.hpp"
 #include "output.hpp"
@@ -30,14 +30,14 @@ namespace sc {
 	Connection::Connection( Manager& manager, string id, PropertyNode const& properties )
 		: Component( "connection", move( id ) )
         , manager_( manager )
-		, output_( manager_.get< Output >( properties[ outputProperty ].as< string >() ) )
+		, output_( manager_.get< Output >( this->id(), properties[ outputProperty ].as< string >() ) )
 	{
-        auto& input = manager_.get< Input >( properties[ inputProperty ].as< string >() );
+        auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ].as< string >() );
 
         size_t channels = input.channels();
         Component const* sender = &input;
 		for ( auto const& transitionId : properties[ transitionsProperty ].as< string[] >() ) {
-			auto& transition = manager_.get< Transition >( transitionId );
+			auto& transition = manager_.get< Transition >( this->id(), transitionId );
             checkReveiverAcceptsChannels( *sender, transition, channels, transition.acceptsChannels( channels ) );
             channels = transition.channels( channels );
             sender = &transition;

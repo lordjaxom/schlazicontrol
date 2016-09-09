@@ -3,7 +3,7 @@
 
 #include <getopt.h>
 
-#include "cmdline.hpp"
+#include "commandline.hpp"
 #include "utility.hpp"
 
 using namespace std;
@@ -21,7 +21,7 @@ namespace sc {
 		}
 	}
 
-	CmdLine::CmdLine( char* const *argv, int argc )
+	CommandLine::CommandLine( char* const *argv, int argc )
 		: propertiesFile_( "/etc/schlazicontrol.json" )
 		, daemon_()
 	{

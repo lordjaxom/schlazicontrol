@@ -18,7 +18,7 @@ namespace sc {
 		: Input( move( id ) )
 		, manager_( manager )
 		, device_(
-				manager_, properties[ vdcdProperty].as< string >(), this->id(),
+				manager_, this->id(), properties[ vdcdProperty].as< string >(),
                 properties[ dsuidProperty ].as< string >(), properties[ groupProperty ].as< int >(),
                 properties[ outputTypeProperty ].as< string >(), properties[ dimmableProperty ].as< bool >(),
                 [this]( double value ) { set( value ); } )

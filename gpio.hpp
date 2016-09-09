@@ -9,7 +9,11 @@ namespace sc {
 
 	class Manager;
 
-	enum class GpioMode
+    /**
+     * enum class GpioMode
+     */
+
+    enum class GpioMode
 	{
 		input,
 		output
@@ -18,7 +22,11 @@ namespace sc {
 	std::istream& operator>>( std::istream& is, GpioMode& dst );
 	std::ostream& operator<<( std::ostream& os, GpioMode val );
 
-	enum class GpioPull
+    /**
+     * enum class GpioPull
+     */
+
+    enum class GpioPull
 	{
 		off,
 		up,
@@ -27,6 +35,10 @@ namespace sc {
 
 	std::istream& operator>>( std::istream& is, GpioPull& dst );
 	std::ostream& operator<<( std::ostream& os, GpioPull val );
+
+	/**
+	 * class GpioDevice
+	 */
 
 	class GpioDevice
 	{

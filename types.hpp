@@ -58,6 +58,10 @@ namespace sc {
 
 		Values::iterator begin() { return values_.begin(); }
 		Values::iterator end() { return values_.end(); }
+		Values::const_iterator begin() const { return values_.begin(); }
+		Values::const_iterator end() const { return values_.end(); }
+		Values::const_iterator cbegin() const { return begin(); }
+		Values::const_iterator cend() const { return end(); }
 
 	private:
 		Values values_;

@@ -6,6 +6,10 @@ using namespace std;
 
 namespace sc {
 
+    /**
+     * class Component
+     */
+
 	Component::Component( string category, string id )
 		: category_( move( category ) )
         , id_( move( id ) )
@@ -14,7 +18,15 @@ namespace sc {
 
 	Component::~Component() = default;
 
-	StaticInstance< ComponentFactory > ComponentFactory::instance;
+    /**
+     * class ComponentFactory
+     */
+
+    ComponentFactory& ComponentFactory::instance()
+    {
+        static ComponentFactory instance;
+        return instance;
+    }
 
     unique_ptr< Component > ComponentFactory::create(
 			Manager& manager, string const& name, string id, PropertyNode const& properties )
@@ -27,11 +39,12 @@ namespace sc {
 		return unique_ptr< Component > { ( *it->second )( manager, move( id ), properties ) };
 	}
 
-	void ComponentFactory::put( string name, Factory* factory )
+	void ComponentFactory::put( string&& name, Factory* factory )
 	{
 		auto it = components_.emplace( move( name ), factory );
 		if ( !it.second ) {
-            throw invalid_argument( "multiple registration of same component type" );
+            throw runtime_error( str(
+                    "unable to register component type \"", it.first->first, "\": type already registered" ) );
 		}
 	}
 

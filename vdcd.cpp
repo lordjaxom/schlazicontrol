@@ -7,7 +7,7 @@
 #include <boost/range.hpp>
 #include <json/json.h>
 
-#include "events.hpp"
+#include "event.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
 #include "vdcd.hpp"
@@ -242,10 +242,10 @@ namespace sc {
 	}
 
 	VdcdDevice::VdcdDevice(
-			Manager& manager, string const& vdcdId, string const& name, string const& dsuid, int group,
+			Manager& manager, string const& requester, string const& vdcdId, string const& dsuid, int group,
 			string const& outputType, bool dimmable, SetterFunction const& setterFunction )
-		: vdcd_( manager.get< Vdcd >( vdcdId ) )
-		, name_( name )
+		: vdcd_( manager.get< Vdcd >( requester, vdcdId ) )
+		, name_( requester )
 		, dsuid_( dsuid )
 		, group_( group )
 		, outputType_( outputType )

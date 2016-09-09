@@ -127,7 +127,7 @@ namespace sc {
 #include <iostream>
 
 #include "connection.hpp"
-#include "cmdline.hpp"
+#include "commandline.hpp"
 #include "input_gpio.hpp"
 #include "input_vdcd.hpp"
 #include "logging.hpp"
@@ -142,7 +142,7 @@ int main( int argc, char* argv[] )
 {
     LoggerScope loggerScope;
 
-    CmdLine cmdLine( argv, argc );
+    CommandLine cmdLine( argv, argc );
     if ( !cmdLine.logFile().empty()) {
         Logger::output( cmdLine.logFile().c_str());
     }

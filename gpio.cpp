@@ -1,8 +1,11 @@
+#include <memory>
+#include <stdexcept>
 #include <string>
+#include <system_error>
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "events.hpp"
+#include "event.hpp"
 #include "logging.hpp"
 #include "gpio.hpp"
 #include "manager.hpp"
@@ -66,6 +69,10 @@ namespace sc {
 		}
 	}
 
+	/**
+     * enum class GpioMode
+     */
+
 	istream& operator>>( istream& is, GpioMode& dst )
 	{
 		string s;
@@ -93,6 +100,10 @@ namespace sc {
 		}
 		throw invalid_argument( "invalid constant for GpioMode" );
 	}
+
+	/**
+     * enum class GpioPull
+     */
 
 	istream& operator>>( istream& is, GpioPull& dst )
 	{
@@ -126,6 +137,10 @@ namespace sc {
 		}
 		throw invalid_argument( "invalid constant for GpioPull" );
 	}
+
+	/**
+	 * class GpioDevice
+	 */
 
 	GpioDevice::GpioDevice( Manager& manager )
 		: manager_( manager )

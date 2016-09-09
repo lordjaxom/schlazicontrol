@@ -1,14 +1,14 @@
-#ifndef SCHLAZICONTROL_CMDLINE_HPP
-#define SCHLAZICONTROL_CMDLINE_HPP
+#ifndef SCHLAZICONTROL_COMMANDLINE_HPP
+#define SCHLAZICONTROL_COMMANDLINE_HPP
 
 #include <string>
 
 namespace sc {
 
-    class CmdLine
+    class CommandLine
     {
     public:
-        CmdLine( char* const* argv, int argc );
+        CommandLine( char* const* argv, int argc );
 
         std::string const& propertiesFile() const { return propertiesFile_; }
         std::string const& logFile() const { return logFile_; }
@@ -22,4 +22,4 @@ namespace sc {
 
 } // namespace sc
 
-#endif // SCHLAZICONTROL_CMDLINE_HPP
+#endif // SCHLAZICONTROL_COMMANDLINE_HPP

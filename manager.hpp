@@ -3,60 +3,61 @@
 
 #include <chrono>
 #include <map>
-#include <stdexcept>
+#include <memory>
 #include <string>
 #include <utility>
 
-#include <asio.hpp>
-
-#include "component.hpp"
-#include "events.hpp"
+#include "event.hpp"
 #include "properties.hpp"
+
+namespace asio {
+    class io_service;
+} // namespace asio
 
 namespace sc {
 
-	class CmdLine;
+	class CommandLine;
+    class Component;
+
+    struct ManagerInternals;
 
 	class Manager
 	{
 		using ReadyEvent = Event< void () >;
-		using PollEvent = Event< void ( std::chrono::microseconds ) >;
+		using PollEvent = Event< void () >;
 
 	public:
-		Manager( CmdLine const& cmdLine );
+		Manager( CommandLine const& commandLine );
 		Manager( Manager const& ) = delete;
+        ~Manager();
 
-		asio::io_service& service() { return service_; }
+		asio::io_service& service();
 
 		template< typename Type >
-		Type& get( std::string const& name ) const
+		Type& get( std::string const& requester, std::string const& name ) const
 		{
-			auto it = components_.find( name );
-			if ( it == components_.end() ) {
-				throw std::runtime_error( str( "dependent component ", name, " not found" ) );
-			}
-			Type* result = dynamic_cast< Type* >( it->second.get() );
-			if ( result == nullptr ) {
-				throw std::runtime_error( str( "dependent component ", name, " not of required type" ) );
-			}
+			Type* result = dynamic_cast< Type* >( findComponent( requester, name ));
+            checkValidComponent( requester, name, result );
 			return *result;
 		}
 
-		void subscribeReadyEvent( ReadyEvent::Handler handler );
-		void subscribePollEvent( PollEvent::Handler handler );
+		EventConnection subscribeReadyEvent( ReadyEvent::Handler handler );
+		EventConnection subscribePollEvent( PollEvent::Handler handler );
 
 		void run();
 
 	private:
-		void startPolling( std::chrono::microseconds const& interval );
+        Component* findComponent( std::string const& requester, std::string const& name ) const;
+        void checkValidComponent( std::string const& requester, std::string const& name, void* component ) const;
+
+		void startPolling( std::chrono::nanoseconds const& interval );
 
 		Properties properties_;
-		asio::io_service service_;
-		asio::signal_set signals_;
-		asio::steady_timer pollingTimer_;
+        std::unique_ptr< ManagerInternals > internals_;
         std::map< std::string, std::unique_ptr< Component > > components_;
 		ReadyEvent readyEvent_;
 		PollEvent pollEvent_;
+
 	};
 
 } // namespace sc

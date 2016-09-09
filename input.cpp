@@ -12,7 +12,7 @@ namespace sc {
     {
     }
 
-    void Input::subscribeInputChange( Input::InputChangeEvent::Handler handler )
+    EventConnection Input::subscribeInputChange( Input::InputChangeEvent::Handler handler )
     {
         return inputChangeEvent_.subscribe( move( handler ) );
     }

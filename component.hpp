@@ -13,6 +13,10 @@ namespace sc {
 	class Manager;
 	class PropertyNode;
 
+    /**
+     * class Component
+     */
+
 	class Component
 	{
 	public:
@@ -28,45 +32,45 @@ namespace sc {
         std::string id_;
 	};
 
-    template< typename Type >
-	class ComponentRegistry;
+    /**
+     * class ComponentFactory
+     */
 
-	class ComponentFactory
+    class ComponentFactory
 	{
-		friend class StaticInstance< ComponentFactory >;
+        template< typename Type > friend class ComponentRegistry;
 
 		using Factory = Component* ( Manager&, std::string, PropertyNode const& );
 
-	public:
-		static StaticInstance< ComponentFactory > instance;
+    public:
+        static ComponentFactory& instance();
 
 		std::unique_ptr< Component > create(
 				Manager& manager, std::string const& name, std::string id, PropertyNode const& properties );
-
-		template< typename Type >
-		void put( std::string name )
-		{
-			put( std::move( name ), []( Manager& manager, std::string id, PropertyNode const& properties ) {
-				return static_cast< Component* >( new Type( manager, std::move( id ), properties ) );
-			} );
-		}
 
 	private:
 		ComponentFactory() = default;
 		ComponentFactory( ComponentFactory const& ) = delete;
 
-		void put( std::string name, Factory* factory );
+		void put( std::string&& name, Factory* factory );
 
 		std::map< std::string, Factory* > components_;
 	};
 
-	template< typename Type >
+    /**
+     * class ComponentRegistry
+     */
+
+    template< typename Type >
 	class ComponentRegistry
 	{
 	public:
 		ComponentRegistry( std::string name )
 		{
-			ComponentFactory::instance->put< Type >( std::move( name ) );
+			ComponentFactory::instance().put(
+                    std::move( name ), []( Manager& manager, std::string id, PropertyNode const& properties ) {
+                        return static_cast< Component* >( new Type( manager, std::move( id ), properties ) );
+                    } );
 		}
 	};
 

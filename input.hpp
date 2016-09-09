@@ -5,7 +5,7 @@
 #include <string>
 
 #include "component.hpp"
-#include "events.hpp"
+#include "event.hpp"
 #include "utility.hpp"
 
 namespace sc {
@@ -20,7 +20,7 @@ namespace sc {
 	public:
         explicit Input( std::string id );
 
-		void subscribeInputChange( InputChangeEvent::Handler handler );
+		EventConnection subscribeInputChange( InputChangeEvent::Handler handler );
 
 		virtual std::size_t channels() const = 0;
 

@@ -24,44 +24,6 @@ namespace sc {
     template< typename Type, typename Other > constexpr bool IsSame() { return std::is_same< Type, Other >::value; }
 	template< typename Base, typename Derived > constexpr bool IsBaseOf() { return std::is_base_of< Base, Derived >::value; }
 
-	template< typename Type >
-	class StaticInstance
-	{
-		Type& get() const
-		{
-			static Type instance;
-			return instance;
-		}
-
-	public:
-		operator Type const&() const { return get(); }
-		operator Type&() { return get(); }
-		Type const* operator->() const { return &get(); }
-		Type* operator->() { return &get(); }
-		Type const& operator*() const { return get(); }
-		Type& operator*() { return get(); }
-	};
-
-	template< typename Type >
-	class SharedInstance
-	{
-		static std::shared_ptr< Type > get()
-		{
-			static std::weak_ptr< Type > instance;
-			if ( auto locked = instance.lock() ) {
-				return locked;
-			}
-
-			auto created = std::make_shared< Type >();
-			instance = created;
-			return created;
-		}
-
-	public:
-		operator std::shared_ptr< Type >() const { return get(); }
-		std::shared_ptr< Type > operator->() const { return get(); }
-	};
-
     template< typename Type >
     Type clip( Type value, Type min, Type max )
     {

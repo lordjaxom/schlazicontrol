@@ -24,10 +24,10 @@ namespace sc {
 		device_.pinMode( gpioPin_, GpioMode::input );
 		device_.pullUpDnControl( gpioPin_, properties[ pullProperty ].as< GpioPull >() );
 
-		manager_.subscribePollEvent( [this]( chrono::microseconds const& elapsed ) { poll( elapsed ); } );
+		manager_.subscribePollEvent( [this] { poll(); } );
 	}
 
-	void GpioInput::poll( chrono::microseconds const& elapsed )
+	void GpioInput::poll()
 	{
 		bool lastValue = value_;
 		value_ = device_.digitalRead( gpioPin_ );

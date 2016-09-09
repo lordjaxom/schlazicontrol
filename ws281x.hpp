@@ -3,16 +3,16 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
-
-#include <asio.hpp>
+#include <system_error>
 
 #include "component.hpp"
+#include "types.hpp"
 
 namespace sc {
 
-	class ChannelBuffer;
 	class Manager;
 	class PropertyNode;
 	class Ws281xClient;
@@ -31,15 +31,18 @@ namespace sc {
 		std::size_t ledCount_;
 	};
 
-	class Ws281x
+    struct Ws281xInternals;
+
+    class Ws281x
 		: public Component
 	{
 	public:
 		Ws281x( Manager& manager, std::string id, PropertyNode const& properties );
+        ~Ws281x();
 
-		std::size_t channelCount() const { return ledCount_ * 3; }
+		std::size_t ledCount() const { return ledCount_; }
 
-		void send( ChannelBuffer const& values );
+		void send( std::size_t start, ChannelBuffer const& values );
 
 	private:
 		void connect();
@@ -53,23 +56,28 @@ namespace sc {
 		Manager& manager_;
 		std::uint16_t gpioPin_;
 		std::size_t ledCount_;
-		std::unique_ptr< Ws281xLauncher > launcher_;
-		asio::ip::tcp::socket socket_;
-		asio::streambuf incoming_;
-		asio::streambuf outgoing_;
+        std::unique_ptr< Ws281xLauncher > launcher_;
+        std::unique_ptr< Ws281xInternals > internals_;
+        ChannelBuffer values_;
 	};
 
 	class Ws281xDevice
 	{
 	public:
-		Ws281xDevice( Manager& manager, std::string const& ws281xId );
+        static constexpr size_t maxCount = std::numeric_limits< std::size_t >::max();
 
-		std::size_t channelCount() const { return ws281x_.channelCount(); }
+        Ws281xDevice(
+                Manager& manager, std::string const& requester, std::string const& ws281xId,
+                std::size_t start, std::size_t count );
 
-		void send( ChannelBuffer const& values ) { ws281x_.send( values ); }
+		std::size_t channelCount() const { return count_ * 3; }
+
+		void send( ChannelBuffer const& values );
 
 	private:
 		Ws281x& ws281x_;
+		std::size_t start_;
+        std::size_t count_;
 	};
 
 } // namespace sc

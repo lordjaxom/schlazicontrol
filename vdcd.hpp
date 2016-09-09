@@ -63,7 +63,7 @@ namespace sc {
 
 	public:
 		VdcdDevice(
-				Manager& manager, std::string const& vdcdId, std::string const& name, std::string const& dsuid, int group,
+				Manager& manager, std::string const& requester, std::string const& vdcdId, std::string const& dsuid, int group,
 				std::string const& outputType, bool dimmable, SetterFunction const& setterFunction = SetterFunction() );
 		VdcdDevice( VdcdDevice const& ) = delete;
 		~VdcdDevice();

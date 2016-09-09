@@ -2,7 +2,6 @@
 #define SCHLAZICONTROL_INPUT_GPIO_HPP
 
 #include <cstddef>
-#include <chrono>
 #include <string>
 
 #include "gpio.hpp"
@@ -24,7 +23,7 @@ namespace sc {
 		virtual std::size_t channels() const override { return 1; }
 
 	private:
-		void poll( std::chrono::microseconds const& elapsed );
+		void poll();
 
 		Manager& manager_;
 		GpioDevice device_;

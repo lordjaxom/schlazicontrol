@@ -44,7 +44,8 @@ set(SOURCE_FILES
         component.hpp
         connection.cpp
         connection.hpp
-        events.hpp
+        event.hpp
+        event.cpp
         gpio.cpp
         gpio.hpp
         input_gpio.cpp
@@ -73,8 +74,8 @@ set(SOURCE_FILES
         vdcd.hpp
         ws281x.cpp
         ws281x.hpp
-        cmdline.cpp
-        cmdline.hpp
+        commandline.cpp
+        commandline.hpp
         transition.hpp
         transition.cpp
         transition_triggers.cpp
