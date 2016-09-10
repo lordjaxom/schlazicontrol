@@ -33,7 +33,7 @@ set(rpiWS281X_LIBRARIES rpi_ws281x)
 include_directories("${RPIWS281X_ROOT}")
 link_directories("${RPIWS281X_ROOT}")
 
-set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring")
+set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
 include_directories("${TYPESTRING_ROOT}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")

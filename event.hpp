@@ -57,16 +57,11 @@ namespace sc {
      */
 
     template< typename Signature >
-    class Event;
-
-    template< typename Signature >
     class EventInterface;
 
     template< typename ...Args >
     class EventInterface< void ( Args... ) >
     {
-        friend class Event< void ( Args... ) >;
-
     public:
         using Handler = std::function< void ( Args... ) >;
         using ExtendedHandler = std::function< void ( EventConnection const&, Args... ) >;
@@ -94,7 +89,7 @@ namespace sc {
             return connection;
         }
 
-    private:
+    protected:
         std::list< Handler > handlers_;
     };
 
@@ -104,25 +99,23 @@ namespace sc {
 
     template< typename Signature >
     class Event
+            : EventInterface< Signature >
     {
     public:
         using Interface = EventInterface< Signature >;
-        using Handler = typename Interface::Handler;
+        using Interface::Handler;
 
-        Interface& interface() { return interface_; }
+        Interface& interface() { return *static_cast< Interface* >( this ); }
 
         template< typename ...T >
         void operator()( T&&... args ) const
         {
-            for ( auto it = interface_.handlers_.begin() ; it != interface_.handlers_.end() ; ) {
+            for ( auto it = this->handlers_.begin() ; it != this->handlers_.end() ; ) {
                 // make sure handlers can delete themselves
                 auto current = it++;
                 ( *current )( std::forward< T >( args )... );
             }
-        }
-
-    private:
-        Interface interface_;
+        };
     };
 
 } // namespace sc
