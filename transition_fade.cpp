@@ -69,13 +69,18 @@ namespace sc {
         }
         else {
             changed = calculateDeltas( state );
+            logger.debug(
+                    "fade through input change from ", state.output[ 0 ].get(), " to ", state.target[ 0 ].get(),
+                    " - delta is ", state.deltas[ 0 ] );
         }
         if ( calculateOutput( state ) ) {
+            logger.debug( "fade to ", state.output[ 0 ].get() );
             changed = true;
         }
         values = state.output;
 
         if ( !changed ) {
+            logger.debug( "no change, resetting poll receiver" );
             state.pollEventScope = nullptr;
             return;
         }
