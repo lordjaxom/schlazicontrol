@@ -54,34 +54,6 @@ namespace sc {
      * class PropertyNode
      */
 
-    namespace detail {
-
-        PropertyNodeIterator::PropertyNodeIterator(
-                string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it )
-            : PropertyNodeIterator::iterator_adaptor_( it )
-            , path_( &path )
-            , first_( first )
-        {
-        }
-
-        PropertyNodeIterator::reference PropertyNodeIterator::dereference() const
-        {
-            auto const& it = base_reference();
-            return { str( *path_, '[', distance( first_, it ), ']' ), *it };
-        }
-
-        string PropertyConverter< string >::convert( PropertyNode const& node )
-        {
-            return node.value_->asString();
-        }
-
-        bool PropertyConverter< bool >::convert( PropertyNode const& node )
-        {
-            return node.value_->asBool();
-        }
-
-    } // namespace detail
-
     static char const* valueType( Json::ValueType type )
     {
         switch ( type ) {
@@ -111,10 +83,22 @@ namespace sc {
     PropertyNode::PropertyNode() = default;
 
     PropertyNode::PropertyNode( string path, Json::Value const& value )
-		: path_( move( path ) )
-        , value_( &value )
-	{
-	}
+            : path_( move( path ) )
+            , value_( &value )
+    {
+    }
+
+    PropertyNode::PropertyNode( string path, Json::Value&& value )
+            : path_( move( path ) )
+            , storage_( move( value ) )
+            , value_( &storage_ )
+    {
+    }
+
+    char const* PropertyNode::typeName() const
+    {
+        return valueType( value_->type() );
+    }
 
     PropertyNode::const_iterator PropertyNode::begin() const
     {
@@ -153,6 +137,24 @@ namespace sc {
         return PropertyNode( move( path ), value );
     }
 
+    namespace detail {
+
+        PropertyNodeIterator::PropertyNodeIterator(
+                string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it )
+                : PropertyNodeIterator::iterator_adaptor_( it )
+                , path_( &path )
+                , first_( first )
+        {
+        }
+
+        PropertyNodeIterator::reference PropertyNodeIterator::dereference() const
+        {
+            auto const& it = base_reference();
+            return { str( *path_, '[', distance( first_, it ), ']' ), *it };
+        }
+
+    } // namespace detail
+
     /**
      * class PropertyList
      */
@@ -162,5 +164,46 @@ namespace sc {
 		, value_( readJsonFile( propertiesFile ) )
 	{
 	}
+
+    /**
+     * property conversion
+     */
+
+    namespace detail {
+
+        runtime_error invalidType( PropertyNode const& node, char const* expectedType )
+        {
+            return std::runtime_error( str(
+                    "property at ", node.path(), " expected to be of type ", expectedType, " but was ",
+                    node.typeName() ) );
+        }
+
+        bool PropertyConverter< string >::is( PropertyNode const& node )
+        {
+            return node.value_->isString();
+        }
+
+        string PropertyConverter< string >::unckeckedConvert( PropertyNode const& node )
+        {
+            return node.value_->asString();
+        }
+
+        bool PropertyConverter< bool >::is( PropertyNode const& node )
+        {
+            return node.value_->isBool();
+        }
+
+        bool PropertyConverter< bool >::unckeckedConvert( PropertyNode const& node )
+        {
+            return node.value_->asBool();
+        }
+
+        template< typename Type, typename Value >
+        bool propertyCheckRange( Value value )
+        {
+            return value >= numeric_limits< Type >::min() && value <= numeric_limits< Type >::max();
+        }
+
+    } // namespace detail
 
 } // namespace sc

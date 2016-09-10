@@ -16,6 +16,7 @@ namespace sc {
 	public:
 		static constexpr double minimum = 0.0;
 		static constexpr double maximum = 100.0;
+		static constexpr double epsilon = 0.1;
 
 		static constexpr ChannelValue offValue() { return ChannelValue { minimum }; }
 		static constexpr ChannelValue fullOnValue() { return ChannelValue { maximum }; }

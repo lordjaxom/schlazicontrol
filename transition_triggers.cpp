@@ -1,6 +1,8 @@
 #include <functional>
 #include <unordered_map>
 
+#include <boost/iterator/transform_iterator.hpp>
+
 #include "expression.hpp"
 #include "logging.hpp"
 #include "properties.hpp"

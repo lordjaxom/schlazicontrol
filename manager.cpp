@@ -41,7 +41,8 @@ namespace sc {
 
     Manager::Manager( CommandLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
-		, updateInterval_( properties_[ updateIntervalProperty ].as< chrono::milliseconds::rep >() )
+		, updateInterval_(
+					chrono::milliseconds( properties_[ updateIntervalProperty ].as< chrono::milliseconds::rep >() ) )
         , internals_( new ManagerInternals )
 	{
         for ( auto component : properties_[ componentsProperty ] ) {

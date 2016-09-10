@@ -3,26 +3,12 @@
 
 #include <algorithm>
 #include <iterator>
-#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <tuple>
 #include <utility>
 
 namespace sc {
-
-	template< bool Cond, typename Result = void > using EnableIf = typename std::enable_if< Cond, Result >::type;
-
-	template< typename Type > using Decay = typename std::decay< Type >::type;
-	template< typename Type > using RemoveReference = typename std::remove_reference< Type >::type;
-	template< typename Type > using RemoveCv = typename std::remove_cv< Type >::type;
-
-	template< typename Type > constexpr bool IsIntegral() { return std::is_integral< Type >::value; }
-	template< typename Type > constexpr bool IsEnum() { return std::is_enum< Type >::value; }
-
-    template< typename Type, typename Other > constexpr bool IsSame() { return std::is_same< Type, Other >::value; }
-	template< typename Base, typename Derived > constexpr bool IsBaseOf() { return std::is_base_of< Base, Derived >::value; }
 
     template< typename Type >
     Type clip( Type value, Type min, Type max )
@@ -62,8 +48,10 @@ namespace sc {
         template< typename Delim, typename Iter >
         struct Joiner
         {
-            Joiner( Delim&& delimiter, Iter first, Iter last )
-                    : delimiter_( std::move( delimiter ) ), first_( first ), last_( last ) {}
+            Joiner( Delim delimiter, Iter first, Iter last )
+                    : delimiter_( std::move( delimiter ) )
+                    , first_( first )
+                    , last_( last ) {}
 
             friend std::ostream& operator<<( std::ostream& os, Joiner const& joiner )
             {
@@ -83,16 +71,15 @@ namespace sc {
     } // namespace detail
 
     template< typename Delim, typename Iter >
-    detail::Joiner< Delim, Iter > join( Delim delimiter, Iter first, Iter last )
+    detail::Joiner< Delim, Iter > join( Delim&& delim, Iter first, Iter last )
     {
-        return detail::Joiner< Delim, Iter >( std::move( delimiter ), first, last );
+        return detail::Joiner< Delim, Iter >( std::forward< Delim >( delim ), first, last );
     }
 
     template< typename Delim, typename Range >
-    detail::Joiner< Delim, typename Range::const_iterator > join( Delim delimiter, Range const& range )
+    detail::Joiner< Delim, typename Range::const_iterator > join( Delim&& delim, Range const& range )
     {
-        return detail::Joiner< Delim, typename Range::const_iterator >(
-                std::move( delimiter ), range.begin(), range.end() );
+        return join( std::forward< Delim >( delim ), range.begin(), range.end() );
     }
 
 } // namespace sc

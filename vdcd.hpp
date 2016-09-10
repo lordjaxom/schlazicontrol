@@ -9,6 +9,7 @@
 #include <asio.hpp>
 
 #include "component.hpp"
+#include "event.hpp"
 
 namespace Json {
 	class StreamWriter;
@@ -59,12 +60,12 @@ namespace sc {
 
 	class VdcdDevice
 	{
-		using SetterFunction = std::function< void ( double ) >;
-
 	public:
+		using SetEvent = Event< void ( double ) >;
+
 		VdcdDevice(
 				Manager& manager, std::string const& requester, std::string const& vdcdId, std::string const& dsuid, int group,
-				std::string const& outputType, bool dimmable, SetterFunction const& setterFunction = SetterFunction() );
+				std::string const& outputType, bool dimmable );
 		VdcdDevice( VdcdDevice const& ) = delete;
 		~VdcdDevice();
 
@@ -77,6 +78,8 @@ namespace sc {
 		std::string const& outputType() const { return outputType_; }
 		bool dimmable() const { return dimmable_; }
 
+        SetEvent::Interface& setEvent() { return setEvent_.interface(); }
+
 	private:
 		Vdcd& vdcd_;
 		std::string name_;
@@ -85,7 +88,7 @@ namespace sc {
 		std::string outputType_;
 		bool dimmable_;
 		double value_;
-		SetterFunction setterFunction_;
+        SetEvent setEvent_;
 	};
 
 } // namespace sc

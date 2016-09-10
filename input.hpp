@@ -20,7 +20,7 @@ namespace sc {
 
 		explicit Input( std::string id );
 
-        InputChangeEvent::Interface inputChangeEvent() { return inputChangeEvent_.interface(); }
+        InputChangeEvent::Interface& inputChangeEvent() { return inputChangeEvent_.interface(); }
 
 		virtual std::size_t channels() const = 0;
 

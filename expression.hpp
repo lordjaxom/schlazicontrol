@@ -16,6 +16,8 @@
 #include <boost/variant/variant.hpp>
 #include <typestring.hh>
 
+#include "typeinfo.hpp"
+#include "typetraits.hpp"
 #include "utility.hpp"
 
 namespace sc {
@@ -41,27 +43,6 @@ namespace sc {
             {
                 return std::runtime_error( str(
                         "invalid argument ", index + 1, " in call to ", function, ": ", std::forward< Args >( args )... ) );
-            }
-
-            namespace detail {
-
-                template< typename S > struct TypeString { using String = S; };
-
-                template< typename Type, typename Enable = void > struct TypeName;
-                template<> struct TypeName< std::string > : TypeString< typestring_is( "identifier" ) > {};
-                template< typename Type > struct TypeName< Type, EnableIf< IsIntegral< Type >() > >
-                        : TypeString< typestring_is( "number" ) > {};
-                template< typename Rep, typename Period > struct TypeName< std::chrono::duration< Rep, Period > >
-                        : TypeString< typestring_is( "duration" ) > {};
-
-            } // namespace detail
-
-            template< typename Type >
-            std::ostream& typeName( std::ostream& os )
-            {
-                using TypeName = detail::TypeName< Decay< Type > >;
-                std::copy( TypeName::String::cbegin(), TypeName::String::cend(), std::ostream_iterator< char >( os ) );
-                return os;
             }
 
             namespace detail {
@@ -291,9 +272,9 @@ namespace sc {
                 static Type invoke( std::string const& function, std::size_t index, Other&& value )
                 {
                     throw diagnostics::invalidArgument(
-                            function, index, "got ", diagnostics::typeName< Other >, " \"",
+                            function, index, "got ", typeName< Other >(), " \"",
                             diagnostics::value( std::forward< Other >( value ) ), "\" instead of ",
-                            diagnostics::typeName< Type > );
+                            typeName< Type >() );
                 }
             };
 
