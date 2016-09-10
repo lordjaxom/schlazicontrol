@@ -88,14 +88,12 @@ namespace sc {
         return unique_ptr< TransitionStateBase > { new TransitionState< TriggersTransition, State >( *this ) };
     }
 
-    bool TriggersTransition::transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const
+    void TriggersTransition::transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const
     {
         Context context { connection, manager_, state, values[ 0 ] };
-        bool result = false;
-        for ( auto const& action : actions_ ) {
-            result |= action.invoke( context );
-        }
-        return result;
+        for_each(
+                actions_.begin(), actions_.end(),
+                [&context]( triggers::Action const& action ) { action.invoke( context ); } );
     }
 
     __attribute__(( unused )) static TransitionRegistry< TriggersTransition > registry( "triggers" );

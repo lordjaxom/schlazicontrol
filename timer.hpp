@@ -15,7 +15,6 @@ namespace sc {
     public:
         Timer( Manager& manager, std::chrono::nanoseconds timeout, std::function< void () > handler );
         Timer( Timer const& ) = delete;
-        ~Timer();
 
     private:
         void poll( std::chrono::nanoseconds elapsed );

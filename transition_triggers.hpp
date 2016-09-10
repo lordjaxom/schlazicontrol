@@ -29,7 +29,7 @@ namespace sc {
 
         virtual std::unique_ptr< TransitionStateBase > instantiate() const override;
 
-        bool transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const;
+        void transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const;
 
     private:
         Manager& manager_;

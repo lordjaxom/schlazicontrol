@@ -49,13 +49,18 @@ namespace sc {
 
     void Connection::transfer( ChannelValue const& value )
 	{
-		ChannelBuffer values { value };
+		ChannelBuffer values { lastValue_ = value };
 		for ( auto& transition : transitions_ ) {
 			transition->transform( *this, values );
 		}
         output_.set( values );
 	}
 
-    __attribute__(( unused )) static ComponentRegistry< Connection > registry( "connection" );
+	void Connection::retransfer()
+	{
+		transfer( lastValue_ );
+	}
+
+	__attribute__(( unused )) static ComponentRegistry< Connection > registry( "connection" );
 
 } // namespace sc

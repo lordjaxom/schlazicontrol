@@ -49,6 +49,7 @@ namespace sc {
 		explicit ChannelBuffer( std::initializer_list< ChannelValue > initializer );
 		explicit ChannelBuffer( std::size_t size );
 
+		bool empty() const { return values_.empty(); }
 		std::size_t size() const { return values_.size(); }
 
 		void resize( std::size_t size );

@@ -38,6 +38,14 @@ namespace sc {
      * class EventScope
      */
 
+    EventScope::EventScope() = default;
+
+    EventScope::EventScope( EventScope&& other )
+        : connection_( move( other.connection_ ) )
+    {
+        other.connection_ = nullptr;
+    }
+
     EventScope::EventScope( EventConnection connection )
         : connection_( move( connection ) )
     {
@@ -48,11 +56,28 @@ namespace sc {
         connection_.disconnect();
     }
 
-    EventConnection EventScope::release()
+    EventScope& EventScope::operator=( EventScope&& other )
     {
-        EventConnection released( move( connection_ ) );
+        EventScope( move( other ) ).swap( *this );
+        return *this;
+    }
+
+    EventScope& EventScope::operator=( EventConnection connection )
+    {
+        EventScope( move( connection ) ).swap( *this );
+        return *this;
+    }
+
+    EventScope& EventScope::operator=( std::nullptr_t )
+    {
         connection_ = nullptr;
-        return released;
+        return *this;
+    }
+
+    void EventScope::swap( EventScope& other )
+    {
+        using std::swap;
+        swap( connection_, other.connection_ );
     }
 
 } // namespace sc

@@ -24,7 +24,7 @@ namespace sc {
 
         virtual std::unique_ptr< TransitionStateBase > instantiate() const override;
 
-        bool transform( Connection& connection, ChannelBuffer& values ) const;
+        void transform( Connection& connection, ChannelBuffer& values ) const;
 
     private:
         std::size_t factor_;

@@ -1,4 +1,5 @@
 #include <system_error>
+#include <utility>
 
 #include "logging.hpp"
 #include "manager.hpp"
@@ -25,7 +26,7 @@ namespace sc {
             return;
         }
 
-        __attribute__(( unused )) EventScope scope( pollEventScope_.release() );
+        __attribute__(( unused )) EventScope scope( move( pollEventScope_ ) );
         handler_();
     }
 

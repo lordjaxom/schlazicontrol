@@ -87,7 +87,9 @@ set(SOURCE_FILES
         triggers.cpp
         triggers.hpp
         transition_multiply.cpp
-        transition_multiply.hpp)
+        transition_multiply.hpp
+        transition_fade.cpp
+        transition_fade.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

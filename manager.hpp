@@ -31,6 +31,8 @@ namespace sc {
 		Manager( Manager const& ) = delete;
         ~Manager();
 
+        std::chrono::nanoseconds updateInterval() const { return updateInterval_; }
+
 		asio::io_service& service();
 
 		template< typename Type >
@@ -50,9 +52,10 @@ namespace sc {
         Component* findComponent( std::string const& requester, std::string const& name ) const;
         void checkValidComponent( std::string const& requester, std::string const& name, void* component ) const;
 
-		void startPolling( std::chrono::nanoseconds interval );
+		void startPolling();
 
 		Properties properties_;
+		std::chrono::nanoseconds updateInterval_;
         std::unique_ptr< ManagerInternals > internals_;
         std::map< std::string, std::unique_ptr< Component > > components_;
 		ReadyEvent readyEvent_;

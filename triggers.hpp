@@ -89,7 +89,7 @@ namespace sc {
         {
         public:
             virtual ~Outcome();
-            virtual bool invoke( Context& context ) const = 0;
+            virtual void invoke( Context& context ) const = 0;
         };
 
         /*
@@ -101,7 +101,7 @@ namespace sc {
         public:
             explicit SetOutcome( Value value );
 
-            virtual bool invoke( Context& context ) const override;
+            virtual void invoke( Context& context ) const override;
 
         private:
             Value value_;
@@ -116,7 +116,7 @@ namespace sc {
         public:
             StartTimerOutcome( std::size_t timer, std::chrono::nanoseconds const& timeout );
 
-            virtual bool invoke( Context& context ) const override;
+            virtual void invoke( Context& context ) const override;
 
         private:
             std::size_t timer_;
@@ -132,7 +132,7 @@ namespace sc {
         public:
             explicit StopTimerOutcome( std::size_t timer );
 
-            virtual bool invoke( Context& context ) const override;
+            virtual void invoke( Context& context ) const override;
 
         private:
             std::size_t timer_;
@@ -147,7 +147,7 @@ namespace sc {
         public:
             Action( std::unique_ptr< Event >&& event, std::vector< std::unique_ptr< Outcome > >&& outcomes );
 
-            bool invoke( Context& context ) const;
+            void invoke( Context& context ) const;
 
         private:
             std::unique_ptr< Event > event_;
@@ -179,7 +179,7 @@ namespace sc {
             ChannelValue const& input() const { return value_; }
             ChannelValue const& lastInput() const { return state_.lastInput; }
 
-            bool set( ChannelValue const& value );
+            void set( ChannelValue const& value );
 
             void startTimer( std::size_t timer, std::chrono::nanoseconds const& timeout );
             void stopTimer( std::size_t timer );

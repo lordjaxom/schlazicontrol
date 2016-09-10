@@ -26,7 +26,7 @@ namespace sc {
         return unique_ptr< TransitionStateBase >( new TransitionState< MultiplyTransition >( *this ) );
     }
 
-    bool MultiplyTransition::transform( Connection& connection, ChannelBuffer& values ) const
+    void MultiplyTransition::transform( Connection& connection, ChannelBuffer& values ) const
     {
         size_t oldSize = values.size();
         size_t newSize = oldSize * factor_;
@@ -35,7 +35,6 @@ namespace sc {
         for ( auto it = next( values.begin(), oldSize ) ; it != values.end() ; ) {
             it = copy_n( values.begin(), oldSize, it );
         }
-        return true;
     }
 
     __attribute__(( unused )) static TransitionRegistry< MultiplyTransition > registry( "multiply" );

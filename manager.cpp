@@ -36,11 +36,12 @@ namespace sc {
      * class Manager
      */
 
-    static PropertyKey const pollingIntervalProperty( "pollingInterval", 40 );
+    static PropertyKey const updateIntervalProperty( "updateInterval", 40 );
     static PropertyKey const componentsProperty( "components" );
 
     Manager::Manager( CommandLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
+		, updateInterval_( properties_[ updateIntervalProperty ].as< chrono::milliseconds::rep >() )
         , internals_( new ManagerInternals )
 	{
         for ( auto component : properties_[ componentsProperty ] ) {
@@ -73,8 +74,7 @@ namespace sc {
 	{
 		logger.info( "running..." );
 		readyEvent_();
-		startPolling( chrono::milliseconds(
-				properties_[ pollingIntervalProperty ].as< chrono::milliseconds::rep >() ) );
+		startPolling();
         internals_->service.run();
 	}
 
@@ -94,16 +94,16 @@ namespace sc {
         }
 	}
 
-	void Manager::startPolling( chrono::nanoseconds interval )
+	void Manager::startPolling()
 	{
-        internals_->pollingTimer.expires_from_now( interval );
-        internals_->pollingTimer.async_wait( [this, interval]( error_code ec ) {
+        internals_->pollingTimer.expires_from_now( updateInterval_ );
+        internals_->pollingTimer.async_wait( [this]( error_code ec ) {
 			if ( ec.value() == (int) errc::operation_canceled ) {
 				return;
 			}
 
-            pollEvent_( interval );
-			startPolling( interval );
+            pollEvent_( updateInterval_ );
+			startPolling();
 		} );
 	}
 

@@ -29,7 +29,7 @@ namespace sc {
         TransitionStateBase( TransitionStateBase const& ) = delete;
         virtual ~TransitionStateBase();
 
-        virtual bool transform( Connection& connection, ChannelBuffer& values ) = 0;
+        virtual void transform( Connection& connection, ChannelBuffer& values ) = 0;
     };
 
     /**
@@ -41,23 +41,27 @@ namespace sc {
             : public TransitionStateBase
     {
     public:
-        TransitionState( Transition const& transition ) : transition_( transition ) {}
-
-        virtual bool transform( Connection& connection, ChannelBuffer& values ) override
+        TransitionState( Transition const& transition )
+                : transition_( transition )
+                , state_()
         {
-            return transform( connection, values, state_ );
+        }
+
+        virtual void transform( Connection& connection, ChannelBuffer& values ) override
+        {
+            transform( connection, values, state_ );
         }
 
     private:
-        bool transform( Connection& connection, ChannelBuffer& values, detail::EmptyTransitionState )
+        void transform( Connection& connection, ChannelBuffer& values, detail::EmptyTransitionState )
         {
-            return transition_.transform( connection, values );
+            transition_.transform( connection, values );
         }
 
         template< typename Other >
-        bool transform( Connection& connection, ChannelBuffer& values, Other& state )
+        void transform( Connection& connection, ChannelBuffer& values, Other& state )
         {
-            return transition_.transform( state, connection, values );
+            transition_.transform( state, connection, values );
         }
 
         Transition const& transition_;

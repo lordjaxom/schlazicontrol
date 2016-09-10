@@ -36,11 +36,17 @@ namespace sc {
     class EventScope
     {
     public:
-        EventScope( EventConnection connection );
+        EventScope();
         EventScope( EventScope const& ) = delete;
+        EventScope( EventScope&& other );
+        EventScope( EventConnection connection );
         ~EventScope();
 
-        EventConnection release();
+        EventScope& operator=( EventScope&& other );
+        EventScope& operator=( EventConnection connection );
+        EventScope& operator=( std::nullptr_t );
+
+        void swap( EventScope& other );
 
     private:
         EventConnection connection_;

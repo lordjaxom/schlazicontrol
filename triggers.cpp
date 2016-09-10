@@ -94,11 +94,10 @@ namespace sc {
         {
         }
 
-        bool SetOutcome::invoke( Context& context ) const
+        void SetOutcome::invoke( Context& context ) const
         {
             logger.debug( "set outcome triggered with value ", value_.get().get() );
-
-            return context.set( value_.get() );
+            context.set( value_.get() );
         }
 
         /*
@@ -111,11 +110,10 @@ namespace sc {
         {
         }
 
-        bool StartTimerOutcome::invoke( Context& context ) const
+        void StartTimerOutcome::invoke( Context& context ) const
         {
             logger.debug( "starting timer ", timer_, " with ", timeout_.count(), "ns" );
             context.startTimer( timer_, timeout_ );
-            return false;
         }
 
         /*
@@ -127,11 +125,10 @@ namespace sc {
         {
         }
 
-        bool StopTimerOutcome::invoke( Context& context ) const
+        void StopTimerOutcome::invoke( Context& context ) const
         {
             logger.debug( "explicitly stopping timer ", timer_ );
             context.stopTimer( timer_ );
-            return false;
         }
 
         /**
@@ -144,13 +141,13 @@ namespace sc {
         {
         }
 
-        bool Action::invoke( Context& context ) const
+        void Action::invoke( Context& context ) const
         {
-            return event_->applies( context )
-                    ? accumulate(
-                            outcomes_.begin(), outcomes_.end(), false,
-                            [&]( bool result, unique_ptr< Outcome > const& outcome ) { return result | outcome->invoke( context ); } )
-                    : false;
+            if ( event_->applies( context ) ) {
+                for_each(
+                        outcomes_.begin(), outcomes_.end(),
+                        [&]( unique_ptr< Outcome > const& outcome ) { outcome->invoke( context ); } );
+            }
         }
 
         /**
@@ -173,13 +170,9 @@ namespace sc {
             value_ = state_.output;
         }
 
-        bool Context::set( ChannelValue const& value )
+        void Context::set( ChannelValue const& value )
         {
-            if ( state_.output != value ) {
-                state_.output = value;
-                return true;
-            }
-            return false;
+            state_.output = value;
         }
 
         void Context::startTimer( size_t timer, chrono::nanoseconds const& timeout )
@@ -197,7 +190,7 @@ namespace sc {
                         safeState->timers.erase( it );
 
                         safeState->expiredTimers.insert( timer );
-                        safeConnection->transfer( safeState->lastInput );
+                        safeConnection->retransfer();
                     } ) ) );
         }
 
