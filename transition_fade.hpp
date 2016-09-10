@@ -38,7 +38,7 @@ namespace sc {
         bool calculateOutput( FadeTransitionState& state ) const;
 
         Manager& manager_;
-        std::chrono::nanoseconds inverseSpeed_;
+        std::chrono::nanoseconds speed_;
     };
 
 } // namespace sc

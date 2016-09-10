@@ -26,7 +26,7 @@ namespace sc {
 		: Component( "vdcd", move( id ) )
 		, manager_( manager )
 		, host_( properties[ hostProperty ].as< string >() )
-		, port_( properties[ portProperty ].as< string >() )
+		, port_( to_string( properties[ portProperty ].as< uint16_t >() ) )
 		, socket_( manager_.service() )
 	{
 		Json::StreamWriterBuilder builder;
@@ -240,14 +240,13 @@ namespace sc {
 
 	VdcdDevice::VdcdDevice(
 			Manager& manager, string const& requester, string const& vdcdId, string const& dsuid, int group,
-			string const& outputType, bool dimmable, SetterFunction const& setterFunction )
+			string const& outputType, bool dimmable )
 		: vdcd_( manager.get< Vdcd >( requester, vdcdId ) )
 		, name_( requester )
 		, dsuid_( dsuid )
 		, group_( group )
 		, outputType_( outputType )
 		, dimmable_( dimmable )
-		, setterFunction_( setterFunction )
 	{
 		vdcd_.add( this );
 	}
@@ -260,10 +259,7 @@ namespace sc {
 	void VdcdDevice::set( double value )
 	{
 		if ( value_ != value ) {
-			value_ = value;
-			if ( setterFunction_ ) {
-				setterFunction_( value_ );
-			}
+			setEvent_( value_ = value );
 		}
 	}
 

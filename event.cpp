@@ -70,7 +70,7 @@ namespace sc {
 
     EventScope& EventScope::operator=( std::nullptr_t )
     {
-        connection_ = nullptr;
+        EventScope().swap( *this );
         return *this;
     }
 

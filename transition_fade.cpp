@@ -1,3 +1,4 @@
+#include <cmath>
 #include <algorithm>
 #include <vector>
 
@@ -24,7 +25,6 @@ namespace sc {
 
     struct FadeTransitionState
     {
-        bool active;
         bool deltasKnown;
         ChannelBuffer output;
         ChannelBuffer target;
@@ -37,12 +37,12 @@ namespace sc {
      * class FadeTransition
      */
 
-    static PropertyKey const inverseSpeedProperty( "inverseSpeed" );
+    static PropertyKey const speedProperty( "speed" );
 
     FadeTransition::FadeTransition( Manager& manager, string id, PropertyNode const& properties )
             : Transition( move( id ) )
             , manager_( manager )
-            , inverseSpeed_( properties[ inverseSpeedProperty ].as< chrono::nanoseconds::rep >() )
+            , speed_( chrono::milliseconds( properties[ speedProperty ].as< chrono::milliseconds::rep >() ) )
     {
     }
 
@@ -53,12 +53,10 @@ namespace sc {
 
     void FadeTransition::transform( FadeTransitionState& state, Connection& connection, ChannelBuffer& values ) const
     {
-        if ( !state.active ) {
+        if ( state.output.empty() ) {
             logger.debug( "fade transition first transform" );
-            state.output = state.target = values;
-            state.deltas.resize( values.size(), 0.0 );
-            state.active = true;
-            return;
+            state.output.resize( values.size() );
+            state.deltas.resize( values.size() );
         }
 
         state.target = move( values );
@@ -89,7 +87,7 @@ namespace sc {
         FadeTransitionState* safeState = &state;
         state.pollEventScope = manager_.pollEvent().subscribe(
                 [this, safeConnection, safeState]( chrono::nanoseconds elapsed ) {
-                    poll( *safeState, *safeConnection, (double) elapsed.count() / inverseSpeed_.count() );
+                    poll( *safeState, *safeConnection, (double) elapsed.count() / speed_.count() );
                 } );
     }
 
@@ -107,7 +105,7 @@ namespace sc {
                 state.target.begin(), state.target.end(), state.output.begin(), state.deltas.begin(),
                 [&changed]( ChannelValue const& target, ChannelValue const& output ) {
                     auto delta = target.get() - output.get();
-                    changed = changed || delta > 0.0;
+                    changed = changed || abs( delta ) > 0.0;
                     return delta;
                 } );
         return changed;
@@ -125,7 +123,7 @@ namespace sc {
                     double delta = inputs.get< 0 >();
                     double target = inputs.get< 1 >().get();
                     double result = output.get() + factor * delta;
-                    result = ( delta > 0 && result > target ) || ( delta < 0 && result < target ) ? target : result;
+                    result = ( delta > 0.0 && result > target ) || ( delta < 0.0 && result < target ) ? target : result;
                     changed = changed || result != output.get();
                     return result;
                 } );

@@ -89,7 +89,9 @@ set(SOURCE_FILES
         transition_multiply.cpp
         transition_multiply.hpp
         transition_fade.cpp
-        transition_fade.hpp)
+        transition_fade.hpp
+        typeinfo.hpp
+        typetraits.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
