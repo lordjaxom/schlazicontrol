@@ -28,6 +28,11 @@ namespace sc {
         return instance;
     }
 
+	string ComponentFactory::generateId( string const& name )
+	{
+		return str( name, "-generated-", ++generatedId_ );
+	}
+
     unique_ptr< Component > ComponentFactory::create(
 			Manager& manager, string const& name, string id, PropertyNode const& properties )
 	{

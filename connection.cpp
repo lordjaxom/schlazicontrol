@@ -35,8 +35,8 @@ namespace sc {
 
         size_t channels = input.channels();
         Component const* sender = &input;
-		for ( auto const& transitionId : properties[ transitionsProperty ].as< string[] >() ) {
-			auto& transition = manager_.get< Transition >( this->id(), transitionId );
+		for ( auto const& transitionNode : properties[ transitionsProperty ] ) {
+			auto& transition = manager_.get< Transition >( this->id(), transitionNode );
             checkReveiverAcceptsChannels( *sender, transition, channels, transition.acceptsChannels( channels ) );
             channels = transition.channels( channels );
             sender = &transition;

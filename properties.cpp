@@ -110,6 +110,11 @@ namespace sc {
         return { path_, value_->begin(), value_->end() };
     }
 
+    bool PropertyNode::has( string const& key ) const
+    {
+        return !( *value_ )[ key ].isNull();
+    }
+
     PropertyNode PropertyNode::operator[]( string const& key ) const
     {
         assertValueType( path_, value_->type(), { Json::objectValue } );

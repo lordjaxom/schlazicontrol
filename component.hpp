@@ -45,6 +45,8 @@ namespace sc {
     public:
         static ComponentFactory& instance();
 
+		std::string generateId( std::string const& name );
+
 		std::unique_ptr< Component > create(
 				Manager& manager, std::string const& name, std::string id, PropertyNode const& properties );
 
@@ -55,6 +57,7 @@ namespace sc {
 		void put( std::string&& name, Factory* factory );
 
 		std::map< std::string, Factory* > components_;
+        std::size_t generatedId_;
 	};
 
     /**
