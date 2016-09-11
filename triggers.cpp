@@ -177,21 +177,18 @@ namespace sc {
 
         void Context::startTimer( size_t timer, chrono::nanoseconds const& timeout )
         {
-            stopTimer( timer );
+            Connection* connection = &connection_;
+            State* state = &state_;
+            auto it = state_.timers.emplace( timer, nullptr ).first;
+            it->second.reset( new Timer( manager_, timeout, [timer, connection, state, it] {
+                logger.debug( "timeout handler fired" );
 
-            Connection* safeConnection = &connection_;
-            State* safeState = &state_;
-            state_.timers.emplace(
-                    timer, unique_ptr< Timer >( new Timer( manager_, timeout, [timer, safeConnection, safeState] {
-                        logger.debug( "timeout handler fired" );
+                __attribute__(( unused )) unique_ptr< Timer > ptr = move( it->second );
+                state->timers.erase( it );
 
-                        auto it = safeState->timers.find( timer );
-                        __attribute__(( unused )) unique_ptr< Timer > ptr = move( it->second );
-                        safeState->timers.erase( it );
-
-                        safeState->expiredTimers.insert( timer );
-                        safeConnection->retransfer();
-                    } ) ) );
+                state->expiredTimers.insert( timer );
+                connection->retransfer();
+            } ) );
         }
 
         void Context::stopTimer( size_t timer )
@@ -199,7 +196,7 @@ namespace sc {
             state_.timers.erase( timer );
         }
 
-        bool Context::timerExpired( std::size_t timer ) const
+        bool Context::timerExpired( size_t timer ) const
         {
             return state_.expiredTimers.erase( timer ) > 0;
         }

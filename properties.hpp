@@ -100,9 +100,9 @@ namespace sc {
             PropertyNodeIterator(
                     std::string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it );
 
+        private:
             reference dereference() const;
 
-        private:
             std::string const* path_;
             Json::Value::const_iterator first_;
         };
@@ -153,9 +153,10 @@ namespace sc {
             {
             }
 
+        private:
             typename PropertyListIterator::reference dereference() const
             {
-                return this->base_reference()->template as< Type >();
+                return this->base()->template as< Type >();
             }
         };
 

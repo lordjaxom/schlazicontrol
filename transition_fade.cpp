@@ -9,6 +9,7 @@
 #include "logging.hpp"
 #include "manager.hpp"
 #include "properties.hpp"
+#include "scoped.hpp"
 #include "timer.hpp"
 #include "transition_fade.hpp"
 #include "types.hpp"
@@ -59,23 +60,24 @@ namespace sc {
             state.deltas.resize( values.size() );
         }
 
+        Scoped scoped( values, state.output );
         state.target = move( values );
 
         bool changed = false;
-        if ( state.deltasKnown ) {
-            state.deltasKnown = false;
-        }
-        else {
+        if ( !state.deltasKnown ) {
             changed = calculateDeltas( state );
             logger.debug(
                     "fade through input change from ", state.output[ 0 ].get(), " to ", state.target[ 0 ].get(),
                     " - delta is ", state.deltas[ 0 ] );
         }
+        else {
+            scoped.push( state.deltasKnown );
+        }
+
         if ( calculateOutput( state ) ) {
             logger.debug( "fade to ", state.output[ 0 ].get() );
             changed = true;
         }
-        values = state.output;
 
         if ( !changed ) {
             logger.debug( "no change, resetting poll receiver" );
@@ -83,12 +85,14 @@ namespace sc {
             return;
         }
 
-        Connection* safeConnection = &connection;
-        FadeTransitionState* safeState = &state;
-        state.pollEventScope = manager_.pollEvent().subscribe(
-                [this, safeConnection, safeState]( chrono::nanoseconds elapsed ) {
-                    poll( *safeState, *safeConnection, (double) elapsed.count() / speed_.count() );
-                } );
+        if ( !state.deltasKnown ) {
+            Connection* safeConnection = &connection;
+            FadeTransitionState* safeState = &state;
+            state.pollEventScope = manager_.pollEvent().subscribe(
+                    [this, safeConnection, safeState]( chrono::nanoseconds elapsed ) {
+                        poll( *safeState, *safeConnection, (double) elapsed.count() / speed_.count());
+                    } );
+        }
     }
 
     void FadeTransition::poll( FadeTransitionState& state, Connection& connection, double factor ) const

@@ -91,7 +91,9 @@ set(SOURCE_FILES
         transition_fade.cpp
         transition_fade.hpp
         typeinfo.hpp
-        typetraits.hpp)
+        typetraits.hpp
+        scoped.hpp
+        scoped.cpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
