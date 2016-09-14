@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "event.hpp"
@@ -38,10 +39,22 @@ namespace sc {
 		template< typename Type >
 		Type& get( std::string const& requester, std::string const& name ) const
 		{
-			Type* result = dynamic_cast< Type* >( findComponent( requester, name ));
-            checkValidComponent( requester, name, result );
+            auto component = findComponent( requester, name );
+			Type* result = dynamic_cast< Type* >( std::get< 1 >( component ) );
+            checkValidComponent( requester, std::get< 0 >( component ), result );
 			return *result;
 		}
+
+		template< typename Type >
+        Type& get( std::string const& requester, PropertyNode const& node )
+        {
+            auto component = node.is< std::string >()
+                    ? findComponent( requester, node.as< std::string >() )
+                    : createComponent( node, true );
+            Type* result = dynamic_cast< Type* >( std::get< 1 >( component ) );
+            checkValidComponent( requester, std::get< 0 >( component ), result );
+            return *result;
+        }
 
         ReadyEvent::Interface& readyEvent() { return readyEvent_.interface(); }
         PollEvent::Interface& pollEvent() { return pollEvent_.interface(); }
@@ -49,7 +62,8 @@ namespace sc {
 		void run();
 
 	private:
-        Component* findComponent( std::string const& requester, std::string const& name ) const;
+        std::tuple< std::string, Component* > createComponent( PropertyNode const& properties, bool adhoc );
+        std::tuple< std::string, Component* > findComponent( std::string const& requester, std::string const& name ) const;
         void checkValidComponent( std::string const& requester, std::string const& name, void* component ) const;
 
 		void startPolling();

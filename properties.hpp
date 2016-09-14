@@ -72,6 +72,8 @@ namespace sc {
         const_iterator begin() const;
         const_iterator end() const;
 
+        bool has( std::string const& key ) const;
+
         PropertyNode operator[]( std::string const& key ) const;
         PropertyNode operator[]( PropertyKey const& key ) const;
 

@@ -1,5 +1,6 @@
 #include <csignal>
 #include <stdexcept>
+#include <system_error>
 
 #include <asio.hpp>
 
@@ -45,17 +46,8 @@ namespace sc {
 					chrono::milliseconds( properties_[ updateIntervalProperty ].as< chrono::milliseconds::rep >() ) )
         , internals_( new ManagerInternals )
 	{
-        for ( auto component : properties_[ componentsProperty ] ) {
-            auto name = component[ "type" ].as< string >();
-            auto ptr = ComponentFactory::instance().create(
-                    *this, name, component[ "id" ].as< string >(), component );
-            auto it = components_.emplace( ptr->id(), move( ptr ) );
-            if ( !it.second ) {
-                throw runtime_error( str(
-                        "unable to create component \"", it.first->first,
-                        "\": another component with the same id exists" ) );
-            }
-            logger.info( "component \"", it.first->first, "\" of type \"", name, "\" created" );
+        for ( auto componentNode : properties_[ componentsProperty ] ) {
+            createComponent( componentNode, false );
         }
 
 		internals_->signals.async_wait( [this] ( error_code ec, int ) {
@@ -79,13 +71,29 @@ namespace sc {
         internals_->service.run();
 	}
 
-    Component* Manager::findComponent( string const& requester, string const& name ) const
+    tuple< string, Component* > Manager::createComponent( PropertyNode const& properties, bool adhoc )
+    {
+        auto name = properties[ "type" ].as< string >();
+        auto id = properties.has( "id" )
+                  ? properties[ "id" ].as< string >() : ComponentFactory::instance().generateId( name );
+        auto ptr = ComponentFactory::instance().create( *this, name, move( id ), properties );
+        auto it = components_.emplace( ptr->id(), move( ptr ) );
+        if ( !it.second ) {
+            throw runtime_error( str(
+                    "unable to create component \"", it.first->first,
+                    "\": another component with the same id exists" ) );
+        }
+        logger.info( "component \"", it.first->first, "\" of type \"", name, "\" created" );
+        return make_tuple( name, it.first->second.get() );
+    }
+
+    tuple< string, Component* > Manager::findComponent( string const& requester, string const& name ) const
 	{
 		auto it = components_.find( name );
 		if ( it == components_.end() ) {
 			throw runtime_error( str( "component \"", name, "\" (requested by \"", requester, "\" does not exist" ) );
 		}
-		return it->second.get();
+		return make_tuple( name, it->second.get() );
 	}
 
     void Manager::checkValidComponent( string const& requester, string const& name, void* component ) const
