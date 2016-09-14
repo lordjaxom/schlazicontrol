@@ -40,6 +40,7 @@ namespace sc {
 		void receiveInitResponse();
 		void sendChannelMessage( std::size_t device );
 		void sendSyncedMessage( std::size_t device );
+		void sendPongMessage( std::size_t device );
 
 		void send( Json::Value const& json, std::function< void () > const& handler );
 		void receive( std::function< void ( Json::Value const& ) > const& handler, bool repeat = true );

@@ -96,6 +96,7 @@ namespace sc {
 			jsonDevice[ "uniqueid" ] = device.dsuid();
 			jsonDevice[ "group" ] = device.group();
 			jsonDevice[ "sync" ] = true;
+			jsonDevice[ "ping" ] = true;
 			if ( !device.outputType().empty() ) {
 				jsonDevice[ "output" ] = device.outputType();
 				jsonDevice[ "dimmable" ] = device.dimmable();
@@ -136,6 +137,14 @@ namespace sc {
 	{
 		Json::Value json( Json::objectValue );
 		json[ "message" ] = "synced";
+		json[ "tag" ] = string( to_string( device ) );
+		send( json, []{} );
+	}
+
+	void Vdcd::sendPongMessage( size_t device )
+	{
+		Json::Value json( Json::objectValue );
+		json[ "message" ] = "pong";
 		json[ "tag" ] = string( to_string( device ) );
 		send( json, []{} );
 	}
@@ -218,6 +227,10 @@ namespace sc {
 		else if ( json[ "message" ].asString() == "sync" ) {
 			size_t device = boost::lexical_cast< size_t >( json[ "tag" ].asString() );
 			sendChannelMessage( device );
+		}
+		else if ( json[ "message" ].asString() == "ping" ) {
+		    size_t device = boost::lexical_cast< size_t >( json[ "tag" ].asString() );
+		    sendPongMessage( device );
 		}
 		else {
 			auto message = json[ "message" ];
