@@ -61,6 +61,6 @@ namespace sc {
 		transfer( lastValue_ );
 	}
 
-	__attribute__(( unused )) static ComponentRegistry< Connection > registry( "connection" );
+	static ComponentRegistry< Connection > registry( "connection" );
 
 } // namespace sc

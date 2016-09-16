@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <chrono>
 #include <ostream>
-#include <string>
 
+#include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
 #include <json/json.h>
@@ -18,6 +18,26 @@ using namespace ip;
 namespace sc {
 
 	static Logger logger( "vdcd" );
+	
+	/**
+	 * struct VdcdInternals
+	 */
+	 
+	struct VdcdInternals
+    {
+        VdcdInternals( io_service& service )
+                : socket( service )
+        {
+        }
+
+        ip::tcp::socket socket;
+        asio::streambuf outgoing;
+        asio::streambuf incoming;
+    };
+	
+	/**
+	 * class Vdcd
+	 */
 
 	static PropertyKey const hostProperty( "host" );
 	static PropertyKey const portProperty( "port", 8999 );
@@ -27,7 +47,7 @@ namespace sc {
 		, manager_( manager )
 		, host_( properties[ hostProperty ].as< string >() )
 		, port_( to_string( properties[ portProperty ].as< uint16_t >() ) )
-		, socket_( manager_.service() )
+        , internals_( new VdcdInternals( manager_.service() ) ) 
 	{
 		Json::StreamWriterBuilder builder;
 		builder[ "indentation" ] = "";
@@ -52,7 +72,7 @@ namespace sc {
 
 		tcp::resolver resolver( manager_.service() );
 		async_connect(
-				socket_, resolver.resolve( tcp::resolver::query( host_, port_ ) ),
+				internals_->socket, resolver.resolve( tcp::resolver::query( host_, port_ ) ),
 				[this] ( error_code ec, tcp::resolver::iterator ) {
 					if ( handleError( ec ) ) {
 						return;
@@ -64,9 +84,9 @@ namespace sc {
 
 	void Vdcd::reconnect()
 	{
-		socket_.close();
-		incoming_.consume( incoming_.size() );
-		outgoing_.consume( outgoing_.size() );
+		internals_->socket.close();
+		internals_->incoming.consume( internals_->incoming.size() );
+		internals_->outgoing.consume( internals_->outgoing.size() );
 		retryConnect();
 	}
 
@@ -151,15 +171,15 @@ namespace sc {
 
 	void Vdcd::send( Json::Value const& json, function< void () > const& handler )
 	{
-		auto start = outgoing_.size();
-		ostream os( &outgoing_ );
+		auto start = internals_->outgoing.size();
+		ostream os( &internals_->outgoing );
 		jsonWriter_->write( json, &os );
 		os << '\n' << flush;
 
 		logger.debug(
 				"<<< ", boost::make_iterator_range(
-					next( buffers_begin( outgoing_.data() ), start ),
-					next( buffers_begin( outgoing_.data() ), outgoing_.size() - 1 ) ) );
+					next( buffers_begin( internals_->outgoing.data() ), start ),
+					next( buffers_begin( internals_->outgoing.data() ), internals_->outgoing.size() - 1 ) ) );
 
 		/*
 		Json::FastWriter writer;
@@ -167,11 +187,11 @@ namespace sc {
 
 		logger.debug( "<<< ", string );
 
-		ostream os( &outgoing_ );
+		ostream os( &internals_->outgoing );
 		os << string << '\n';
 		*/
 		async_write(
-				socket_, outgoing_,
+				internals_->socket, internals_->outgoing,
 				[this, handler] ( error_code ec, size_t written ) {
 					if ( handleError( ec ) ) {
 						return;
@@ -184,14 +204,14 @@ namespace sc {
 	void Vdcd::receive( function< void ( Json::Value const& ) > const& handler, bool repeat )
 	{
 		async_read_until(
-				socket_, incoming_, '\n',
+				internals_->socket, internals_->incoming, '\n',
 				[this, handler, repeat]( error_code ec, size_t ) {
 					if ( handleError( ec ) ) {
 						return;
 					}
 
-					auto begin = buffers_begin( incoming_.data() );
-					auto end = buffers_end( incoming_.data() );
+					auto begin = buffers_begin( internals_->incoming.data() );
+					auto end = buffers_end( internals_->incoming.data() );
 
 					auto first = begin;
 					decltype( first ) last;
@@ -209,7 +229,7 @@ namespace sc {
 
 						first = last + 1;
 					}
-					incoming_.consume( distance( begin, first ) );
+					internals_->incoming.consume( distance( begin, first ) );
 
 					if ( repeat ) {
 						receive( handler, repeat );
@@ -237,7 +257,7 @@ namespace sc {
 			logger.error(
 					message.isNull() ? "unknown" : "unexpected", " message from vdcd",
 					message.isNull() ? "" : ": ", message.asString() );
-			socket_.close();
+			internals_->socket.close();
 		}
 	}
 
@@ -276,6 +296,6 @@ namespace sc {
 		}
 	}
 
-	__attribute__(( unused )) static ComponentRegistry< Vdcd > registry( "vdcd" );
+	static ComponentRegistry< Vdcd > registry( "vdcd" );
 
 } // namespace sc

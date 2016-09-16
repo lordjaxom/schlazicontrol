@@ -37,6 +37,6 @@ namespace sc {
 		}
 	}
 
-	__attribute__(( unused )) static InputRegistry< GpioInput > registry( "gpio" );
+	static InputRegistry< GpioInput > registry( "gpio" );
 
 } // namespace sc

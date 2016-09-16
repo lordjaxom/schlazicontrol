@@ -183,7 +183,7 @@ namespace sc {
             it->second.reset( new Timer( manager_, timeout, [timer, connection, state, it] {
                 logger.debug( "timeout handler fired" );
 
-                __attribute__(( unused )) unique_ptr< Timer > ptr = move( it->second );
+                unique_ptr< Timer > ptr( move( it->second ) );
                 state->timers.erase( it );
 
                 state->expiredTimers.insert( timer );

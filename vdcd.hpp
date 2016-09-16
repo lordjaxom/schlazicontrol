@@ -4,9 +4,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <vector>
-
-#include <asio.hpp>
 
 #include "component.hpp"
 #include "event.hpp"
@@ -21,6 +20,8 @@ namespace sc {
 	class Manager;
 	class PropertyNode;
 	class VdcdDevice;
+
+    struct VdcdInternals;
 
 	class Vdcd
 		: public Component
@@ -52,9 +53,7 @@ namespace sc {
 		Manager& manager_;
 		std::string host_;
 		std::string port_;
-		asio::ip::tcp::socket socket_;
-		asio::streambuf outgoing_;
-		asio::streambuf incoming_;
+        std::unique_ptr< VdcdInternals > internals_;
 		std::unique_ptr< Json::StreamWriter > jsonWriter_;
 		std::vector< VdcdDevice* > devices_;
 	};

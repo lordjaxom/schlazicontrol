@@ -40,7 +40,7 @@ namespace sc {
 
 	static void gpioWiringPiSetupGpio()
 	{
-		static __attribute__(( unused )) auto once = [] {
+		static auto once = [] {
 			if ( ::wiringPiSetupGpio() == -1 ) {
 				throw system_error( errno, system_category(), "couldn't initialize wiringPi" );
 			}

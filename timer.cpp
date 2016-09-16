@@ -1,15 +1,12 @@
 #include <system_error>
 #include <utility>
 
-#include "logging.hpp"
 #include "manager.hpp"
 #include "timer.hpp"
 
 using namespace std;
 
 namespace sc {
-
-    static Logger logger( "timer" );
 
     Timer::Timer( Manager& manager, chrono::nanoseconds timeout, function< void () > handler )
             : remaining_( timeout )
@@ -26,7 +23,7 @@ namespace sc {
             return;
         }
 
-        __attribute__(( unused )) EventScope scope( move( pollEventScope_ ) );
+        EventScope scope( move( pollEventScope_ ) );
         handler_();
     }
 

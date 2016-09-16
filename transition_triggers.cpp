@@ -98,7 +98,7 @@ namespace sc {
                 [&context]( triggers::Action const& action ) { action.invoke( context ); } );
     }
 
-    __attribute__(( unused )) static TransitionRegistry< TriggersTransition > registry( "triggers" );
+    static TransitionRegistry< TriggersTransition > registry( "triggers" );
 
 } // namespace sc
 

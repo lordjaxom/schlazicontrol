@@ -42,6 +42,6 @@ namespace sc {
 		}
 	}
 
-	__attribute__(( unused )) static OutputRegistry< SoftPwmOutput > registry( "softPwm" );
+	static OutputRegistry< SoftPwmOutput > registry( "softPwm" );
 
 } // namespace sc

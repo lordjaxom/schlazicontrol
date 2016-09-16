@@ -479,6 +479,6 @@ namespace sc {
         ws281x_.send( start_, values );
     }
 
-    __attribute__(( unused )) static ComponentRegistry< Ws281x > registry( "ws281x" );
+    static ComponentRegistry< Ws281x > registry( "ws281x" );
 
 } // namespace sc

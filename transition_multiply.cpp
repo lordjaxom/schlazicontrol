@@ -37,6 +37,6 @@ namespace sc {
         }
     }
 
-    __attribute__(( unused )) static TransitionRegistry< MultiplyTransition > registry( "multiply" );
+    static TransitionRegistry< MultiplyTransition > registry( "multiply" );
 
 } // namespace sc

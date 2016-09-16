@@ -34,6 +34,6 @@ namespace sc {
 		inputChangeEvent_( ChannelValue( value, 0.0, 100.0 ) );
 	}
 
-	__attribute__(( unused )) static InputRegistry< VdcdInput > registry( "vdcd" );
+	static InputRegistry< VdcdInput > registry( "vdcd" );
 
 } // namespace sc

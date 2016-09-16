@@ -204,8 +204,7 @@ namespace sc {
         template< typename ...T >
         void operator()( T&&... args )
         {
-            __attribute__(( unused )) std::shared_ptr< void > guard(
-                    nullptr, [this]( void const* ) { this->unlock(); } );
+            std::shared_ptr< void > guard( nullptr, [this]( void const* ) { this->unlock(); } );
             this->lock();
             std::for_each(
                     this->begin(), this->end(),

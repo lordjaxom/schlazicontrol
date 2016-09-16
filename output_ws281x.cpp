@@ -26,6 +26,6 @@ namespace sc {
         device_.send( values );
     }
 
-    __attribute__(( unused )) static OutputRegistry< Ws281xOutput > registry( "ws281x" );
+    static OutputRegistry< Ws281xOutput > registry( "ws281x" );
 
 } // namespace sc

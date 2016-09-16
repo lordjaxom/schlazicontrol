@@ -134,6 +134,6 @@ namespace sc {
         return changed;
     }
 
-    __attribute__(( unused )) static TransitionRegistry< FadeTransition > registry( "fade" );
+    static TransitionRegistry< FadeTransition > registry( "fade" );
 
 } // namespace sc
