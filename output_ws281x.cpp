@@ -17,16 +17,15 @@ namespace sc {
 
     Ws281xOutput::Ws281xOutput( string&& id, Manager& manager, PropertyNode const& properties )
 		: Component( move( id ) )
+        , Output( manager, properties[ inputProperty ] )
 		, manager_( manager )
 		, device_(
-					manager_, this->id(), properties[ ws281xProperty ].as< string >(),
+					*this, manager_, properties[ ws281xProperty ].as< string >(),
                     properties[ firstProperty ].as< size_t >(), properties[ countProperty ].as< size_t >() )
 	{
-		auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ] );
-        connect( input, *this, [this]( ChannelBuffer const& values ) { set( values ); } );
 	}
 
-    void Ws281xOutput::set( ChannelBuffer const& values )
+    void Ws281xOutput::set( Input const& input, ChannelBuffer const& values )
     {
         device_.send( values );
     }

@@ -169,7 +169,7 @@ namespace sc {
         using Interface = EventInterface< Signature >;
         using typename Interface::Handler;
 
-        Interface& interface() { return *static_cast< Interface* >( this ); }
+        Interface& interface() { return static_cast< Interface& >( *this ); }
 
         using Interface::operator();
     };

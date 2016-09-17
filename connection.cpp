@@ -8,23 +8,23 @@
 #include "connection.hpp"
 #include "input.hpp"
 #include "manager.hpp"
-#include "output.hpp"
 #include "types.hpp"
 
 using namespace std;
 
 namespace sc {
 
-    static unique_ptr< TransitionInstance > createInstance( Manager& manager, string const& id, PropertyNode const& properties )
+    static unique_ptr< TransitionInstance > createInstance(
+            Connection const& connection, Manager& manager, PropertyNode const& properties )
     {
-        auto& transition = manager.get< Transition >( id, properties );
+        auto& transition = manager.get< Transition >( connection, properties );
         return transition.instantiate();
     }
 
     static vector< unique_ptr< TransitionInstance > > createInstances(
-            Manager& manager, string const& id, PropertyNode const& properties )
+            Connection const& connection, Manager& manager, PropertyNode const& properties )
     {
-        auto transformer = [&]( PropertyNode const& node ) { return createInstance( manager, id, node ); };
+        auto transformer = [&]( PropertyNode const& node ) { return createInstance( connection, manager, node ); };
         auto first = boost::make_transform_iterator( properties.begin(), transformer );
         auto last = boost::make_transform_iterator( properties.end(), transformer );
         return vector< unique_ptr< TransitionInstance > >( first, last );
@@ -35,20 +35,20 @@ namespace sc {
 
 	Connection::Connection( string&& id, Manager& manager, PropertyNode const& properties )
             : Component( move( id ) )
+            , Output( manager, properties[ inputProperty ] )
             , manager_( manager )
-            , instances_( createInstances( manager_, this->id(), properties[ transitionsProperty ] ) )
+            , instances_( createInstances( *this, manager_, properties[ transitionsProperty ] ) )
 	{
-        auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ] );
-
-        Component const* sender = &input;
-        channels_ = input.emitsChannels();
+        // TODO
+        Transition const* sender = nullptr;
+        channels_ = input().emitsChannels();
         for ( auto const& instance : instances_ ) {
-            checkConnection( *sender, instance->transition(), *instance, channels_ );
+            if ( sender ) {
+                checkConnection( *sender, instance->transition(), channels_, instance->acceptsChannels( channels_ ) );
+            }
             sender = &instance->transition();
             channels_ = instance->emitsChannels( channels_ );
         }
-
-        connect( input, *this, [this]( ChannelBuffer const& value ) { transfer( value ); } );
 	}
 
     bool Connection::acceptsChannels( size_t channels ) const
@@ -56,19 +56,20 @@ namespace sc {
         return !instances_.empty() ? instances_.front()->acceptsChannels( channels ) : true;
     }
 
-    void Connection::transfer( ChannelBuffer values )
+	void Connection::transfer()
 	{
-        lastValues_ = values;
-		for ( auto& instance : instances_ ) {
-            instance->transform( *this, values );
-		}
+        auto values = lastValues_;
+        for_each(
+                instances_.begin(), instances_.end(),
+                [this, &values]( unique_ptr< TransitionInstance > const& instance ) { instance->transform( *this, values ); } );
         inputChangeEvent_( values );
 	}
 
-	void Connection::retransfer()
-	{
-		transfer( move( lastValues_ ) );
-	}
+    void Connection::set( Input const& input, ChannelBuffer const& values )
+    {
+        lastValues_ = values;
+        transfer();
+    }
 
     static ComponentRegistry< Connection > registry( "connection" );
 

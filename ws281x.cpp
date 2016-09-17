@@ -455,19 +455,19 @@ namespace sc {
 	}
 
 	Ws281xDevice::Ws281xDevice(
-            Manager& manager, string const& requester, string const& ws281xId, size_t start, size_t count )
-	    	: ws281x_( manager.get< Ws281x >( requester, ws281xId ) )
+            Component const& owner, Manager& manager, string const& ws281xId, size_t start, size_t count )
+	    	: ws281x_( manager.get< Ws281x >( owner, ws281xId ) )
 	        , start_( start )
             , count_( count != maxCount ? count : ws281x_.ledCount() - start )
 	{
         if ( start_ > ws281x_.ledCount() ) {
             throw runtime_error( str(
-                    "component \"", requester, "\" requested partial led chain beginning at ", start_,
+                    "component \"", owner.id(), "\" requested partial led chain beginning at ", start_,
                     ", but ws281x \"", ws281xId, "\" has only ", ws281x_.ledCount(), " leds" ) );
         }
         if ( start_ + count_ > ws281x_.ledCount() ) {
             throw runtime_error( str(
-                    "component \"", requester, "\" requested partial led chain of ", count_, " leds, but ws281x \"",
+                    "component \"", owner.id(), "\" requested partial led chain of ", count_, " leds, but ws281x \"",
                     ws281xId, "\" has only ", ws281x_.ledCount() - start, " leds beginning at ", start_ ) );
         }
 	}

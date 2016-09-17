@@ -16,7 +16,7 @@ namespace sc {
     class Output;
 	class PropertyNode;
 
-	class Connection
+	class Connection final
 		: public Output
         , public Input
 	{
@@ -26,11 +26,12 @@ namespace sc {
         virtual bool acceptsChannels( std::size_t channels ) const override;
         virtual std::size_t emitsChannels() const override { return channels_; }
 
-        void retransfer();
+        void transfer();
+
+    protected:
+        virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
 	private:
-        void transfer( ChannelBuffer values );
-
         Manager& manager_;
 		std::vector< std::unique_ptr< TransitionInstance > > instances_;
         std::size_t channels_;

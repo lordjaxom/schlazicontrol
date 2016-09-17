@@ -12,7 +12,7 @@ namespace sc {
 	class Manager;
 	class PropertyNode;
 
-	class GpioInput
+	class GpioInput final
 		: public Input
 	{
 	public:

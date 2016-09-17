@@ -36,7 +36,7 @@ namespace sc {
 		asio::io_service& service();
 
 		template< typename Type >
-		Type& get( std::string const& requester, std::string const& id ) const
+		Type& get( Component const& requester, std::string const& id ) const
 		{
             auto& component = findComponent( requester, id );
 			Type* result = dynamic_cast< Type* >( &component );
@@ -45,7 +45,7 @@ namespace sc {
 		}
 
 		template< typename Type >
-        Type& get( std::string const& requester, PropertyNode const& node )
+        Type& get( Component const& requester, PropertyNode const& node )
         {
             auto& component = node.is< std::string >()
                     ? findComponent( requester, node.as< std::string >() )
@@ -62,8 +62,8 @@ namespace sc {
 
 	private:
         Component& createComponent( PropertyNode const& properties, bool adhoc );
-        Component& findComponent( std::string const& requester, std::string const& id ) const;
-        void checkValidComponent( std::string const& requester, Component const& component, void const* cast ) const;
+        Component& findComponent( Component const& requester, std::string const& id ) const;
+        void checkValidComponent( Component const& requester, Component const& component, void const* cast ) const;
 
 		void startPolling();
 

@@ -19,7 +19,7 @@ namespace sc {
      * class FadeTransition
      */
 
-    class FadeTransition
+    class FadeTransition final
             : public Transition
     {
     public:

@@ -11,7 +11,6 @@
 namespace sc {
 
     class ChannelBuffer;
-    class Output;
 
     /**
      * class Input
@@ -23,7 +22,10 @@ namespace sc {
     public:
         using InputChangeEvent = Event< void ( ChannelBuffer const& ) >;
 
-        template< typename = std::nullptr_t > Input() {}
+        template< typename = void >
+        Input()
+        {
+        }
 
         virtual std::size_t emitsChannels() const = 0;
 
@@ -47,22 +49,6 @@ namespace sc {
         {
         }
 	};
-
-    /**
-     * free functions
-     */
-
-    void checkConnection( Component const& input, Component const& output, std::size_t channels, bool accepts );
-    void checkConnection( Input const& input, Output const& output );
-
-    template< typename Receiver >
-    void checkConnection(
-            Component const& input, Component const& output, Receiver& receiver, std::size_t channels )
-    {
-        return checkConnection( input, output, channels, receiver.acceptsChannels( channels ) );
-    }
-
-    void connect( Input& input, Output const& output, Input::InputChangeEvent::Handler handler );
 
 } // namespace sc
 

@@ -185,7 +185,7 @@ namespace sc {
                 state->timers.erase( it );
 
                 state->expiredTimers.insert( timer );
-                connection->retransfer();
+                connection->transfer();
             } ) );
         }
 

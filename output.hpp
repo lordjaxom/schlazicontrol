@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <string>
+#include <type_traits>
 
 #include "component.hpp"
 #include "utility.hpp"
@@ -11,6 +12,8 @@ namespace sc {
 
     class ChannelBuffer;
     class Input;
+    class Manager;
+    class PropertyNode;
 
     /**
      * class Output
@@ -20,9 +23,33 @@ namespace sc {
             : public virtual Component
     {
     public:
-        template< typename = std::nullptr_t > Output() {}
+        static void checkConnection(
+                Component const& input, Component const& output, std::size_t emitsChannels, bool acceptsChannels );
+
+        template< typename = void >
+        Output()
+        {
+        }
+
+        template< typename MultiInput = std::false_type >
+        Output( Manager& manager, PropertyNode const& inputsNode, MultiInput multiInput = {} )
+        {
+            initialize( manager, inputsNode, multiInput );
+        }
 
         virtual bool acceptsChannels( std::size_t channels ) const = 0;
+
+    protected:
+        virtual void set( Input const& input, ChannelBuffer const& values ) = 0;
+
+        Input const& input() const { return *input_; }
+
+    private:
+        void initialize( Manager& manager, PropertyNode const& inputsNode, std::false_type = {} );
+        void initialize( Manager& manager, PropertyNode const& inputsNode, std::true_type );
+        void setup( Input& input );
+
+        Input const* input_ {};
     };
 
     /**

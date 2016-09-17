@@ -18,6 +18,7 @@ namespace sc {
 
 	SoftPwmOutput::SoftPwmOutput( string&& id, Manager& manager, PropertyNode const& properties )
 		: Component( move( id ) )
+        , Output( manager, properties[ inputProperty ] )
 		, manager_( manager )
 		, device_( manager_ )
 	{
@@ -29,22 +30,15 @@ namespace sc {
 					device_.softPwmCreate( gpioPin );
 					return gpioPin;
 				} );
-
-        auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ] );
-        connect( input, *this, [this]( ChannelBuffer const& values ) { set( values ); } );
     }
 
-	void SoftPwmOutput::set( ChannelBuffer const& values )
+	void SoftPwmOutput::set( Input const& input, ChannelBuffer const& values )
 	{
-		if ( values.size() != gpioPins_.size() ) {
-			logger.warning(
-					"soft pwm output ", id(), " called with ", values.size(), " but has ",
-					gpioPins_.size(), " channels" );
-		}
-
-		for ( size_t i = 0; i < values.size() || i < gpioPins_.size() ; ++i ) {
-			device_.softPwmWrite( gpioPins_[ i % gpioPins_.size() ], (uint16_t) values[ i % values.size() ].get() );
-		}
+        auto valuesIt = values.begin(), valuesEnd = values.end();
+        auto pinsIt = gpioPins_.begin(), pinsEnd = gpioPins_.end();
+        for ( ; valuesIt != valuesEnd ; ++valuesIt, ++pinsIt ) {
+            device_.softPwmWrite( *pinsIt, (uint16_t) valuesIt->get() );
+        }
 	}
 
 	static OutputRegistry< SoftPwmOutput > registry( "softPwm" );

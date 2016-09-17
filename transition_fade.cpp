@@ -96,7 +96,7 @@ namespace sc {
     {
         state.deltasKnown = true;
         state.factor = factor;
-        connection.retransfer();
+        connection.transfer();
     }
 
     bool FadeTransition::calculateDeltas( FadeTransitionState& state ) const

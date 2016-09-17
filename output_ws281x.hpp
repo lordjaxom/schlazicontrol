@@ -13,7 +13,7 @@ namespace sc {
 	class ChannelBuffer;
 	class PropertyNode;
 
-	class Ws281xOutput
+	class Ws281xOutput final
 		: public Output
 	{
 	public:
@@ -21,9 +21,10 @@ namespace sc {
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return device_.channelCount() == channels; }
 
-	private:
-		void set( ChannelBuffer const& values );
+	protected:
+		virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
+	private:
 		Manager& manager_;
 		Ws281xDevice device_;
 	};

@@ -67,8 +67,8 @@ namespace sc {
         static constexpr size_t maxCount = std::numeric_limits< std::size_t >::max();
 
         Ws281xDevice(
-                Manager& manager, std::string const& requester, std::string const& ws281xId,
-                std::size_t start, std::size_t count );
+                Component const& owner, Manager& manager, std::string const& ws281xId,
+				std::size_t start, std::size_t count );
 
 		std::size_t channelCount() const { return count_ * 3; }
 

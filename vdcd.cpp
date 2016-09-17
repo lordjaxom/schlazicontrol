@@ -272,10 +272,10 @@ namespace sc {
 	}
 
 	VdcdDevice::VdcdDevice(
-			Manager& manager, string const& requester, string const& vdcdId, string const& dsuid, int group,
+            Component const& owner, Manager& manager, string const& vdcdId, string const& dsuid, int group,
 			string const& outputType, bool dimmable )
-		: vdcd_( manager.get< Vdcd >( requester, vdcdId ) )
-		, name_( requester )
+		: vdcd_( manager.get< Vdcd >( owner, vdcdId ) )
+		, name_( owner.id() )
 		, dsuid_( dsuid )
 		, group_( group )
 		, outputType_( outputType )

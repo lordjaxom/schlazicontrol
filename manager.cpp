@@ -87,19 +87,19 @@ namespace sc {
         return *it.first->second;
     }
 
-    Component& Manager::findComponent( string const& requester, string const& id ) const
+    Component& Manager::findComponent( Component const& requester, string const& id ) const
 	{
 		auto it = components_.find( id );
 		if ( it == components_.end() ) {
-			throw runtime_error( str( "component \"", requester, "\" depends on unknown component \"", id, "\"" ) );
+			throw runtime_error( str( "component \"", requester.id(), "\" depends on unknown component \"", id, "\"" ) );
 		}
 		return *it->second;
 	}
 
-    void Manager::checkValidComponent( string const& requester, Component const& component, void const* cast ) const
+    void Manager::checkValidComponent( Component const& requester, Component const& component, void const* cast ) const
 	{
         if ( cast == nullptr ) {
-            throw runtime_error( str( "component \"", requester, "\" depends on component \"", component.id(),
+            throw runtime_error( str( "component \"", requester.id(), "\" depends on component \"", component.id(),
                                       "\", but \"", component.id(), "\" is not of the required type" ) );
         }
 	}

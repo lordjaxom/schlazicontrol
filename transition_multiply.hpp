@@ -13,7 +13,7 @@ namespace sc {
     class Manager;
     class PropertyNode;
 
-    class MultiplyTransition
+    class MultiplyTransition final
             : public Transition
     {
     public:

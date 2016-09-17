@@ -14,7 +14,7 @@ namespace sc {
 	class Manager;
 	class PropertyNode;
 
-	class SoftPwmOutput
+	class SoftPwmOutput final
 		: public Output
 	{
 	public:
@@ -22,9 +22,10 @@ namespace sc {
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return gpioPins_.size() == channels; }
 
-	private:
-		void set( ChannelBuffer const& values );
+	protected:
+        virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
+	private:
 		Manager& manager_;
 		GpioDevice device_;
 		std::vector< std::uint16_t > gpioPins_;

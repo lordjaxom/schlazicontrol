@@ -12,7 +12,7 @@ namespace sc {
 	class Manager;
 	class PropertyNode;
 
-	class VdcdInput
+	class VdcdInput final
 		: public Input
 	{
 	public:

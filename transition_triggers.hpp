@@ -18,7 +18,7 @@ namespace sc {
         struct State;
     } // namespace triggers
 
-    class TriggersTransition
+    class TriggersTransition final
         : public Transition
     {
     public:

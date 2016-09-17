@@ -92,12 +92,12 @@ namespace sc {
 
     PropertyNode::const_iterator PropertyNode::begin() const
     {
-        return { path_, value_->begin(), value_->begin() };
+        return iter( value_->begin() );
     }
 
     PropertyNode::const_iterator PropertyNode::end() const
     {
-        return { path_, value_->begin(), value_->end() };
+        return iter( value_->end() );
     }
 
     bool PropertyNode::has( string const& key ) const
@@ -113,6 +113,12 @@ namespace sc {
     PropertyNode PropertyNode::operator[]( PropertyKey const& key ) const
     {
         return get( key.name(), key.defaultValue() );
+    }
+
+    PropertyNode::const_iterator PropertyNode::iter( Json::Value::const_iterator it ) const
+    {
+        assertValueType( path_, value_->type(), Json::arrayValue );
+        return { path_, value_->begin(), it };
     }
 
     PropertyNode PropertyNode::get( string const& key, Json::Value const& defaultValue ) const

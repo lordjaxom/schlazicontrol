@@ -77,6 +77,8 @@ namespace sc {
         PropertyNode operator[]( PropertyKey const& key ) const;
 
     private:
+        const_iterator iter( Json::Value::const_iterator it ) const;
+
         PropertyNode get( std::string const& key, Json::Value const& defaultValue = {} ) const;
 
         std::string path_;
