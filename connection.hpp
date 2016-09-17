@@ -5,31 +5,36 @@
 #include <string>
 #include <vector>
 
-#include "component.hpp"
+#include "input.hpp"
+#include "output.hpp"
 #include "transition.hpp"
 #include "types.hpp"
 
 namespace sc {
 
-	class ChannelValue;
 	class Manager;
     class Output;
 	class PropertyNode;
 
 	class Connection
-		: public Component
+		: public Output
+        , public Input
 	{
 	public:
-		Connection( Manager& manager, std::string id, PropertyNode const& properties );
+		Connection( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-		void transfer( ChannelValue const& value );
+        virtual bool acceptsChannels( std::size_t channels ) const override;
+        virtual std::size_t emitsChannels() const override { return channels_; }
+
         void retransfer();
 
 	private:
-		Manager& manager_;
-		Output& output_;
-		std::vector< std::unique_ptr< TransitionStateBase > > transitions_;
-		ChannelValue lastValue_;
+        void transfer( ChannelBuffer values );
+
+        Manager& manager_;
+		std::vector< std::unique_ptr< TransitionInstance > > instances_;
+        std::size_t channels_;
+        ChannelBuffer lastValues_;
 	};
 
 } // namespace sc

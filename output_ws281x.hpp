@@ -17,12 +17,12 @@ namespace sc {
 		: public Output
 	{
 	public:
-		Ws281xOutput( Manager& manager, std::string id, PropertyNode const& properties );
+		Ws281xOutput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return device_.channelCount() == channels; }
 
 	private:
-		virtual void set( ChannelBuffer const& values ) override;
+		void set( ChannelBuffer const& values );
 
 		Manager& manager_;
 		Ws281xDevice device_;

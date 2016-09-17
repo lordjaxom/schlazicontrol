@@ -78,16 +78,16 @@ namespace sc {
         return { first, last };
     }
 
-    TriggersTransition::TriggersTransition( Manager& manager, string id, PropertyNode const& properties )
+    TriggersTransition::TriggersTransition( string&& id, Manager& manager, PropertyNode const& properties )
         : Transition( move( id ) )
         , manager_( manager )
         , actions_( parseActions( properties[ actionsProperty ] ) )
     {
     }
 
-    unique_ptr< TransitionStateBase > TriggersTransition::instantiate() const
+    unique_ptr< TransitionInstance > TriggersTransition::instantiate() const
     {
-        return unique_ptr< TransitionStateBase > { new TransitionState< TriggersTransition, State >( *this ) };
+        return unique_ptr< TransitionInstance > { new TransitionInstanceImpl< TriggersTransition, State >( *this ) };
     }
 
     void TriggersTransition::transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const

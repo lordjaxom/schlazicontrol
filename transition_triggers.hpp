@@ -22,12 +22,12 @@ namespace sc {
         : public Transition
     {
     public:
-        TriggersTransition( Manager& manager, std::string id, PropertyNode const& properties );
+        TriggersTransition( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-        virtual std::size_t channels( std::size_t channels ) const override { return 1; }
-        virtual bool acceptsChannels( std::size_t channels ) const override { return channels == 1; }
+        virtual std::unique_ptr< TransitionInstance > instantiate() const override;
 
-        virtual std::unique_ptr< TransitionStateBase > instantiate() const override;
+        bool acceptsChannels( std::size_t channels ) const { return channels == 1; }
+        std::size_t emitsChannels( std::size_t channels ) const { return 1; }
 
         void transform( triggers::State& state, Connection& connection, ChannelBuffer& values ) const;
 

@@ -73,18 +73,19 @@ namespace sc {
 
     tuple< string, Component* > Manager::createComponent( PropertyNode const& properties, bool adhoc )
     {
-        auto name = properties[ "type" ].as< string >();
-        auto id = properties.has( "id" )
-                  ? properties[ "id" ].as< string >() : ComponentFactory::instance().generateId( name );
-        auto ptr = ComponentFactory::instance().create( *this, name, move( id ), properties );
+        auto type = properties[ "type" ].as< string >();
+        auto id = !adhoc || properties.has( "id" )
+                  ? properties[ "id" ].as< string >()
+				  : ComponentFactory::instance().generateId( type );
+        auto ptr = ComponentFactory::instance().create( type, move( id ), *this, properties );
         auto it = components_.emplace( ptr->id(), move( ptr ) );
         if ( !it.second ) {
             throw runtime_error( str(
                     "unable to create component \"", it.first->first,
                     "\": another component with the same id exists" ) );
         }
-        logger.info( "component \"", it.first->first, "\" of type \"", name, "\" created" );
-        return make_tuple( name, it.first->second.get() );
+        logger.info( "component \"", it.first->first, "\" of type \"", type, "\" created" );
+        return make_tuple( type, it.first->second.get() );
     }
 
     tuple< string, Component* > Manager::findComponent( string const& requester, string const& name ) const

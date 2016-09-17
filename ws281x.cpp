@@ -248,7 +248,7 @@ namespace sc {
 				return;
 			}
 
-			incoming_.consume( distance( srcBegin, src ) + 2 );
+			incoming_.consume( (size_t) distance( srcBegin, src ) + 2 );
 			wrapper_.update();
 			receive();
 		} );
@@ -336,8 +336,8 @@ namespace sc {
     static PropertyKey const gpioPinProperty( "gpioPin" );
 	static PropertyKey const ledCountProperty( "ledCount" );
 
-	Ws281x::Ws281x( Manager& manager, string id, PropertyNode const& properties )
-            : Component( "ws281x", move( id ) )
+	Ws281x::Ws281x( string&& id, Manager& manager, PropertyNode const& properties )
+            : Component( move( id ) )
             , manager_( manager )
             , gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
             , ledCount_( properties[ ledCountProperty ].as< size_t >() )

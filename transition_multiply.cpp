@@ -15,15 +15,15 @@ namespace sc {
 
     static PropertyKey factorProperty( "factor" );
 
-    MultiplyTransition::MultiplyTransition( Manager& manager, std::string id, PropertyNode const& properties )
+    MultiplyTransition::MultiplyTransition( string&& id, Manager& manager, PropertyNode const& properties )
             : Transition( move( id ) )
             , factor_( properties[ factorProperty ].as< size_t >() )
     {
     }
 
-    unique_ptr< TransitionStateBase > MultiplyTransition::instantiate() const
+    unique_ptr< TransitionInstance > MultiplyTransition::instantiate() const
     {
-        return unique_ptr< TransitionStateBase >( new TransitionState< MultiplyTransition >( *this ) );
+        return unique_ptr< TransitionInstance >( new TransitionInstanceImpl< MultiplyTransition >( *this ) );
     }
 
     void MultiplyTransition::transform( Connection& connection, ChannelBuffer& values ) const

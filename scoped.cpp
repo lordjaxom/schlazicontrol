@@ -1,29 +1,34 @@
+#include <utility>
+
 #include "scoped.hpp"
 
 using namespace std;
 
 namespace sc {
 
-    Scoped::Scoped( std::function< void () > handler )
-            : handler_( move( handler ) )
+    Scoped::Scoped( Scoped::Handler release )
+            : release_( move( release ) )
     {
     }
 
-    Scoped::Scoped( Scoped&& other )
-            : handler_( move( other.handler_ ) )
+    Scoped::Scoped( Scoped::Handler acquire, Scoped::Handler release )
+            : release_( move( release ) )
     {
-        other.handler_ = nullptr;
+        acquire();
+    }
+
+    Scoped::Scoped( Scoped&& other )
+            : release_( move( other.release_ ) )
+    {
+        other.release_ = nullptr;
     }
 
     Scoped::~Scoped()
     {
-        handler_();
-    }
-
-    void Scoped::push( std::function< void () > handler )
-    {
-        std::function< void () > previous = move( handler_ );
-        handler_ = [previous, handler] { previous(); handler(); };
+        try {
+            release_();
+        }
+        catch ( ... ) {}
     }
 
 } // namespace sc

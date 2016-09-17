@@ -8,18 +8,18 @@ using namespace std;
 namespace sc {
 
     /**
-     * class TransitionStateBase
+     * class TransitionInstance
      */
 
-    TransitionStateBase::TransitionStateBase() = default;
-    TransitionStateBase::~TransitionStateBase() = default;
+    TransitionInstance::TransitionInstance() = default;
+    TransitionInstance::~TransitionInstance() = default;
 
     /**
      * class Transition
      */
 
-    Transition::Transition( string id )
-            : Component( "transition", move( id ) )
+    Transition::Transition( string&& id )
+            : Component( move( id ) )
     {
     }
 

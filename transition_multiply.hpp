@@ -17,12 +17,12 @@ namespace sc {
             : public Transition
     {
     public:
-        MultiplyTransition( Manager& manager, std::string id, PropertyNode const& properties );
+        MultiplyTransition( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-        virtual std::size_t channels( std::size_t channels ) const override { return channels * factor_; }
-        virtual bool acceptsChannels( std::size_t channels ) const override { return true; }
+        virtual std::unique_ptr< TransitionInstance > instantiate() const override;
 
-        virtual std::unique_ptr< TransitionStateBase > instantiate() const override;
+        bool acceptsChannels( std::size_t channels ) const { return true; }
+        std::size_t emitsChannels( std::size_t channels ) const { return channels * factor_; }
 
         void transform( Connection& connection, ChannelBuffer& values ) const;
 

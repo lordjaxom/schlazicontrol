@@ -17,8 +17,8 @@ namespace sc {
 	static PropertyKey const outputTypeProperty( "outputType", "" );
 	static PropertyKey const dimmableProperty( "dimmable", false );
 
-	VdcdInput::VdcdInput( Manager& manager, string id, PropertyNode const& properties )
-		: Input( move( id ) )
+	VdcdInput::VdcdInput( string&& id, Manager& manager, PropertyNode const& properties )
+		: Component( move( id ) )
 		, manager_( manager )
 		, device_(
 				manager_, this->id(), properties[ vdcdProperty].as< string >(),
@@ -31,7 +31,7 @@ namespace sc {
 	void VdcdInput::set( double value )
 	{
         logger.debug( "vdcd input ", id(), " set to ", value );
-		inputChangeEvent_( ChannelValue( value, 0.0, 100.0 ) );
+		inputChangeEvent_( ChannelBuffer { { value, 0.0, 100.0 } } );
 	}
 
 	static InputRegistry< VdcdInput > registry( "vdcd" );

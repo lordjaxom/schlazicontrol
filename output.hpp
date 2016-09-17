@@ -10,24 +10,34 @@
 namespace sc {
 
     class ChannelBuffer;
+    class Input;
 
-	class Output
-		: public Component
-	{
-	public:
-		explicit Output( std::string id );
+    /**
+     * class Output
+     */
 
-		virtual bool acceptsChannels( std::size_t channels ) const = 0;
+    class Output
+            : public virtual Component
+    {
+    public:
+        template< typename = std::nullptr_t > Output() {}
 
-        virtual void set( ChannelBuffer const& values ) = 0;
-	};
+        virtual bool acceptsChannels( std::size_t channels ) const = 0;
+    };
 
-	template< typename Type >
+    /**
+     * class OutputRegistry
+     */
+
+    template< typename Type >
 	class OutputRegistry
 		: public ComponentRegistry< Type >
 	{
 	public:
-		OutputRegistry( char const* name ) : ComponentRegistry< Type >( str( "output.", name ) ) {}
+		OutputRegistry( char const* name )
+                : ComponentRegistry< Type >( "output", name )
+        {
+        }
 	};
 
 } // namespace sc

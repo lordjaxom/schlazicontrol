@@ -21,7 +21,55 @@ namespace sc {
     {
         return ( value - fromMin ) * ( toMax - toMin ) / ( fromMax - fromMin ) + toMin;
     }
-	
+
+    namespace detail {
+
+        template< typename Release >
+        class ScopeGuard
+        {
+        public:
+            ScopeGuard( Release release )
+                    : release_( std::move( release ) )
+            {
+            }
+
+            template< typename Acquire >
+            ScopeGuard( Acquire acquire, Release release )
+                    : release_( std::move( release ) )
+            {
+                try {
+                    acquire();
+                }
+                catch ( ... ) {
+                    release_ = nullptr;
+                    throw;
+                }
+            }
+
+            ScopeGuard( ScopeGuard const& ) = delete;
+
+            ScopeGuard( ScopeGuard&& other )
+                    : release_( std::move( other.release_ ))
+            {
+                other.release_ = nullptr;
+            }
+
+            ~ScopeGuard()
+            {
+                if ( release_ ) {
+                    release_;
+                }
+            }
+
+        private:
+            Release release_;
+            std::size_t locked_;
+        };
+
+    } // namespace detail
+
+
+
 	namespace detail {
 
 		inline void strWrite( std::ostream& os ) {}

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "input.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
 #include "output_pwm.hpp"
@@ -13,9 +14,10 @@ namespace sc {
 	static Logger logger( "output_pwm" );
 
 	static PropertyKey const gpioPinsProperty( "gpioPins" );
+    static PropertyKey const inputProperty( "input" );
 
-	SoftPwmOutput::SoftPwmOutput( Manager& manager, string id, PropertyNode const& properties )
-		: Output( move( id ) )
+	SoftPwmOutput::SoftPwmOutput( string&& id, Manager& manager, PropertyNode const& properties )
+		: Component( move( id ) )
 		, manager_( manager )
 		, device_( manager_ )
 	{
@@ -27,7 +29,10 @@ namespace sc {
 					device_.softPwmCreate( gpioPin );
 					return gpioPin;
 				} );
-	}
+
+        auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ] );
+        connect( input, *this, [this]( ChannelBuffer const& values ) { set( values ); } );
+    }
 
 	void SoftPwmOutput::set( ChannelBuffer const& values )
 	{

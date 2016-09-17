@@ -18,13 +18,13 @@ namespace sc {
 		: public Output
 	{
 	public:
-		SoftPwmOutput( Manager& manager, std::string id, PropertyNode const& properties );
+		SoftPwmOutput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return gpioPins_.size() == channels; }
 
-		virtual void set( ChannelBuffer const& value ) override;
-
 	private:
+		void set( ChannelBuffer const& values );
+
 		Manager& manager_;
 		GpioDevice device_;
 		std::vector< std::uint16_t > gpioPins_;

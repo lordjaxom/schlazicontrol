@@ -1,6 +1,7 @@
 #ifndef SCHLAZICONTROL_COMPONENT_HPP
 #define SCHLAZICONTROL_COMPONENT_HPP
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -19,17 +20,22 @@ namespace sc {
 
 	class Component
 	{
-	public:
-		Component( std::string category, std::string id );
+        template< typename Type > friend class ComponentRegistry;
+
+    public:
+        Component();
+		explicit Component( std::string&& id );
         Component( Component const& ) = delete;
         virtual ~Component();
 
-        std::string const& category() const { return category_; }
         std::string const& id() const { return id_; }
+        std::string const& category() const { return *category_; }
+        std::string const& name() const { return *name_; }
 
     private:
-        std::string category_;
         std::string id_;
+        std::string const* category_;
+        std::string const* name_;
 	};
 
     /**
@@ -40,23 +46,23 @@ namespace sc {
 	{
         template< typename Type > friend class ComponentRegistry;
 
-		using Factory = Component* ( Manager&, std::string, PropertyNode const& );
+		using Factory = std::function< std::unique_ptr< Component > ( std::string&&, Manager&, PropertyNode const& ) >;
 
     public:
         static ComponentFactory& instance();
 
-		std::string generateId( std::string const& name );
+		std::string generateId( std::string const& type );
 
-		std::unique_ptr< Component > create(
-				Manager& manager, std::string const& name, std::string id, PropertyNode const& properties );
+        std::unique_ptr< Component > create(
+                std::string const& type, std::string id, Manager& manager, PropertyNode const& properties );
 
 	private:
-		ComponentFactory() = default;
+		ComponentFactory();
 		ComponentFactory( ComponentFactory const& ) = delete;
 
-		void put( std::string&& name, Factory* factory );
+		void put( std::string&& name, Factory factory );
 
-		std::map< std::string, Factory* > components_;
+		std::map< std::string, Factory > components_;
         std::size_t generatedId_;
 	};
 
@@ -68,14 +74,29 @@ namespace sc {
 	class ComponentRegistry
 	{
 	public:
-		ComponentRegistry( std::string name )
+		ComponentRegistry( std::string const& category, std::string const& name )
+                : ComponentRegistry( category, name, str( category, ".", name ) )
 		{
-			ComponentFactory::instance().put(
-                    std::move( name ), []( Manager& manager, std::string id, PropertyNode const& properties ) {
-                        return static_cast< Component* >( new Type( manager, std::move( id ), properties ) );
-                    } );
 		}
-	};
+
+        ComponentRegistry( std::string const& name )
+                : ComponentRegistry( name, name, name )
+        {
+        }
+
+    private:
+        ComponentRegistry( std::string const& category, std::string const& name, std::string type )
+        {
+            ComponentFactory::instance().put(
+                    std::move( type ),
+                    [category, name]( std::string&& id, Manager& manager, PropertyNode const& properties ) {
+                        std::unique_ptr< Component > result( new Type( std::move( id ), manager, properties ) );
+                        result->category_ = &category;
+                        result->name_ = &name;
+                        return result;
+                    } );
+        }
+    };
 
 } // namespace sc
 

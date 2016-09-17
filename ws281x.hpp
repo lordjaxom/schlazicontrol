@@ -37,7 +37,7 @@ namespace sc {
 		: public Component
 	{
 	public:
-		Ws281x( Manager& manager, std::string id, PropertyNode const& properties );
+		Ws281x( std::string&& id, Manager& manager, PropertyNode const& properties );
         ~Ws281x();
 
 		std::size_t ledCount() const { return ledCount_; }

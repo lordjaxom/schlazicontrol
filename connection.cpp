@@ -1,6 +1,9 @@
+#include <algorithm>
 #include <functional>
 #include <stdexcept>
 #include <utility>
+
+#include <boost/iterator/transform_iterator.hpp>
 
 #include "connection.hpp"
 #include "input.hpp"
@@ -12,55 +15,73 @@ using namespace std;
 
 namespace sc {
 
-    static void checkReveiverAcceptsChannels(
-            Component const& sender, Component const& receiver, size_t channels, bool accepts )
+    static unique_ptr< TransitionInstance > createInstance( Manager& manager, string const& id, PropertyNode const& properties )
     {
-        if ( !accepts ) {
+        auto& transition = manager.get< Transition >( id, properties );
+        return transition.instantiate();
+    }
+
+    static vector< unique_ptr< TransitionInstance > > createInstances(
+            Manager& manager, string const& id, PropertyNode const& properties )
+    {
+        auto transformer = [&]( PropertyNode const& node ) { return createInstance( manager, id, node ); };
+        auto first = boost::make_transform_iterator( properties.begin(), transformer );
+        auto last = boost::make_transform_iterator( properties.end(), transformer );
+        return vector< unique_ptr< TransitionInstance > >( first, last );
+    }
+
+    static void checkReveiverAcceptsChannels(
+            Component const& sender, TransitionInstance const& receiver, size_t channels )
+    {
+        if ( !receiver.acceptsChannels( channels ) ) {
             throw runtime_error( str(
-                    "invalid connection between ", sender.category(), " ", sender.id(), " and ", receiver.category(),
-                    " ", receiver.id(), ": receiver won't accept ", channels, " output channels" ) );
+                    "invalid connection between ", sender.name(), " ", sender.category(), " \"", sender.id(), "\" and ",
+                    receiver.transition().name(), " ", receiver.transition().category(), " \"",
+                    receiver.transition().id(), "\": ", receiver.transition().category(), " won't accept ",
+                    channels, " output channels" ) );
         }
     }
 
 	static PropertyKey const inputProperty( "input" );
 	static PropertyKey const transitionsProperty( "transitions" );
-	static PropertyKey const outputProperty( "output" );
 
-	Connection::Connection( Manager& manager, string id, PropertyNode const& properties )
-		: Component( "connection", move( id ) )
-        , manager_( manager )
-		, output_( manager_.get< Output >( this->id(), properties[ outputProperty ].as< string >() ) )
+	Connection::Connection( string&& id, Manager& manager, PropertyNode const& properties )
+            : Component( move( id ) )
+            , manager_( manager )
+            , instances_( createInstances( manager_, this->id(), properties[ transitionsProperty ] ) )
 	{
-        auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ].as< string >() );
+        auto& input = manager_.get< Input >( this->id(), properties[ inputProperty ] );
 
-        size_t channels = input.channels();
         Component const* sender = &input;
-		for ( auto const& transitionNode : properties[ transitionsProperty ] ) {
-			auto& transition = manager_.get< Transition >( this->id(), transitionNode );
-            checkReveiverAcceptsChannels( *sender, transition, channels, transition.acceptsChannels( channels ) );
-            channels = transition.channels( channels );
-            sender = &transition;
-			transitions_.push_back( transition.instantiate() );
-		}
-        checkReveiverAcceptsChannels( *sender, output_, channels, output_.acceptsChannels( channels ) );
+        channels_ = input.emitsChannels();
+        for ( auto const& instance : instances_ ) {
+            checkConnection( *sender, instance->transition(), *instance, channels_ );
+            sender = &instance->transition();
+            channels_ = instance->emitsChannels( channels_ );
+        }
 
-        input.inputChangeEvent().subscribe( [this]( ChannelValue const& value ) { transfer( value ); } );
+        connect( input, *this, [this]( ChannelBuffer const& value ) { transfer( value ); } );
 	}
 
-    void Connection::transfer( ChannelValue const& value )
+    bool Connection::acceptsChannels( size_t channels ) const
+    {
+        return !instances_.empty() ? instances_.front()->acceptsChannels( channels ) : true;
+    }
+
+    void Connection::transfer( ChannelBuffer values )
 	{
-		ChannelBuffer values { lastValue_ = value };
-		for ( auto& transition : transitions_ ) {
-			transition->transform( *this, values );
+        lastValues_ = values;
+		for ( auto& instance : instances_ ) {
+            instance->transform( *this, values );
 		}
-        output_.set( values );
+        inputChangeEvent_( values );
 	}
 
 	void Connection::retransfer()
 	{
-		transfer( lastValue_ );
+		transfer( move( lastValues_ ) );
 	}
 
-	static ComponentRegistry< Connection > registry( "connection" );
+    static ComponentRegistry< Connection > registry( "connection" );
 
 } // namespace sc

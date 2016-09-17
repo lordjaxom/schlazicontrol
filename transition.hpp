@@ -4,7 +4,8 @@
 #include <memory>
 #include <string>
 
-#include "component.hpp"
+#include "input.hpp"
+#include "output.hpp"
 #include "utility.hpp"
 
 namespace sc {
@@ -12,22 +13,23 @@ namespace sc {
     class ChannelBuffer;
     class Connection;
 
-    namespace detail {
-
-        struct EmptyTransitionState {};
-
-    } // namespace detail
-
     /**
-     * class TransitionStateBase
+     * class TransitionInstance
      */
 
-    class TransitionStateBase
+    class Transition;
+
+    class TransitionInstance
     {
     public:
-        TransitionStateBase();
-        TransitionStateBase( TransitionStateBase const& ) = delete;
-        virtual ~TransitionStateBase();
+        TransitionInstance();
+        TransitionInstance( TransitionInstance const& ) = delete;
+        virtual ~TransitionInstance();
+
+        virtual Transition const& transition() const = 0;
+
+        virtual bool acceptsChannels( std::size_t channels ) const = 0;
+        virtual std::size_t emitsChannels( std::size_t channels ) const = 0;
 
         virtual void transform( Connection& connection, ChannelBuffer& values ) = 0;
     };
@@ -36,16 +38,21 @@ namespace sc {
      * class TransitionState
      */
 
-    template< typename Transition, typename State = detail::EmptyTransitionState >
-    class TransitionState
-            : public TransitionStateBase
+    template< typename Transition, typename State = std::nullptr_t >
+    class TransitionInstanceImpl final
+            : public TransitionInstance
     {
     public:
-        TransitionState( Transition const& transition )
+        TransitionInstanceImpl( Transition const& transition )
                 : transition_( transition )
                 , state_()
         {
         }
+
+        virtual Transition const& transition() const override { return transition_; }
+
+        virtual bool acceptsChannels( std::size_t channels ) const override { return transition_.acceptsChannels( channels ); }
+        virtual std::size_t emitsChannels( std::size_t channels ) const override { return transition_.emitsChannels( channels ); }
 
         virtual void transform( Connection& connection, ChannelBuffer& values ) override
         {
@@ -53,7 +60,7 @@ namespace sc {
         }
 
     private:
-        void transform( Connection& connection, ChannelBuffer& values, detail::EmptyTransitionState )
+        void transform( Connection& connection, ChannelBuffer& values, std::nullptr_t )
         {
             transition_.transform( connection, values );
         }
@@ -68,24 +75,31 @@ namespace sc {
         State state_;
     };
 
+    /**
+     * class Transition
+     */
+
     class Transition
-        : public Component
+            : public Component
     {
     public:
-        explicit Transition( std::string id );
+        explicit Transition( std::string&& id );
 
-        virtual std::size_t channels( std::size_t channels ) const = 0;
-        virtual bool acceptsChannels( std::size_t channels ) const = 0;
-
-        virtual std::unique_ptr< TransitionStateBase > instantiate() const = 0;
+        virtual std::unique_ptr< TransitionInstance > instantiate() const = 0;
     };
+
+    /**
+     * class TransitionRegistry
+     */
 
     template< typename Type >
     class TransitionRegistry
         : public ComponentRegistry< Type >
     {
     public:
-        TransitionRegistry( char const* name ) : ComponentRegistry< Type >( str( "transition.", name ) ) {}
+        TransitionRegistry( char const* name ) : ComponentRegistry< Type >( "transition", name )
+        {
+        }
     };
 
 } // namespace sc

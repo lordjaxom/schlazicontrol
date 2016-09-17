@@ -40,16 +40,16 @@ namespace sc {
 
     static PropertyKey const speedProperty( "speed" );
 
-    FadeTransition::FadeTransition( Manager& manager, string id, PropertyNode const& properties )
+    FadeTransition::FadeTransition( string&& id, Manager& manager, PropertyNode const& properties )
             : Transition( move( id ) )
             , manager_( manager )
             , speed_( chrono::milliseconds( properties[ speedProperty ].as< chrono::milliseconds::rep >() ) )
     {
     }
 
-    std::unique_ptr< TransitionStateBase > FadeTransition::instantiate() const
+    std::unique_ptr< TransitionInstance > FadeTransition::instantiate() const
     {
-        return unique_ptr< TransitionStateBase >( new TransitionState< FadeTransition, FadeTransitionState >( *this ) );
+        return unique_ptr< TransitionInstance >( new TransitionInstanceImpl< FadeTransition, FadeTransitionState >( *this ) );
     }
 
     void FadeTransition::transform( FadeTransitionState& state, Connection& connection, ChannelBuffer& values ) const
@@ -60,7 +60,7 @@ namespace sc {
             state.deltas.resize( values.size() );
         }
 
-        Scoped scoped( values, state.output );
+        Scoped scoped( [&state, &values] { values = state.output; state.deltasKnown = false; } );
         state.target = move( values );
 
         bool changed = false;
@@ -69,9 +69,6 @@ namespace sc {
             logger.debug(
                     "fade through input change from ", state.output[ 0 ].get(), " to ", state.target[ 0 ].get(),
                     " - delta is ", state.deltas[ 0 ] );
-        }
-        else {
-            scoped.push( state.deltasKnown );
         }
 
         if ( calculateOutput( state ) ) {

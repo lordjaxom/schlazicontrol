@@ -14,8 +14,8 @@ namespace sc {
 	static PropertyKey const gpioPinProperty( "gpioPin" );
 	static PropertyKey const pullProperty( "pull", "off" );
 
-	GpioInput::GpioInput( Manager& manager, string id, PropertyNode const& properties )
-		: Input( move( id ) )
+	GpioInput::GpioInput( string&& id, Manager& manager, PropertyNode const& properties )
+		: Component( move( id ) )
         , manager_( manager )
 		, device_( manager_ )
 		, gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
@@ -33,7 +33,7 @@ namespace sc {
 		value_ = device_.digitalRead( gpioPin_ );
 		if ( lastValue != value_ ) {
             logger.debug( "gpio on pin ", gpioPin_, " changed to ", value_ );
-			inputChangeEvent_( ChannelValue( value_ ) );
+			inputChangeEvent_( ChannelBuffer { value_ } );
 		}
 	}
 

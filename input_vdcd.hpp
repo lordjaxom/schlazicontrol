@@ -16,9 +16,9 @@ namespace sc {
 		: public Input
 	{
 	public:
-		VdcdInput( Manager& manager, std::string id, PropertyNode const& properties );
+		VdcdInput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-        virtual std::size_t channels() const override { return 1; }
+        virtual std::size_t emitsChannels() const override { return 1; }
 
 	private:
 		void set( double value );

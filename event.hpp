@@ -10,6 +10,8 @@
 
 #include <boost/iterator/iterator_adaptor.hpp>
 
+#include "scoped.hpp"
+
 namespace sc {
 
     /**
@@ -72,17 +74,19 @@ namespace sc {
     template< typename ...Args >
     class EventInterface< void ( Args... ) >
     {
+        using Signature = void ( Args... );
+        using ExtendedSignature = void ( EventConnection const&, Args... );
+
+        using Holder = detail::EventHandlerHolder< Signature >;
+
     public:
-        using Holder = detail::EventHandlerHolder< void ( Args... ) >;
-
-        using Handler = std::function< void ( Args... ) >;
-        using ExtendedHandler = std::function< void ( EventConnection const&, Args... ) >;
-
-        using const_iterator = detail::EventHandlerIterator< void ( Args... ) >;
+        using Handler = std::function< Signature >;
+        using ExtendedHandler = std::function< ExtendedSignature >;
 
         EventConnection subscribe( ExtendedHandler handler )
         {
-            auto it = handlers_.emplace( handlers_.end(), locked_ );
+            auto guard = lock();
+            auto it = inserted_.emplace( handlers_.end() );
             EventConnection connection( [this, it] { erase( it ); } );
             *it = [handler, connection]( Args... args ) { handler( connection, args... ); };
             return connection;
@@ -90,50 +94,54 @@ namespace sc {
 
         EventConnection subscribe( Handler handler, bool oneShot = false )
         {
-            auto it = handlers_.emplace( handlers_.end(), locked_ );
+            auto guard = lock();
+            auto it = inserted_.emplace( handlers_.end() );
             EventConnection connection( [this, it] { erase( it ); } );
             *it = oneShot
-                    ? [handler, connection]( Args... args ) {
+                  ? [handler, connection]( Args... args ) {
                         EventScope scope( std::move( connection ) );
                         handler( args... );
                     }
-                    : std::move( handler );
+                  : std::move( handler );
             return connection;
         }
 
     protected:
-        void lock()
+        template< typename ...T >
+        void operator()( T&&... args )
         {
-            locked_ = true;
-        }
-
-        void unlock()
-        {
-            if ( locked_ ) {
-                handlers_.remove_if( []( Holder& holder ) {
-                    holder.inserted = false;
-                    return holder.erased;
-                } );
-                locked_ = false;
-            }
-        }
-
-        const_iterator begin() const { return const_iterator( handlers_.begin(), handlers_.end() ); }
-        const_iterator end() const { return const_iterator( handlers_.end(), handlers_.end() ); }
+            auto guard = lock();
+            std::for_each(
+                    handlers_.begin(), handlers_.end(),
+                    [&args...]( Holder const& holder ) {
+                        if ( !holder.erased ) {
+                            holder.handler( std::forward< T >( args )... );
+                        }
+                    } );
+        };
 
     private:
+        Scoped lock()
+        {
+            return Scoped(
+                    [this] { ++locked_; },
+                    [this] {
+                        if ( --locked_ == 0 ) {
+                            handlers_.remove_if( []( Holder& holder ) { return holder.erased; } );
+                            handlers_.splice( handlers_.end(), inserted_ );
+                        }
+                    } );
+        }
+
         void erase( typename std::list< Holder >::iterator it )
         {
-            if ( locked_ ) {
-                it->erased = true;
-            }
-            else {
-                handlers_.erase( it );
-            }
+            auto guard = lock();
+            it->erased = true;
         }
 
         std::list< Holder > handlers_;
-        bool locked_ {};
+        std::list< Holder > inserted_;
+        std::size_t locked_ {};
     };
 
     namespace detail {
@@ -143,19 +151,17 @@ namespace sc {
         {
             using Handler = typename EventInterface< Signature >::Handler;
 
-            EventHandlerHolder( bool locked ) : inserted( locked ) {}
             EventHandlerHolder& operator=( Handler&& handler ) { this->handler = std::move( handler ); return *this; }
 
             Handler handler;
             bool erased {};
-            bool inserted;
         };
 
         template< typename Signature >
         struct EventHandlerIterator
                 : boost::iterator_adaptor<
                         EventHandlerIterator< Signature >,
-                        typename std::list< typename EventInterface< Signature >::Holder >::const_iterator,
+                        typename std::list< detail::EventHandlerHolder< Signature > >::const_iterator,
                         typename EventInterface< Signature >::Handler const,
                         boost::incrementable_traversal_tag >
         {
@@ -201,15 +207,7 @@ namespace sc {
 
         Interface& interface() { return *static_cast< Interface* >( this ); }
 
-        template< typename ...T >
-        void operator()( T&&... args )
-        {
-            std::shared_ptr< void > guard( nullptr, [this]( void const* ) { this->unlock(); } );
-            this->lock();
-            std::for_each(
-                    this->begin(), this->end(),
-                    [&args...]( Handler const& handler ) { handler( std::forward< T >( args )... ); } );
-        };
+        using Interface::operator();
     };
 
 } // namespace sc

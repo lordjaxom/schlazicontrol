@@ -16,11 +16,11 @@ namespace sc {
 		: public Input
 	{
 	public:
-		GpioInput( Manager& manager, std::string id, PropertyNode const& properties );
+		GpioInput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
 		bool get() const { return value_; }
 
-		virtual std::size_t channels() const override { return 1; }
+		virtual std::size_t emitsChannels() const override { return 1; }
 
 	private:
 		void poll();
