@@ -1,15 +1,12 @@
 #include <utility>
 
 #include "input_vdcd.hpp"
-#include "logging.hpp"
 #include "manager.hpp"
 #include "types.hpp"
 
 using namespace std;
 
 namespace sc {
-
-    static Logger logger( "input_vdcd" );
 
 	static PropertyKey const vdcdProperty( "vdcd" );
 	static PropertyKey const dsuidProperty( "dsuid" );
@@ -32,7 +29,6 @@ namespace sc {
 	{
         if ( value != value_ ) {
             value_ = value;
-            logger.debug( "vdcd input ", id(), " set to ", value_ );
             inputChangeEvent_( ChannelBuffer { { value_, 0.0, 100.0 } } );
         }
 	}

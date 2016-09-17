@@ -1,15 +1,12 @@
 #include <utility>
 
 #include "input_gpio.hpp"
-#include "logging.hpp"
 #include "manager.hpp"
 #include "types.hpp"
 
 using namespace std;
 
 namespace sc {
-
-	static Logger logger( "input_gpio" );
 
 	static PropertyKey const gpioPinProperty( "gpioPin" );
 	static PropertyKey const pullProperty( "pull", "off" );
@@ -32,15 +29,13 @@ namespace sc {
 		bool lastValue = value_;
 		value_ = device_.digitalRead( gpioPin_ );
 		if ( lastValue != value_ ) {
-            logger.debug( "gpio on pin ", gpioPin_, " changed to ", value_ );
 			inputChangeEvent_( ChannelBuffer { value_ } );
 		}
 	}
 
 	void GpioInput::statistics( ostream& os ) const
 	{
-		os << "gpio: " << gpioPin_ << "; "
-           << "value: " << value_;
+		os << "value: " << value_;
 	}
 
 	static InputRegistry< GpioInput > registry( "gpio" );

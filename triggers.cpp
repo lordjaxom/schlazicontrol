@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "logging.hpp"
 #include "manager.hpp"
 #include "timer.hpp"
 #include "triggers.hpp"
@@ -9,8 +8,6 @@
 using namespace std;
 
 namespace sc {
-
-    static Logger logger( "triggers" );
 
     namespace triggers {
 
@@ -53,12 +50,7 @@ namespace sc {
         {
             bool old = value_.matches( context.lastInput() );
             bool current = value_.matches( context.input() );
-            if ( !old && current ) {
-                logger.debug(
-                        "change event applies, changed from ", context.lastInput().get(), " to ", context.input().get() );
-                return true;
-            }
-            return false;
+            return !old && current;
         }
 
         /*
@@ -72,11 +64,7 @@ namespace sc {
 
         bool TimeoutEvent::applies( Context const& context ) const
         {
-            if ( context.timerExpired( timer_ ) ) {
-                logger.debug( "timer ", timer_, " expired" );
-                return true;
-            }
-            return false;
+            return context.timerExpired( timer_ );
         }
 
         /*
@@ -96,7 +84,6 @@ namespace sc {
 
         void SetOutcome::invoke( Context& context ) const
         {
-            logger.debug( "set outcome triggered with value ", value_.get().get() );
             context.set( value_.get() );
         }
 
@@ -112,7 +99,6 @@ namespace sc {
 
         void StartTimerOutcome::invoke( Context& context ) const
         {
-            logger.debug( "starting timer ", timer_, " with ", timeout_.count(), "ns" );
             context.startTimer( timer_, timeout_ );
         }
 
@@ -127,7 +113,6 @@ namespace sc {
 
         void StopTimerOutcome::invoke( Context& context ) const
         {
-            logger.debug( "explicitly stopping timer ", timer_ );
             context.stopTimer( timer_ );
         }
 
@@ -179,8 +164,6 @@ namespace sc {
             State* state = &state_;
             auto it = state_.timers.emplace( timer, nullptr ).first;
             it->second.reset( new Timer( manager_, timeout, [timer, connection, state, it] {
-                logger.debug( "timeout handler fired" );
-
                 unique_ptr< Timer > ptr( move( it->second ) );
                 state->timers.erase( it );
 

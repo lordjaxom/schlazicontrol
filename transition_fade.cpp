@@ -6,7 +6,6 @@
 
 #include "connection.hpp"
 #include "event.hpp"
-#include "logging.hpp"
 #include "manager.hpp"
 #include "properties.hpp"
 #include "scoped.hpp"
@@ -17,8 +16,6 @@
 using namespace std;
 
 namespace sc {
-
-    static Logger logger( "transition_fade" );
 
     /**
      * struct FadeTransitionState
@@ -55,7 +52,6 @@ namespace sc {
     void FadeTransition::transform( FadeTransitionState& state, Connection& connection, ChannelBuffer& values ) const
     {
         if ( state.output.empty() ) {
-            logger.debug( "fade transition first transform" );
             state.output.resize( values.size() );
             state.deltas.resize( values.size() );
         }
@@ -66,18 +62,13 @@ namespace sc {
         bool changed = false;
         if ( !state.deltasKnown ) {
             changed = calculateDeltas( state );
-            logger.debug(
-                    "fade through input change from ", state.output[ 0 ].get(), " to ", state.target[ 0 ].get(),
-                    " - delta is ", state.deltas[ 0 ] );
         }
 
         if ( calculateOutput( state ) ) {
-            logger.debug( "fade to ", state.output[ 0 ].get() );
             changed = true;
         }
 
         if ( !changed ) {
-            logger.debug( "no change, resetting poll receiver" );
             state.pollEventScope = nullptr;
             return;
         }

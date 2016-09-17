@@ -51,12 +51,16 @@ namespace sc {
     void StatisticsWriter< ChannelBuffer >::operator()( std::ostream& os, ChannelBuffer const& values )
     {
         os << "[";
-        transform(
-                values.begin(), next( values.begin(), min( values.size(), statisticsOutputCount ) ),
-                ostream_iterator< Statistics< ChannelValue > >( os, ", " ),
-                []( auto const& value ) { return makeStatistics( value ); } );
-        if ( values.size() > statisticsOutputCount ) {
-            os << ", ...";
+        auto count = min( values.size(), statisticsOutputCount );
+        if ( count > 0 ) {
+            auto last = next( values.begin(), count - 1 );
+            transform(
+                    values.begin(), last, ostream_iterator< Statistics< ChannelValue > >( os, ", " ),
+                    []( auto const& value ) { return makeStatistics( value ); } );
+            os << makeStatistics( *last );
+            if ( values.size() > statisticsOutputCount ) {
+                os << ", ...";
+            }
         }
         os << "]";
     }
