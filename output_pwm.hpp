@@ -7,10 +7,10 @@
 
 #include "gpio.hpp"
 #include "output.hpp"
+#include "types.hpp"
 
 namespace sc {
 
-	class ChannelBuffer;
 	class Manager;
 	class PropertyNode;
 
@@ -22,6 +22,8 @@ namespace sc {
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return gpioPins_.size() == channels; }
 
+        virtual void statistics( std::ostream& os ) const override;
+
 	protected:
         virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
@@ -29,6 +31,7 @@ namespace sc {
 		Manager& manager_;
 		GpioDevice device_;
 		std::vector< std::uint16_t > gpioPins_;
+        ChannelBuffer values_;
 	};
 
 } // namespace sc

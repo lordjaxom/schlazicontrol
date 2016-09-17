@@ -1,4 +1,5 @@
 #include <cassert>
+#include <ostream>
 #include <stdexcept>
 
 #include "component.hpp"
@@ -59,5 +60,18 @@ namespace sc {
                     "unable to register component type \"", it.first->first, "\": type already registered" ) );
 		}
 	}
+
+    /**
+     * struct StatisticsWriter specialization
+     */
+
+    void StatisticsWriter< Component >::operator()( ostream& os, Component const& component )
+    {
+        if ( component.statistics() ) {
+            os << "\n\tcomponent {" << component.category() << "." << component.name() << ":" << component.id()
+               << "} : ";
+            component.statistics( os );
+        }
+    }
 
 } // namespace sc

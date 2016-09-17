@@ -2,11 +2,13 @@
 #define SCHLAZICONTROL_COMPONENT_HPP
 
 #include <functional>
+#include <iosfwd>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "statistics.hpp"
 #include "utility.hpp"
 
 namespace sc {
@@ -31,6 +33,9 @@ namespace sc {
         std::string const& id() const { return id_; }
         std::string const& category() const { return *category_; }
         std::string const& name() const { return *name_; }
+
+        virtual bool statistics() const { return true; }
+        virtual void statistics( std::ostream& os ) const = 0;
 
     private:
         std::string id_;
@@ -96,6 +101,16 @@ namespace sc {
                         return result;
                     } );
         }
+    };
+
+    /**
+     * struct StatisticsWriter specialization
+     */
+
+    template<>
+    struct StatisticsWriter< Component >
+    {
+        void operator()( std::ostream& os, Component const& component );
     };
 
 } // namespace sc

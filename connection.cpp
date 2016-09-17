@@ -58,17 +58,25 @@ namespace sc {
 
 	void Connection::transfer()
 	{
-        auto values = lastValues_;
+        outputValues_ = inputValues_;
         for_each(
                 instances_.begin(), instances_.end(),
-                [this, &values]( unique_ptr< TransitionInstance > const& instance ) { instance->transform( *this, values ); } );
-        inputChangeEvent_( values );
+                [this]( unique_ptr< TransitionInstance > const& instance ) {
+                    instance->transform( *this, outputValues_ );
+                } );
+        inputChangeEvent_( outputValues_ );
 	}
 
     void Connection::set( Input const& input, ChannelBuffer const& values )
     {
-        lastValues_ = values;
+        inputValues_ = values;
         transfer();
+    }
+
+    void Connection::statistics( ostream& os ) const
+    {
+        os << "input values: " << makeStatistics( inputValues_ ) << "; "
+           << "output values: " << makeStatistics( outputValues_ );
     }
 
     static ComponentRegistry< Connection > registry( "connection" );

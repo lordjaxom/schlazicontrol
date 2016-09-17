@@ -3,18 +3,14 @@
 #include <stdexcept>
 #include <system_error>
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/find.hpp>
-#include <boost/algorithm/string/find_iterator.hpp>
-#include <boost/algorithm/string/trim.hpp>
 #include <json/reader.h>
 
+#include "expression.hpp"
 #include "logging.hpp"
 #include "properties.hpp"
 #include "utility.hpp"
 
 using namespace std;
-using namespace boost::algorithm;
 
 namespace sc {
 
@@ -195,10 +191,27 @@ namespace sc {
             return node.value_->asBool();
         }
 
-        template< typename Type, typename Value >
-        bool propertyCheckRange( Value value )
+        bool PropertyConverter< chrono::nanoseconds >::is( PropertyNode const& node )
         {
-            return value >= numeric_limits< Type >::min() && value <= numeric_limits< Type >::max();
+            if ( !node.value_->isString() ) {
+                return false;
+            }
+
+            try {
+                convert( node );
+                return true;
+            }
+            catch ( ... ) {
+                return false;
+            }
+        }
+
+        chrono::nanoseconds PropertyConverter< chrono::nanoseconds >::convert( PropertyNode const& node )
+        {
+            if ( !node.value_->isString() ) {
+                throw invalidType( node, "duration string" );
+            }
+            return expression::parseDuration( node.value_->asString() );
         }
 
     } // namespace detail

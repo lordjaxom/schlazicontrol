@@ -5,12 +5,12 @@
 #include <string>
 
 #include "output.hpp"
+#include "types.hpp"
 #include "ws281x.hpp"
 
 namespace sc {
 
 	class Manager;
-	class ChannelBuffer;
 	class PropertyNode;
 
 	class Ws281xOutput final
@@ -21,12 +21,15 @@ namespace sc {
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return device_.channelCount() == channels; }
 
+        virtual void statistics( std::ostream& os ) const override;
+
 	protected:
 		virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
 	private:
 		Manager& manager_;
 		Ws281xDevice device_;
+        ChannelBuffer values_;
 	};
 
 } // namespace sc

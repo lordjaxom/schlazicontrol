@@ -41,20 +41,20 @@ namespace sc {
     static unique_ptr< triggers::Event > parseEvent( string const& event )
     {
         using namespace expression;
-        return parse< triggers::Event >(
+        return parseExpression< triggers::Event >(
                 event,
                 Factory< ChangeEvent, ValueParser >( "change" ),
-                Factory< TimeoutEvent, size_t >( "timeout" ) );
+                Factory< TimeoutEvent, size_t >( "timeout" ));
     }
 
     static unique_ptr< Outcome > parseOutcome( string const& outcome )
     {
         using namespace expression;
-        return parse< Outcome >(
+        return parseExpression< Outcome >(
                 outcome,
                 Factory< SetOutcome, ValueParser >( "set" ),
                 Factory< StartTimerOutcome, size_t, chrono::nanoseconds >( "startTimer" ),
-                Factory< StopTimerOutcome, size_t >( "stopTimer" ) );
+                Factory< StopTimerOutcome, size_t >( "stopTimer" ));
     }
 
     static vector< unique_ptr< Outcome > > parseOutcomes( PropertyList< string > const& outcomes )

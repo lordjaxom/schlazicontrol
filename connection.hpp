@@ -26,6 +26,8 @@ namespace sc {
         virtual bool acceptsChannels( std::size_t channels ) const override;
         virtual std::size_t emitsChannels() const override { return channels_; }
 
+        virtual void statistics( std::ostream& os ) const override;
+
         void transfer();
 
     protected:
@@ -35,7 +37,8 @@ namespace sc {
         Manager& manager_;
 		std::vector< std::unique_ptr< TransitionInstance > > instances_;
         std::size_t channels_;
-        ChannelBuffer lastValues_;
+        ChannelBuffer inputValues_;
+        ChannelBuffer outputValues_;
 	};
 
 } // namespace sc

@@ -3,11 +3,12 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <iosfwd>
 #include <vector>
 
 #include <boost/operators.hpp>
 
-#include "utility.hpp"
+#include "statistics.hpp"
 
 namespace sc {
 
@@ -44,7 +45,7 @@ namespace sc {
 	class ChannelBuffer
 	{
 	public:
-		using Values = std::vector< ChannelValue >;
+        using Values = std::vector< ChannelValue >;
 
 		ChannelBuffer();
 		explicit ChannelBuffer( std::initializer_list< ChannelValue > initializer );
@@ -68,6 +69,18 @@ namespace sc {
 	private:
 		Values values_;
 	};
+
+    template<>
+    struct StatisticsWriter< ChannelValue >
+    {
+        void operator()( std::ostream& os, ChannelValue const& value );
+    };
+
+    template<>
+    struct StatisticsWriter< ChannelBuffer >
+    {
+        void operator()( std::ostream& os, ChannelBuffer const& values );
+    };
 
 } // namespace sc
 

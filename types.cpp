@@ -1,9 +1,15 @@
+#include <algorithm>
+#include <iterator>
+#include <ostream>
+
 #include "utility.hpp"
 #include "types.hpp"
 
 using namespace std;
 
 namespace sc {
+
+    static constexpr size_t statisticsOutputCount = 3;
 
 	ChannelValue::ChannelValue()
 		: value_()
@@ -36,5 +42,23 @@ namespace sc {
 	{
 		values_.resize( size );
 	}
+
+    void StatisticsWriter< ChannelValue >::operator()( ostream& os, ChannelValue const& value )
+    {
+        os << value.get();
+    }
+
+    void StatisticsWriter< ChannelBuffer >::operator()( std::ostream& os, ChannelBuffer const& values )
+    {
+        os << "[";
+        transform(
+                values.begin(), next( values.begin(), min( values.size(), statisticsOutputCount ) ),
+                ostream_iterator< Statistics< ChannelValue > >( os, ", " ),
+                []( auto const& value ) { return makeStatistics( value ); } );
+        if ( values.size() > statisticsOutputCount ) {
+            os << ", ...";
+        }
+        os << "]";
+    }
 
 } // namespace sc

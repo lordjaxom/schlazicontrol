@@ -454,6 +454,11 @@ namespace sc {
 		return false;
 	}
 
+	void Ws281x::statistics( std::ostream& os ) const
+	{
+		os << "connected: " << internals_->socket.is_open();
+	}
+
 	Ws281xDevice::Ws281xDevice(
             Component const& owner, Manager& manager, string const& ws281xId, size_t start, size_t count )
 	    	: ws281x_( manager.get< Ws281x >( owner, ws281xId ) )

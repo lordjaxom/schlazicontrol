@@ -30,8 +30,16 @@ namespace sc {
 
 	void VdcdInput::set( double value )
 	{
-        logger.debug( "vdcd input ", id(), " set to ", value );
-		inputChangeEvent_( ChannelBuffer { { value, 0.0, 100.0 } } );
+        if ( value != value_ ) {
+            value_ = value;
+            logger.debug( "vdcd input ", id(), " set to ", value_ );
+            inputChangeEvent_( ChannelBuffer { { value_, 0.0, 100.0 } } );
+        }
+	}
+
+	void VdcdInput::statistics( ostream& os ) const
+	{
+		os << "value: " << value_;
 	}
 
 	static InputRegistry< VdcdInput > registry( "vdcd" );

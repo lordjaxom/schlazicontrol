@@ -1,4 +1,6 @@
 #include <csignal>
+#include <algorithm>
+#include <iterator>
 #include <stdexcept>
 #include <system_error>
 
@@ -8,6 +10,7 @@
 #include "commandline.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
+#include "statistics.hpp"
 
 using namespace std;
 using namespace asio;
@@ -25,12 +28,14 @@ namespace sc {
         ManagerInternals()
                 : signals( service, SIGINT, SIGTERM )
                 , pollingTimer( service )
+                , statisticsTimer( service )
         {
         }
 
         io_service service;
         signal_set signals;
         steady_timer pollingTimer;
+        steady_timer statisticsTimer;
     };
 
     /**
@@ -38,12 +43,13 @@ namespace sc {
      */
 
     static PropertyKey const updateIntervalProperty( "updateInterval", 40 );
+    static PropertyKey const statisticsIntervalProperty( "statisticsInterval", 0 );
     static PropertyKey const componentsProperty( "components" );
 
     Manager::Manager( CommandLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
-		, updateInterval_(
-					chrono::milliseconds( properties_[ updateIntervalProperty ].as< chrono::milliseconds::rep >() ) )
+		, updateInterval_( properties_[ updateIntervalProperty ].as< chrono::nanoseconds >() )
+        , statisticsInterval_( properties_[ statisticsIntervalProperty ].as< chrono::nanoseconds >() )
         , internals_( new ManagerInternals )
 	{
         for ( auto componentNode : properties_[ componentsProperty ] ) {
@@ -67,6 +73,7 @@ namespace sc {
 	{
 		readyEvent_();
 		startPolling();
+        startStatistics();
         internals_->service.run();
 	}
 
@@ -116,5 +123,23 @@ namespace sc {
 			startPolling();
 		} );
 	}
+
+    void Manager::startStatistics()
+    {
+        if ( statisticsInterval_ == chrono::nanoseconds::zero() ) {
+            return;
+        }
+
+        internals_->statisticsTimer.expires_from_now( statisticsInterval_ );
+        internals_->statisticsTimer.async_wait( [this]( error_code ec ) {
+            if ( ec.value() == (int) errc::operation_canceled ) {
+                return;
+            }
+
+            logger.info( "statistics", makeStatistics( components_ ) );
+
+            startStatistics();
+        } );
+    }
 
 } // namespace sc

@@ -2,7 +2,7 @@
 #define SCHLAZICONTROL_MANAGER_HPP
 
 #include <chrono>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -18,6 +18,10 @@ namespace sc {
 
 	class CommandLine;
     class Component;
+
+    /**
+     * class Manager
+     */
 
     struct ManagerInternals;
 
@@ -66,14 +70,15 @@ namespace sc {
         void checkValidComponent( Component const& requester, Component const& component, void const* cast ) const;
 
 		void startPolling();
+        void startStatistics();
 
 		Properties properties_;
 		std::chrono::nanoseconds updateInterval_;
+        std::chrono::nanoseconds statisticsInterval_;
         std::unique_ptr< ManagerInternals > internals_;
-        std::map< std::string, std::unique_ptr< Component > > components_;
+        std::unordered_map< std::string, std::unique_ptr< Component > > components_;
 		ReadyEvent readyEvent_;
 		PollEvent pollEvent_;
-
 	};
 
 } // namespace sc

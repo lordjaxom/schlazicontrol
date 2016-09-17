@@ -85,6 +85,9 @@ namespace sc {
     public:
         explicit Transition( std::string&& id );
 
+        virtual bool statistics() const override { return false; }
+        virtual void statistics( std::ostream& os ) const override {}
+
         virtual std::unique_ptr< TransitionInstance > instantiate() const = 0;
     };
 
@@ -97,7 +100,8 @@ namespace sc {
         : public ComponentRegistry< Type >
     {
     public:
-        TransitionRegistry( char const* name ) : ComponentRegistry< Type >( "transition", name )
+        TransitionRegistry( char const* name )
+                : ComponentRegistry< Type >( "transition", name )
         {
         }
     };

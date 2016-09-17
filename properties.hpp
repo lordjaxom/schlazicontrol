@@ -1,6 +1,7 @@
 #ifndef SCHLAZICONTROL_PROPERTIES_HPP
 #define SCHLAZICONTROL_PROPERTIES_HPP
 
+#include <chrono>
 #include <initializer_list>
 #include <limits>
 #include <stdexcept>
@@ -280,6 +281,26 @@ namespace sc {
                 }
                 throw invalidType( node, typeName< Type >() );
             }
+        };
+
+        template<>
+        struct PropertyConverter< std::chrono::nanoseconds >
+        {
+            static bool is( PropertyNode const& node );
+            static std::chrono::nanoseconds convert( PropertyNode const& node );
+        };
+
+        template< typename Rep, typename Period >
+        struct PropertyConverter< std::chrono::duration< Rep, Period > >
+                : PropertyConverter< std::chrono::nanoseconds >
+        {
+            using BaseType = PropertyConverter< std::chrono::nanoseconds >;
+            using BaseType::is;
+
+            static std::chrono::duration< Rep, Period > convert( PropertyNode const& node )
+            {
+                return std::chrono::duration_cast< std::chrono::duration< Rep, Period > >( BaseType::convert( node ) );
+            };
         };
 
         template< typename Type, typename Enable >

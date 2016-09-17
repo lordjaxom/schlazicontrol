@@ -27,7 +27,12 @@ namespace sc {
 
     void Ws281xOutput::set( Input const& input, ChannelBuffer const& values )
     {
-        device_.send( values );
+        device_.send( values_ = values );
+    }
+
+    void Ws281xOutput::statistics( ostream& os ) const
+    {
+        os << "values: " << makeStatistics( values_ );
     }
 
     static OutputRegistry< Ws281xOutput > registry( "ws281x" );

@@ -37,6 +37,12 @@ namespace sc {
 		}
 	}
 
+	void GpioInput::statistics( ostream& os ) const
+	{
+		os << "gpio: " << gpioPin_ << "; "
+           << "value: " << value_;
+	}
+
 	static InputRegistry< GpioInput > registry( "gpio" );
 
 } // namespace sc

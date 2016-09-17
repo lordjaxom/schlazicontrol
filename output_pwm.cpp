@@ -34,13 +34,19 @@ namespace sc {
 
 	void SoftPwmOutput::set( Input const& input, ChannelBuffer const& values )
 	{
-        auto valuesIt = values.begin(), valuesEnd = values.end();
-        auto pinsIt = gpioPins_.begin(), pinsEnd = gpioPins_.end();
+        values_ = values;
+        auto valuesIt = values_.begin(), valuesEnd = values_.end();
+        auto pinsIt = gpioPins_.begin();
         for ( ; valuesIt != valuesEnd ; ++valuesIt, ++pinsIt ) {
             device_.softPwmWrite( *pinsIt, (uint16_t) valuesIt->get() );
         }
 	}
 
-	static OutputRegistry< SoftPwmOutput > registry( "softPwm" );
+    void SoftPwmOutput::statistics( ostream& os ) const
+    {
+        os << "values: " << makeStatistics( values_ );
+    }
+
+    static OutputRegistry< SoftPwmOutput > registry( "softPwm" );
 
 } // namespace sc

@@ -271,7 +271,12 @@ namespace sc {
 		return false;
 	}
 
-	VdcdDevice::VdcdDevice(
+    void Vdcd::statistics( std::ostream& os ) const
+    {
+        os << "connected: " << internals_->socket.is_open();
+    }
+
+    VdcdDevice::VdcdDevice(
             Component const& owner, Manager& manager, string const& vdcdId, string const& dsuid, int group,
 			string const& outputType, bool dimmable )
 		: vdcd_( manager.get< Vdcd >( owner, vdcdId ) )

@@ -93,7 +93,8 @@ set(SOURCE_FILES
         typeinfo.hpp
         typetraits.hpp
         scoped.hpp
-        scoped.cpp)
+        scoped.cpp
+        statistics.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

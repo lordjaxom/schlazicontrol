@@ -253,7 +253,7 @@ namespace sc {
         };
 
         template< typename Base, typename ...Factories >
-        std::unique_ptr< Base > parse( std::string const& text, Factories&&... factories );
+        std::unique_ptr< Base > parseExpression( std::string const& text, Factories&& ... factories );
 
         namespace detail {
 
@@ -378,15 +378,17 @@ namespace sc {
                         new Derived( expand< Args >( call, index++ )... ) );
             }
 
-            Call parse( std::string const& text );
+            Call parseExpression( std::string const& text );
 
         } // namespace detail
 
         template< typename Base, typename ...Factories >
-        std::unique_ptr< Base > parse( std::string const& text, Factories&&... factories )
+        std::unique_ptr< Base > parseExpression( std::string const& text, Factories&& ... factories )
         {
-            return detail::create< Base >( detail::parse( text ), std::forward< Factories >( factories )... );
+            return detail::create< Base >( detail::parseExpression( text ), std::forward< Factories >( factories )... );
         }
+
+        std::chrono::nanoseconds parseDuration( std::string const& text );
 
     } // namespace expression
 
