@@ -65,42 +65,42 @@ namespace sc {
 
     void Manager::run()
 	{
-		logger.info( "running..." );
 		readyEvent_();
 		startPolling();
         internals_->service.run();
 	}
 
-    tuple< string, Component* > Manager::createComponent( PropertyNode const& properties, bool adhoc )
+    Component& Manager::createComponent( PropertyNode const& properties, bool adhoc )
     {
         auto type = properties[ "type" ].as< string >();
         auto id = !adhoc || properties.has( "id" )
                   ? properties[ "id" ].as< string >()
 				  : ComponentFactory::instance().generateId( type );
+
         auto ptr = ComponentFactory::instance().create( type, move( id ), *this, properties );
         auto it = components_.emplace( ptr->id(), move( ptr ) );
         if ( !it.second ) {
-            throw runtime_error( str(
-                    "unable to create component \"", it.first->first,
-                    "\": another component with the same id exists" ) );
+            throw runtime_error( str( "unable to create component \"", it.first->first,
+                                      "\": another component with the same id exists" ) );
         }
         logger.info( "component \"", it.first->first, "\" of type \"", type, "\" created" );
-        return make_tuple( type, it.first->second.get() );
+        return *it.first->second;
     }
 
-    tuple< string, Component* > Manager::findComponent( string const& requester, string const& name ) const
+    Component& Manager::findComponent( string const& requester, string const& id ) const
 	{
-		auto it = components_.find( name );
+		auto it = components_.find( id );
 		if ( it == components_.end() ) {
-			throw runtime_error( str( "component \"", name, "\" (requested by \"", requester, "\" does not exist" ) );
+			throw runtime_error( str( "component \"", requester, "\" depends on unknown component \"", id, "\"" ) );
 		}
-		return make_tuple( name, it->second.get() );
+		return *it->second;
 	}
 
-    void Manager::checkValidComponent( string const& requester, string const& name, void* component ) const
+    void Manager::checkValidComponent( string const& requester, Component const& component, void const* cast ) const
 	{
-        if ( component == nullptr ) {
-            throw std::runtime_error( str( "dependent component ", name, " not of required type" ) );
+        if ( cast == nullptr ) {
+            throw runtime_error( str( "component \"", requester, "\" depends on component \"", component.id(),
+                                      "\", but \"", component.id(), "\" is not of the required type" ) );
         }
 	}
 

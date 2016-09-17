@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include "event.hpp"
@@ -37,22 +36,22 @@ namespace sc {
 		asio::io_service& service();
 
 		template< typename Type >
-		Type& get( std::string const& requester, std::string const& name ) const
+		Type& get( std::string const& requester, std::string const& id ) const
 		{
-            auto component = findComponent( requester, name );
-			Type* result = dynamic_cast< Type* >( std::get< 1 >( component ) );
-            checkValidComponent( requester, std::get< 0 >( component ), result );
+            auto& component = findComponent( requester, id );
+			Type* result = dynamic_cast< Type* >( &component );
+            checkValidComponent( requester, component, result );
 			return *result;
 		}
 
 		template< typename Type >
         Type& get( std::string const& requester, PropertyNode const& node )
         {
-            auto component = node.is< std::string >()
+            auto& component = node.is< std::string >()
                     ? findComponent( requester, node.as< std::string >() )
                     : createComponent( node, true );
-            Type* result = dynamic_cast< Type* >( std::get< 1 >( component ) );
-            checkValidComponent( requester, std::get< 0 >( component ), result );
+            Type* result = dynamic_cast< Type* >( &component );
+            checkValidComponent( requester, component, result );
             return *result;
         }
 
@@ -62,9 +61,9 @@ namespace sc {
 		void run();
 
 	private:
-        std::tuple< std::string, Component* > createComponent( PropertyNode const& properties, bool adhoc );
-        std::tuple< std::string, Component* > findComponent( std::string const& requester, std::string const& name ) const;
-        void checkValidComponent( std::string const& requester, std::string const& name, void* component ) const;
+        Component& createComponent( PropertyNode const& properties, bool adhoc );
+        Component& findComponent( std::string const& requester, std::string const& id ) const;
+        void checkValidComponent( std::string const& requester, Component const& component, void const* cast ) const;
 
 		void startPolling();
 

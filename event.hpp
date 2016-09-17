@@ -20,8 +20,7 @@ namespace sc {
 
     class EventConnection
     {
-        template< typename Signature >
-        friend class EventInterface;
+        template< typename Signature > friend class EventInterface;
 
     public:
         EventConnection();
@@ -65,7 +64,6 @@ namespace sc {
 
     namespace detail {
         template< typename Signature > struct EventHandlerHolder;
-        template< typename Signature > struct EventHandlerIterator;
     } // namespace detail
 
     template< typename Signature >
@@ -155,40 +153,6 @@ namespace sc {
 
             Handler handler;
             bool erased {};
-        };
-
-        template< typename Signature >
-        struct EventHandlerIterator
-                : boost::iterator_adaptor<
-                        EventHandlerIterator< Signature >,
-                        typename std::list< detail::EventHandlerHolder< Signature > >::const_iterator,
-                        typename EventInterface< Signature >::Handler const,
-                        boost::incrementable_traversal_tag >
-        {
-            friend class boost::iterator_core_access;
-
-            explicit EventHandlerIterator(
-                    typename EventHandlerIterator::base_type it,
-                    typename EventHandlerIterator::base_type last )
-                    : EventHandlerIterator::iterator_adaptor_( it )
-                    , last_( last )
-            {
-            }
-
-        private:
-            typename EventHandlerIterator::reference dereference() const
-            {
-                return this->base()->handler;
-            }
-
-            void increment()
-            {
-                do {
-                    ++this->base_reference();
-                } while ( this->base() != last_ && ( this->base()->erased || this->base()->inserted ) );
-            }
-
-            typename EventHandlerIterator::base_type last_;
         };
 
     } // namespace detail

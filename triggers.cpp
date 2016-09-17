@@ -160,12 +160,10 @@ namespace sc {
                 , state_( state )
                 , value_( value )
         {
-            logger.debug( "context create" );
         }
 
         Context::~Context()
         {
-            logger.debug( "context destroy" );
             state_.lastInput = move( value_ );
             value_ = state_.output;
         }

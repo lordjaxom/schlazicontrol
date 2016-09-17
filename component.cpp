@@ -35,7 +35,7 @@ namespace sc {
 
 	string ComponentFactory::generateId( string const& name )
 	{
-        auto id = str( name, "-generated-", generatedId_ );
+        auto id = str( name, ".", generatedId_ );
         generatedId_ = ( generatedId_ - 100000 + 99991 ) % 900000 + 100000;
         return id;
 	}

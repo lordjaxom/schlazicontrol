@@ -22,54 +22,6 @@ namespace sc {
         return ( value - fromMin ) * ( toMax - toMin ) / ( fromMax - fromMin ) + toMin;
     }
 
-    namespace detail {
-
-        template< typename Release >
-        class ScopeGuard
-        {
-        public:
-            ScopeGuard( Release release )
-                    : release_( std::move( release ) )
-            {
-            }
-
-            template< typename Acquire >
-            ScopeGuard( Acquire acquire, Release release )
-                    : release_( std::move( release ) )
-            {
-                try {
-                    acquire();
-                }
-                catch ( ... ) {
-                    release_ = nullptr;
-                    throw;
-                }
-            }
-
-            ScopeGuard( ScopeGuard const& ) = delete;
-
-            ScopeGuard( ScopeGuard&& other )
-                    : release_( std::move( other.release_ ))
-            {
-                other.release_ = nullptr;
-            }
-
-            ~ScopeGuard()
-            {
-                if ( release_ ) {
-                    release_;
-                }
-            }
-
-        private:
-            Release release_;
-            std::size_t locked_;
-        };
-
-    } // namespace detail
-
-
-
 	namespace detail {
 
 		inline void strWrite( std::ostream& os ) {}
@@ -90,45 +42,6 @@ namespace sc {
 		detail::strWrite( os, std::forward< Args >( args )... );
 		return os.str();
 	}
-
-    namespace detail {
-
-        template< typename Delim, typename Iter >
-        struct Joiner
-        {
-            Joiner( Delim delimiter, Iter first, Iter last )
-                    : delimiter_( std::move( delimiter ) )
-                    , first_( first )
-                    , last_( last ) {}
-
-            friend std::ostream& operator<<( std::ostream& os, Joiner const& joiner )
-            {
-                using ValueType = typename std::iterator_traits< Iter >::value_type;
-                std::copy(
-                        joiner.first_, joiner.last_,
-                        std::ostream_iterator< ValueType >( os, joiner.delimiter_ ) );
-                return os;
-            }
-
-        private:
-            Delim delimiter_;
-            Iter first_;
-            Iter last_;
-        };
-
-    } // namespace detail
-
-    template< typename Delim, typename Iter >
-    detail::Joiner< Delim, Iter > join( Delim&& delim, Iter first, Iter last )
-    {
-        return detail::Joiner< Delim, Iter >( std::forward< Delim >( delim ), first, last );
-    }
-
-    template< typename Delim, typename Range >
-    detail::Joiner< Delim, typename Range::const_iterator > join( Delim&& delim, Range const& range )
-    {
-        return join( std::forward< Delim >( delim ), range.begin(), range.end() );
-    }
 
 } // namespace sc
 

@@ -50,7 +50,6 @@ namespace sc {
 
         PropertyNode();
         PropertyNode( std::string path, Json::Value const& value );
-        PropertyNode( std::string path, Json::Value&& value );
 
         explicit operator bool() const { return !value_->isNull(); }
 
@@ -78,12 +77,9 @@ namespace sc {
         PropertyNode operator[]( PropertyKey const& key ) const;
 
     private:
-        PropertyNode get(
-                std::string const& key, Json::Value const& defaultValue = {},
-                std::initializer_list< Json::ValueType > allowedTypes = {}) const;
+        PropertyNode get( std::string const& key, Json::Value const& defaultValue = {} ) const;
 
         std::string path_;
-        Json::Value storage_;
         Json::Value const* value_;
 	};
 
@@ -300,18 +296,13 @@ namespace sc {
         {
             static bool is( PropertyNode const& node )
             {
-                return !node.value_->isNull() && !node.value_->isObject();
+                return node.value_->isArray();
             }
 
             static PropertyList< Type > convert( PropertyNode node )
             {
                 if ( !is( node ) ) {
                     throw invalidType( node, "array" );
-                }
-                if ( !node.value_->isArray() ) {
-                    Json::Value array( Json::arrayValue );
-                    array.append( *node.value_ );
-                    node = PropertyNode( node.path_, std::move( array ) );
                 }
                 return PropertyList< Type >( std::move( node ) );
             }

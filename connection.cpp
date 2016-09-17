@@ -30,18 +30,6 @@ namespace sc {
         return vector< unique_ptr< TransitionInstance > >( first, last );
     }
 
-    static void checkReveiverAcceptsChannels(
-            Component const& sender, TransitionInstance const& receiver, size_t channels )
-    {
-        if ( !receiver.acceptsChannels( channels ) ) {
-            throw runtime_error( str(
-                    "invalid connection between ", sender.name(), " ", sender.category(), " \"", sender.id(), "\" and ",
-                    receiver.transition().name(), " ", receiver.transition().category(), " \"",
-                    receiver.transition().id(), "\": ", receiver.transition().category(), " won't accept ",
-                    channels, " output channels" ) );
-        }
-    }
-
 	static PropertyKey const inputProperty( "input" );
 	static PropertyKey const transitionsProperty( "transitions" );
 

@@ -69,14 +69,11 @@ namespace sc {
         throw invalid_argument( "invalid enum constant for Json::ValueType" );
     }
 
-    static void assertValueType(
-            string const& path, Json::ValueType type, initializer_list< Json::ValueType > allowedTypes )
+    static void assertValueType( string const& path, Json::ValueType type, Json::ValueType expected )
     {
-        if ( allowedTypes.begin() != allowedTypes.end() &&
-                find( allowedTypes.begin(), allowedTypes.end(), type ) == allowedTypes.end() ) {
-            throw runtime_error( str(
-                    "expected property \"", path, "\" to be of type(s) ", join( ", ", allowedTypes ),
-                    " but was ", valueType( type ) ) );
+        if ( type != expected ) {
+            throw runtime_error( str( "expected property \"", path, "\" to be of type ", valueType( expected ),
+                                      " but was ", valueType( type ) ) );
         }
     }
 
@@ -85,13 +82,6 @@ namespace sc {
     PropertyNode::PropertyNode( string path, Json::Value const& value )
             : path_( move( path ) )
             , value_( &value )
-    {
-    }
-
-    PropertyNode::PropertyNode( string path, Json::Value&& value )
-            : path_( move( path ) )
-            , storage_( move( value ) )
-            , value_( &storage_ )
     {
     }
 
@@ -117,28 +107,24 @@ namespace sc {
 
     PropertyNode PropertyNode::operator[]( string const& key ) const
     {
-        assertValueType( path_, value_->type(), { Json::objectValue } );
         return get( key, {} );
     }
 
     PropertyNode PropertyNode::operator[]( PropertyKey const& key ) const
     {
-        assertValueType( path_, value_->type(), { Json::objectValue } );
         return get( key.name(), key.defaultValue() );
     }
 
-    PropertyNode PropertyNode::get(
-            string const& key, Json::Value const& defaultValue, initializer_list< Json::ValueType > allowedTypes ) const
+    PropertyNode PropertyNode::get( string const& key, Json::Value const& defaultValue ) const
     {
+        assertValueType( path_, value_->type(), Json::objectValue );
+
         string path = str( path_, "/", key );
-        auto const& value = ( *value_ )[ key ];
+        auto const& stored = ( *value_ )[ key ];
+        auto const& value = !stored.isNull() ? stored : defaultValue;
         if ( value.isNull() ) {
-            if ( defaultValue.isNull()) {
-                throw runtime_error( str( "mandatory property \"", path, "\" does not exist" ));
-            }
-            return PropertyNode( move( path ), defaultValue );
+            throw runtime_error( str( "required property \"", path, "\" not found" ) );
         }
-        assertValueType( path, value.type(), allowedTypes );
         return PropertyNode( move( path ), value );
     }
 

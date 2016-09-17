@@ -88,7 +88,7 @@ namespace sc {
 		channel_->strip_type = stripType;
 		channel_->brightness = 255;
 
-		logger.debug( "initializing ws281x api on pin ", gpioPin );
+		logger.debug( "initializing rpi_ws281x api" );
 
 		if ( ws2811_init( &wrapped_ ) ) {
 			throw runtime_error( str( "couldn't initialize ws2811 api on pin ", gpioPin ) );
