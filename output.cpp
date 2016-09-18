@@ -24,7 +24,7 @@ namespace sc {
     {
         auto& input = manager.get< Input >( *this, inputsNode );
         manager.readyEvent().subscribe( [this, &input] { setup( input ); }, true );
-        input_ = &input;
+        inputs_.emplace_back( &input );
     }
 
     void Output::initialize( Manager& manager, PropertyNode const& inputsNode, true_type )
@@ -32,7 +32,6 @@ namespace sc {
         for_each(
                 inputsNode.begin(), inputsNode.end(),
                 [this, &manager]( PropertyNode const& node ) { initialize( manager, node ); } );
-        input_ = nullptr; // not valid for multiconnections
     }
 
     void Output::setup( Input& input )

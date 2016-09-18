@@ -65,9 +65,8 @@ namespace sc {
 	public:
 		using SetEvent = Event< void ( double ) >;
 
-		VdcdDevice(
-                Component const& owner, Manager& manager, std::string const& vdcdId, std::string const& dsuid,
-                int group, std::string const& outputType, bool dimmable );
+		VdcdDevice( Vdcd& vdcd, std::string const& name, std::string const& dsuid, int group,
+                    std::string const& outputType, bool dimmable );
 		VdcdDevice( VdcdDevice const& ) = delete;
 		~VdcdDevice();
 

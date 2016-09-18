@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "component.hpp"
 #include "utility.hpp"
@@ -26,6 +27,8 @@ namespace sc {
         static void checkConnection(
                 Component const& input, Component const& output, std::size_t emitsChannels, bool acceptsChannels );
 
+        static constexpr std::true_type multiInput {};
+
         template< typename = void >
         Output()
         {
@@ -42,14 +45,14 @@ namespace sc {
     protected:
         virtual void set( Input const& input, ChannelBuffer const& values ) = 0;
 
-        Input const& input() const { return *input_; }
+        std::vector< Input const* > const& inputs() const { return inputs_; }
 
     private:
         void initialize( Manager& manager, PropertyNode const& inputsNode, std::false_type = {} );
         void initialize( Manager& manager, PropertyNode const& inputsNode, std::true_type );
         void setup( Input& input );
 
-        Input const* input_ {};
+        std::vector< Input const* > inputs_;
     };
 
     /**

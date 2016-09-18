@@ -43,6 +43,16 @@ namespace sc {
 		values_.resize( size );
 	}
 
+    void ChannelBuffer::shift( size_t offset )
+    {
+        values_.insert( values_.begin(), offset, {} );
+    }
+
+    void ChannelBuffer::clear()
+    {
+        fill( values_.begin(), values_.end(), ChannelValue() );
+    }
+
     void StatisticsWriter< ChannelValue >::operator()( ostream& os, ChannelValue const& value )
     {
         os << value.get();

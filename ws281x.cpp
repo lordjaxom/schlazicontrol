@@ -343,23 +343,22 @@ namespace sc {
             , ledCount_( properties[ ledCountProperty ].as< size_t >() )
             , launcher_( new Ws281xLauncher( manager_, gpioPin_, ledCount_ ) )
             , internals_( new Ws281xInternals( manager_.service() ) )
-            , values_( ledCount_ * 3 )
 	{
 		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
     Ws281x::~Ws281x() = default;
 
-	void Ws281x::send( size_t start, ChannelBuffer const& values )
+	void Ws281x::send( ChannelBuffer const& values )
 	{
-        copy( values.begin(), values.end(), next( values_.begin(), start * 3 ) );
+		assert( values.size() == ledCount_ * 3 );
 
 		if ( !internals_->socket.is_open() ) {
 			return;
 		}
 
 		ostream os( &internals_->outgoing );
-        for ( auto it = values_.begin() ; it != values_.end() ; ++it ) {
+        for ( auto it = values.begin() ; it != values.end() ; ++it ) {
 			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) it->scale( 0, 255 );
 		}
 		os << ws281xSeparator << flush;
@@ -459,29 +458,14 @@ namespace sc {
 		os << "connected: " << internals_->socket.is_open();
 	}
 
-	Ws281xDevice::Ws281xDevice(
-            Component const& owner, Manager& manager, string const& ws281xId, size_t start, size_t count )
-	    	: ws281x_( manager.get< Ws281x >( owner, ws281xId ) )
-	        , start_( start )
-            , count_( count != maxCount ? count : ws281x_.ledCount() - start )
+	Ws281xDevice::Ws281xDevice( Ws281x& ws281x )
+	    	: ws281x_( ws281x )
 	{
-        if ( start_ > ws281x_.ledCount() ) {
-            throw runtime_error( str(
-                    "component \"", owner.id(), "\" requested partial led chain beginning at ", start_,
-                    ", but ws281x \"", ws281xId, "\" has only ", ws281x_.ledCount(), " leds" ) );
-        }
-        if ( start_ + count_ > ws281x_.ledCount() ) {
-            throw runtime_error( str(
-                    "component \"", owner.id(), "\" requested partial led chain of ", count_, " leds, but ws281x \"",
-                    ws281xId, "\" has only ", ws281x_.ledCount() - start, " leds beginning at ", start_ ) );
-        }
 	}
 
     void Ws281xDevice::send( ChannelBuffer const& values )
     {
-        assert( values.size() == count_ * 3 );
-
-        ws281x_.send( start_, values );
+        ws281x_.send( values );
     }
 
     static ComponentRegistry< Ws281x > registry( "ws281x" );

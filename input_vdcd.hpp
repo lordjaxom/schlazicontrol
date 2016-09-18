@@ -25,7 +25,6 @@ namespace sc {
 	private:
 		void set( double value );
 
-		Manager& manager_;
 		VdcdDevice device_;
         double value_ {};
 	};

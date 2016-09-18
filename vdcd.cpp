@@ -276,11 +276,9 @@ namespace sc {
         os << "connected: " << internals_->socket.is_open();
     }
 
-    VdcdDevice::VdcdDevice(
-            Component const& owner, Manager& manager, string const& vdcdId, string const& dsuid, int group,
-			string const& outputType, bool dimmable )
-		: vdcd_( manager.get< Vdcd >( owner, vdcdId ) )
-		, name_( owner.id() )
+    VdcdDevice::VdcdDevice( Vdcd& vdcd, string const& name, string const& dsuid, int group, string const& outputType, bool dimmable )
+		: vdcd_( vdcd )
+		, name_( name )
 		, dsuid_( dsuid )
 		, group_( group )
 		, outputType_( outputType )

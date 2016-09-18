@@ -5,12 +5,6 @@
 
 namespace sc {
 
-    template< bool Cond, typename Result = void > using EnableIf = typename std::enable_if< Cond, Result >::type;
-
-    template< typename Type > using Decay = typename std::decay< Type >::type;
-    template< typename Type > using RemoveReference = typename std::remove_reference< Type >::type;
-    template< typename Type > using RemoveCv = typename std::remove_cv< Type >::type;
-
     template< typename Type > constexpr bool IsIntegral() { return std::is_integral< Type >::value; }
     template< typename Type > constexpr bool IsArithmetic() { return std::is_arithmetic< Type >::value; }
     template< typename Type > constexpr bool IsUnsigned() { return std::is_unsigned< Type >::value; }

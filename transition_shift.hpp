@@ -1,5 +1,5 @@
-#ifndef SCHLAZICONTROL_TRANSITION_MULTIPLY_HPP
-#define SCHLAZICONTROL_TRANSITION_MULTIPLY_HPP
+#ifndef SCHLAZICONTROL_TRANSITION_SHIFT_HPP
+#define SCHLAZICONTROL_TRANSITION_SHIFT_HPP
 
 #include <cstddef>
 #include <string>
@@ -11,23 +11,23 @@ namespace sc {
     class Manager;
     class PropertyNode;
 
-    class MultiplyTransition final
+    class ShiftTransition final
             : public Transition
     {
     public:
-        MultiplyTransition( std::string&& id, Manager& manager, PropertyNode const& properties );
+        ShiftTransition( std::string&& id, Manager& manager, PropertyNode const& properties );
 
         virtual std::unique_ptr< TransitionInstance > instantiate() const override;
 
         bool acceptsChannels( std::size_t channels ) const { return true; }
-        std::size_t emitsChannels( std::size_t channels ) const { return channels * factor_; }
+        std::size_t emitsChannels( std::size_t channels ) const { return channels + offset_; }
 
         void transform( Connection& connection, ChannelBuffer& values ) const;
 
     private:
-        std::size_t factor_;
+        std::size_t offset_;
     };
 
 } // namespace sc
 
-#endif // SCHLAZICONTROL_TRANSITION_MULTIPLY_HPP
+#endif // SCHLAZICONTROL_TRANSITION_SHIFT_HPP

@@ -44,7 +44,7 @@ namespace sc {
 
 		std::size_t ledCount() const { return ledCount_; }
 
-		void send( std::size_t start, ChannelBuffer const& values );
+		void send( ChannelBuffer const& values );
 
 	private:
 		void connect();
@@ -60,7 +60,6 @@ namespace sc {
 		std::size_t ledCount_;
         std::unique_ptr< Ws281xLauncher > launcher_;
         std::unique_ptr< Ws281xInternals > internals_;
-        ChannelBuffer values_;
 	};
 
 	class Ws281xDevice
@@ -68,18 +67,14 @@ namespace sc {
 	public:
         static constexpr size_t maxCount = std::numeric_limits< std::size_t >::max();
 
-        Ws281xDevice(
-                Component const& owner, Manager& manager, std::string const& ws281xId,
-				std::size_t start, std::size_t count );
+        Ws281xDevice( Ws281x& ws281x );
 
-		std::size_t channelCount() const { return count_ * 3; }
+		std::size_t channelCount() const { return ws281x_.ledCount() * 3; }
 
 		void send( ChannelBuffer const& values );
 
 	private:
 		Ws281x& ws281x_;
-		std::size_t start_;
-        std::size_t count_;
 	};
 
 } // namespace sc

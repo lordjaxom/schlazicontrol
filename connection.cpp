@@ -36,12 +36,11 @@ namespace sc {
 	Connection::Connection( string&& id, Manager& manager, PropertyNode const& properties )
             : Component( move( id ) )
             , Output( manager, properties[ inputProperty ] )
-            , manager_( manager )
-            , instances_( createInstances( *this, manager_, properties[ transitionsProperty ] ) )
+            , instances_( createInstances( *this, manager, properties[ transitionsProperty ] ) )
 	{
         // TODO
         Transition const* sender = nullptr;
-        channels_ = input().emitsChannels();
+        channels_ = inputs().front()->emitsChannels();
         for ( auto const& instance : instances_ ) {
             if ( sender ) {
                 checkConnection( *sender, instance->transition(), channels_, instance->acceptsChannels( channels_ ) );

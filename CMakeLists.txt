@@ -94,7 +94,11 @@ set(SOURCE_FILES
         typetraits.hpp
         scoped.hpp
         scoped.cpp
-        statistics.hpp)
+        statistics.hpp
+        transition_shift.cpp
+        transition_shift.hpp
+        multiconnection.cpp
+        multiconnection.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

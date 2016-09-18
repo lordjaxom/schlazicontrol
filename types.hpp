@@ -55,6 +55,8 @@ namespace sc {
 		std::size_t size() const { return values_.size(); }
 
 		void resize( std::size_t size );
+        void shift( std::size_t offset );
+        void clear();
 
 		ChannelValue& operator[]( std::size_t index ) { return values_[ index ]; }
 		ChannelValue const& operator[]( std::size_t index ) const { return values_[ index ]; }

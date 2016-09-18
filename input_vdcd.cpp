@@ -16,11 +16,9 @@ namespace sc {
 
 	VdcdInput::VdcdInput( string&& id, Manager& manager, PropertyNode const& properties )
 		: Component( move( id ) )
-		, manager_( manager )
-		, device_(
-				*this, manager_, properties[ vdcdProperty ].as< string >(),
-                properties[ dsuidProperty ].as< string >(), properties[ groupProperty ].as< int >(),
-                properties[ outputTypeProperty ].as< string >(), properties[ dimmableProperty ].as< bool >() )
+		, device_( manager.get< Vdcd >( *this, properties[ vdcdProperty ] ), this->id(),
+                   properties[ dsuidProperty ].as< string >(), properties[ groupProperty ].as< int >(),
+                   properties[ outputTypeProperty ].as< string >(), properties[ dimmableProperty ].as< bool >() )
 	{
 		device_.setEvent().subscribe( [this]( double value ) { set( value ); } );
 	}

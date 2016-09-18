@@ -34,7 +34,6 @@ namespace sc {
         virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
 	private:
-        Manager& manager_;
 		std::vector< std::unique_ptr< TransitionInstance > > instances_;
         std::size_t channels_;
         ChannelBuffer inputValues_;

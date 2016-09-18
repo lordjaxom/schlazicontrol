@@ -189,25 +189,25 @@ namespace sc {
         std::runtime_error invalidType( PropertyNode const& node, char const* expectedType );
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestInt value, EnableIf< IsSigned< Type >() >* = nullptr )
+        bool propertyIsInRange( Json::LargestInt value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
         {
             return value >= std::numeric_limits< Type >::min() && value <= std::numeric_limits< Type >::max();
         }
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestUInt value, EnableIf< IsSigned< Type >() >* = nullptr )
+        bool propertyIsInRange( Json::LargestUInt value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
         {
             return value <= (Json::LargestUInt) std::numeric_limits< Type >::max();
         }
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestInt value, EnableIf< IsUnsigned< Type >() >* = nullptr )
+        bool propertyIsInRange( Json::LargestInt value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
         {
             return value >= 0;
         }
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestUInt value, EnableIf< IsUnsigned< Type >() >* = nullptr )
+        bool propertyIsInRange( Json::LargestUInt value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
         {
             return value <= std::numeric_limits< Type >::max();
         }
@@ -261,7 +261,7 @@ namespace sc {
         };
 
         template< typename Type >
-        struct PropertyConverter< Type, sc::EnableIf< IsIntegral< Type >() > >
+        struct PropertyConverter< Type, std::enable_if_t< IsIntegral< Type >() > >
         {
             static bool is( PropertyNode const& node )
             {

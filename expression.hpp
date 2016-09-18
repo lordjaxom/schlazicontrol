@@ -294,7 +294,7 @@ namespace sc {
             };
 
             template< typename Type >
-            struct ArgumentVisitorImpl< Type, EnableIf< IsIntegral< Type >() > >
+            struct ArgumentVisitorImpl< Type, std::enable_if_t< IsIntegral< Type >() > >
                     : ArgumentVisitorFallback< Type >
             {
                 static Type invoke( std::string const& function, std::size_t index, std::intmax_t value )
@@ -319,7 +319,7 @@ namespace sc {
             };
 
             template< typename Type >
-            struct ArgumentVisitorImpl< Type, EnableIf< IsBaseOf< ArgParserTag, Type >() > >
+            struct ArgumentVisitorImpl< Type, std::enable_if_t< IsBaseOf< ArgParserTag, Type >() > >
             {
                 template< typename Other >
                 static Type invoke( std::string const& function, std::size_t index, Other&& value )

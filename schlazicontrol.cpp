@@ -154,45 +154,6 @@ int main( int argc, char* argv[] )
 
             Manager manager( cmdLine );
 
-            /*
-            Gpio::Triggers pirSenseTriggers;
-            pirSenseTriggers.add( Gpio::Change( Gpio::Edge::Rising ), Gpio::Set( true ), Gpio::StopTimer( 0 ) );
-            pirSenseTriggers.add( Gpio::Change( Gpio::Edge::Falling ), Gpio::StartTimer( 0, chrono::seconds( 5 ) ) );
-            pirSenseTriggers.add( Gpio::Timeout( 0 ), Gpio::Set( false ) );
-
-            Gpio::Triggers debounceTriggers;
-            debounceTriggers.add( Gpio::Change( Gpio::Edge::Rising ), Gpio::StartTimer( 0, chrono::milliseconds( 100 ) ), Gpio::StopTimer( 1 ) );
-            debounceTriggers.add( Gpio::Change( Gpio::Edge::Falling ), Gpio::StartTimer( 1, chrono::milliseconds( 100 ) ), Gpio::StopTimer( 0 ) );
-            debounceTriggers.add( Gpio::Timeout( 0 ), Gpio::Set( true ) );
-            debounceTriggers.add( Gpio::Timeout( 1 ), Gpio::Set( false ) );
-
-            Transformers bedlightTransformer;
-            bedlightTransformer.add( Transform::GreyToRgb() );
-            bedlightTransformer.add( Transform::Multiply( cfg::ws281x_led_count ) );
-
-            Transformers headlightTransformer;
-            headlightTransformer.add( Transform::GreyToRgb() );
-
-            manager.add( "input", "vdcd", "bedlight_switch", _()( "dsName", "Unterbodenbeleuchtung Bett" )( "dsuid", "fbf90820-3501-11e6-bdf4-0800200c9a66" )( "group", "1" )( "outputType", "light" )( "dimmable", "true" ) );
-            */
-
-            /*
-            manager.add< GpioInput >( "floor_right", cfg::pir_sensor_right_pin, pirSenseTriggers );
-            manager.add< GpioInput >( "floor_center", cfg::pir_sensor_center_pin, pirSenseTriggers );
-            manager.add< GpioInput >( "floor_left", cfg::pir_sensor_left_pin, pirSenseTriggers );
-            manager.add< VdcdInput >( "bedlight_switch", "Unterbodenbeleuchtung Bett", "fbf90820-3501-11e6-bdf4-0800200c9a66", 1, "light", true );
-            manager.add< VdcdInput >( "headlight_switch", "Beleuchtung Kopfteil", "443bb7f0-35a1-11e6-bdf4-0800200c9a66", 1, "light", true );
-
-            manager.add< SoftPwmOutput >( "headlight_leds", cfg::rgb_chain_red_pin, cfg::rgb_chain_green_pin, cfg::rgb_chain_blue_pin );
-            manager.add< Ws281xOutput >( "bedlight_leds", cfg::ws281x_led_pin, cfg::ws281x_led_count );
-
-            manager.add< Connection >( "1", "floor_right", "bedlight_leds" );
-            manager.add< Connection >( "2", "floor_center", "bedlight_leds" );
-            manager.add< Connection >( "3", "floor_left", "bedlight_leds" );
-            manager.add< Connection >( "4", "bedlight_switch", "bedlight_leds", bedlightTransformer );
-            manager.add< Connection >( "5", "headlight_switch", "headlight_leds", headlightTransformer );
-            */
-
             logger.info( "setup finished, running..." );
             manager.run();
             logger.info( "exiting gracefully" );
@@ -213,60 +174,4 @@ int main( int argc, char* argv[] )
             logger.error( "runtime error, attempting graceful exit: ", e.what() );
         }
     }
-
-    /*
-    log( "setting up wiringPi and GPIO" );
-
-    wiringPiSetup();
-
-    sc::stopwatch stopwatch;
-
-    sc::ws281x_client ws281x_client( stopwatch, "localhost", 9999 );
-    sc::rgb_chain actor_headroom( cfg::rgb_chain_red_pin, cfg::rgb_chain_green_pin, cfg::rgb_chain_blue_pin );
-
-    sc::vdcd vdcd( stopwatch, "192.168.178.57", 8999 );
-    auto device_bedlight = vdcd.emplace_device( "Unterbodenbeleuchtung Bett", "fbf90820-3501-11e6-bdf4-0800200c9a66", 1, "light", true );
-    auto device_headroom = vdcd.emplace_device( "Beleuchtung Kopfteil", "443bb7f0-35a1-11e6-bdf4-0800200c9a66", 1, "light", true );
-
-    sc::motion_light motion_right_device( stopwatch, 3 );
-    sc::motion_light motion_center_device( stopwatch, 2 );
-    sc::motion_light motion_left_device( stopwatch, 0 );
-
-    sc::warp_animation bedlight_mood( stopwatch, cfg::ws281x_led_count );
-    sc::white_animation bedlight_animation( stopwatch );
-    sc::white_animation headroom_animation( stopwatch );
-    sc::white_animation motion_right_animation( stopwatch, 127 );
-    sc::white_animation motion_center_animation( stopwatch, 127 );
-    sc::white_animation motion_left_animation( stopwatch, 127 );
-
-    while ( true ) {
-        stopwatch.advance();
-
-        ws281x_client.prepare();
-        actor_headroom.prepare();
-
-        vdcd.poll();
-        motion_right_device.poll();
-        motion_center_device.poll();
-        motion_left_device.poll();
-
-        auto&& ws281x_pixels = ws281x_client.pixels();
-        auto&& headroom_pixels = actor_headroom.pixels();
-
-        //bed_light_mood.animate( ws281x_pixels );
-        bedlight_animation.animate( device_bedlight->get(), ws281x_pixels );
-        headroom_animation.animate( device_headroom->get(), headroom_pixels );
-        motion_right_animation.animate( motion_right_device.get(), ws281x_pixels.range( 0, 12 ) );
-        motion_center_animation.animate( motion_center_device.get(), ws281x_pixels.range( 11, 14 ) );
-        motion_left_animation.animate( motion_left_device.get(), ws281x_pixels.range( 24, 12 ) );
-
-        ws281x_client.update();
-        actor_headroom.update();
-
-        auto elapsed = stopwatch.elapsed();
-        if ( elapsed < cfg::update_duration ) {
-            std::this_thread::sleep_for( cfg::update_duration - elapsed );
-        }
-    }
-    */
 }

@@ -16,7 +16,7 @@ namespace sc {
 
         template< typename Type, typename Enable = void > struct TypeName;
         template<> struct TypeName< std::string > : TypeString< typestring_is( "identifier" ) > {};
-        template< typename Type > struct TypeName< Type, EnableIf< IsIntegral< Type >() > >
+        template< typename Type > struct TypeName< Type, std::enable_if_t< IsIntegral< Type >() > >
                 : TypeString< typestring_is( "number" ) > {};
         template< typename Rep, typename Period > struct TypeName< std::chrono::duration< Rep, Period > >
                 : TypeString< typestring_is( "duration" ) > {};
@@ -26,7 +26,7 @@ namespace sc {
     template< typename Type >
     char const* typeName()
     {
-        return detail::TypeName< Decay< Type > >::String::data();
+        return detail::TypeName< std::decay_t< Type > >::String::data();
     }
 
     template< typename Type >

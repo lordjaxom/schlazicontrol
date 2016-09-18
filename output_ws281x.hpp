@@ -27,7 +27,6 @@ namespace sc {
 		virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
 	private:
-		Manager& manager_;
 		Ws281xDevice device_;
         ChannelBuffer values_;
 	};
