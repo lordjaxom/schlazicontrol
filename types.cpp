@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <iterator>
 #include <ostream>
 
 #include "utility.hpp"
@@ -9,7 +8,11 @@ using namespace std;
 
 namespace sc {
 
-    static constexpr size_t statisticsOutputCount = 3;
+    static constexpr size_t maxOutputCount = 3;
+
+    /**
+     * class ChannelValue
+     */
 
 	ChannelValue::ChannelValue()
 		: value_()
@@ -26,26 +29,40 @@ namespace sc {
 	{
 	}
 
+    void ChannelValue::statistics( ostream& os ) const
+    {
+        os << value_;
+    }
+
+    /**
+     * class ChannelBuffer
+     */
+
 	ChannelBuffer::ChannelBuffer() = default;
 
 	ChannelBuffer::ChannelBuffer( initializer_list< ChannelValue > initializer )
 		: values_( initializer.begin(), initializer.end() )
 	{
+        allocate< ChannelValue >( values_.size() );
 	}
 
 	ChannelBuffer::ChannelBuffer( size_t size )
 		: values_( size )
 	{
+        allocate< ChannelValue >( values_.size() );
 	}
 
 	void ChannelBuffer::resize( size_t size )
 	{
+        deallocate< ChannelValue >( values_.size() );
 		values_.resize( size );
+        allocate< ChannelValue >( values_.size() );
 	}
 
     void ChannelBuffer::shift( size_t offset )
     {
         values_.insert( values_.begin(), offset, {} );
+        allocate< ChannelValue >( offset );
     }
 
     void ChannelBuffer::clear()
@@ -53,26 +70,15 @@ namespace sc {
         fill( values_.begin(), values_.end(), ChannelValue() );
     }
 
-    void StatisticsWriter< ChannelValue >::operator()( ostream& os, ChannelValue const& value )
+    void ChannelBuffer::statistics( ostream& os ) const
     {
-        os << value.get();
-    }
-
-    void StatisticsWriter< ChannelBuffer >::operator()( std::ostream& os, ChannelBuffer const& values )
-    {
-        os << "[";
-        auto count = min( values.size(), statisticsOutputCount );
-        if ( count > 0 ) {
-            auto last = next( values.begin(), count - 1 );
-            transform(
-                    values.begin(), last, ostream_iterator< Statistics< ChannelValue > >( os, ", " ),
-                    []( auto const& value ) { return makeStatistics( value ); } );
-            os << makeStatistics( *last );
-            if ( values.size() > statisticsOutputCount ) {
-                os << ", ...";
-            }
+        os << "{size: " << values_.size() << ", " << makeStatistics( trackable() ) << ", values: [";
+        transform( values_.begin(), next( values_.begin(), min( values_.size(), maxOutputCount ) ),
+                   OutputStreamIterator( os, ", " ), []( auto const& value ) { return makeStatistics( value ); } );
+        if ( values_.size() > maxOutputCount ) {
+            os << ", ...";
         }
-        os << "]";
+        os << "]}";
     }
 
 } // namespace sc

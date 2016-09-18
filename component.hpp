@@ -26,7 +26,7 @@ namespace sc {
 
     public:
         Component();
-		explicit Component( std::string&& id );
+		explicit Component( std::string&& id, bool statistics = true );
         Component( Component const& ) = delete;
         virtual ~Component();
 
@@ -34,11 +34,15 @@ namespace sc {
         std::string const& category() const { return *category_; }
         std::string const& name() const { return *name_; }
 
-        virtual bool statistics() const { return true; }
-        virtual void statistics( std::ostream& os ) const = 0;
+        void statistics( std::ostream& os ) const;
+
+    protected:
+        virtual bool hasStatistics() const { return true; }
+        virtual void doStatistics( std::ostream& os ) const = 0;
 
     private:
         std::string id_;
+        bool statistics_;
         std::string const* category_;
         std::string const* name_;
 	};
@@ -101,16 +105,6 @@ namespace sc {
                         return result;
                     } );
         }
-    };
-
-    /**
-     * struct StatisticsWriter specialization
-     */
-
-    template<>
-    struct StatisticsWriter< Component >
-    {
-        void operator()( std::ostream& os, Component const& component );
     };
 
 } // namespace sc

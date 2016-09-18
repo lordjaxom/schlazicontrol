@@ -22,7 +22,8 @@ namespace sc {
 
 		virtual std::size_t emitsChannels() const override { return 1; }
 
-		virtual void statistics( std::ostream& os ) const override;
+    protected:
+		virtual void doStatistics( std::ostream& os ) const override;
 
 	private:
 		void poll();

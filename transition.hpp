@@ -85,10 +85,10 @@ namespace sc {
     public:
         explicit Transition( std::string&& id );
 
-        virtual bool statistics() const override { return false; }
-        virtual void statistics( std::ostream& os ) const override {}
-
         virtual std::unique_ptr< TransitionInstance > instantiate() const = 0;
+
+    protected:
+        virtual void doStatistics( std::ostream& os ) const override {}
     };
 
     /**

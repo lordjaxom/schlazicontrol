@@ -26,18 +26,18 @@ namespace sc {
         virtual bool acceptsChannels( std::size_t channels ) const override;
         virtual std::size_t emitsChannels() const override { return channels_; }
 
-        virtual void statistics( std::ostream& os ) const override;
-
         void transfer();
 
     protected:
         virtual void set( Input const& input, ChannelBuffer const& values ) override;
 
+        virtual void doStatistics( std::ostream& os ) const override;
+
 	private:
 		std::vector< std::unique_ptr< TransitionInstance > > instances_;
         std::size_t channels_;
-        ChannelBuffer inputValues_;
-        ChannelBuffer outputValues_;
+        ChannelBuffer input_;
+        ChannelBuffer output_;
 	};
 
 } // namespace sc

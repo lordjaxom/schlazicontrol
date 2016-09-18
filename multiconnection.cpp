@@ -1,8 +1,10 @@
+#include <algorithm>
 #include <utility>
 
 #include "manager.hpp"
 #include "multiconnection.hpp"
 #include "properties.hpp"
+#include "utility.hpp"
 
 using namespace std;
 
@@ -27,21 +29,24 @@ namespace sc {
         buffers_[ input.id() ] = values;
 
         values_.clear();
-        for_each(
-                buffers_.begin(), buffers_.end(),
-                [this]( auto const& entry ) {
-                    transform(
-                            entry.second.begin(), entry.second.end(), values_.begin(), values_.begin(),
-                            []( auto const& a, auto const& b ) { return ChannelValue( max( a.get(), b.get() ) ); } );
-                } );
+        for_each( buffers_.begin(), buffers_.end(),
+                  [this]( auto const& entry ) {
+                      transform( entry.second.begin(), entry.second.end(), values_.begin(), values_.begin(),
+                                 []( auto const& a, auto const& b ) {
+                                     return ChannelValue( max( a.get(), b.get() ) );
+                                 } );
+                  } );
         inputChangeEvent_( values_ );
     }
 
-    void MultiConnection::statistics( std::ostream& os ) const
+    void MultiConnection::doStatistics( ostream& os ) const
     {
-        os << "channels: " << channels_ << "; "
-           << "buffers: " << buffers_.size() << "; "
-           << "values: " << makeStatistics( values_ );
+        os << ", channels: " << channels_ << ", buffers: " << buffers_.size()
+           << "\n\t\tvalues: " << makeStatistics( values_ );
+        transform( buffers_.begin(), buffers_.end(), OutputStreamIterator( os ),
+                   []( auto const& entry ) {
+                       return make_tuple( "\n\t\tbuffer[ ", ref( entry.first ), "]", makeStatistics( entry.second ) );
+                   } );
     }
 
     static ComponentRegistry< MultiConnection > registry( "multiconnection" );

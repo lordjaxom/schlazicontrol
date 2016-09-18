@@ -5,8 +5,10 @@
 #include <iterator>
 #include <memory>
 #include <ostream>
+#include <tuple>
 #include <type_traits>
 #include <utility>
+#include "utility.hpp"
 
 namespace sc {
 
@@ -27,27 +29,41 @@ namespace sc {
 
     template< typename Type >
     struct StatisticsWriter<
-        Type,
-        std::conditional_t<
-            false,
-            std::tuple<
-                typename Type::key_type,
-                typename Type::mapped_type,
-                typename Type::value_type,
-                typename Type::const_iterator,
-                decltype( std::declval< Type >().begin() ),
-                decltype( std::declval< Type >().end() )
-            >,
-            void
-        >
-    >
+            Type,
+            std::conditional_t<
+                    false,
+                    std::tuple<
+                            typename Type::key_type,
+                            typename Type::mapped_type,
+                            typename Type::value_type,
+                            typename Type::const_iterator,
+                            decltype( std::declval< Type >().begin() ),
+                            decltype( std::declval< Type >().end() )
+                            >,
+                    void
+                    >
+            >
     {
         void operator()( std::ostream& os, Type const& value )
         {
-            std::transform(
-                    value.begin(), value.end(),
-                    std::ostream_iterator< Statistics< typename Type::mapped_type > >( os ),
-                    []( auto const& entry ) { return makeStatistics( entry.second ); } );
+            std::transform( value.begin(), value.end(), OutputStreamIterator( os ),
+                            []( auto const& entry ) { return makeStatistics( entry.second ); } );
+        }
+    };
+
+    template< typename Type >
+    struct StatisticsWriter<
+            Type,
+            std::conditional_t<
+                    false,
+                    decltype( std::declval< Type const >().statistics( std::declval< std::ostream& >() ) ),
+                    void
+                    >
+            >
+    {
+        void operator()( std::ostream& os, Type const& value )
+        {
+            value.statistics( os );
         }
     };
 

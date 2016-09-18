@@ -11,6 +11,7 @@
 #include "logging.hpp"
 #include "manager.hpp"
 #include "statistics.hpp"
+#include "types.hpp"
 
 using namespace std;
 using namespace asio;
@@ -136,7 +137,7 @@ namespace sc {
                 return;
             }
 
-            logger.info( "statistics", makeStatistics( components_ ) );
+            logger.info( "statistics", makeStatistics( components_ ), makeStatistics( ChannelBuffer::tracker() ) );
 
             startStatistics();
         } );

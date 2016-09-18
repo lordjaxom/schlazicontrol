@@ -271,9 +271,9 @@ namespace sc {
 		return false;
 	}
 
-    void Vdcd::statistics( std::ostream& os ) const
+    void Vdcd::doStatistics( ostream& os ) const
     {
-        os << "connected: " << internals_->socket.is_open();
+        os << ", connected: " << internals_->socket.is_open();
     }
 
     VdcdDevice::VdcdDevice( Vdcd& vdcd, string const& name, string const& dsuid, int group, string const& outputType, bool dimmable )

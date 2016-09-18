@@ -21,10 +21,10 @@ namespace sc {
 
 		virtual bool acceptsChannels( std::size_t channels ) const override { return device_.channelCount() == channels; }
 
-        virtual void statistics( std::ostream& os ) const override;
-
 	protected:
 		virtual void set( Input const& input, ChannelBuffer const& values ) override;
+
+        virtual void doStatistics( std::ostream& os ) const override;
 
 	private:
 		Ws281xDevice device_;

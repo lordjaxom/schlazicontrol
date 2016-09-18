@@ -25,9 +25,9 @@ namespace sc {
         device_.send( values_ = values );
     }
 
-    void Ws281xOutput::statistics( ostream& os ) const
+    void Ws281xOutput::doStatistics( ostream& os ) const
     {
-        os << "values: " << makeStatistics( values_ );
+        os << "\n\t\tvalues: " << makeStatistics( values_ );
     }
 
     static OutputRegistry< Ws281xOutput > registry( "ws281x" );

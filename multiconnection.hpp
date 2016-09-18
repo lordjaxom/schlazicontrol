@@ -22,10 +22,10 @@ namespace sc {
         virtual bool acceptsChannels( std::size_t channels ) const override { return true; }
         virtual std::size_t emitsChannels() const override { return channels_; }
 
-        virtual void statistics( std::ostream& os ) const override;
-
     protected:
         virtual void set( Input const& input, ChannelBuffer const& values ) override;
+
+        virtual void doStatistics( std::ostream& os ) const override;
 
     private:
         std::size_t channels_;

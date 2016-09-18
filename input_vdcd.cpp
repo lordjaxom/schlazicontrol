@@ -31,9 +31,9 @@ namespace sc {
         }
 	}
 
-	void VdcdInput::statistics( ostream& os ) const
+	void VdcdInput::doStatistics( ostream& os ) const
 	{
-		os << "value: " << value_;
+		os << ", value: " << value_;
 	}
 
 	static InputRegistry< VdcdInput > registry( "vdcd" );

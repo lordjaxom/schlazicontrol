@@ -9,8 +9,13 @@
 #include <boost/operators.hpp>
 
 #include "statistics.hpp"
+#include "trackable.hpp"
 
 namespace sc {
+
+    /**
+     * class ChannelValue
+     */
 
 	class ChannelValue : public boost::totally_ordered< ChannelValue >
 	{
@@ -38,11 +43,18 @@ namespace sc {
 		bool on() const { return value_ != minimum; }
 		bool fullOn() const { return value_ == maximum; }
 
+        void statistics( std::ostream& os ) const;
+
 	private:
 		double value_;
 	};
 
+    /**
+     * class ChannelBuffer
+     */
+
 	class ChannelBuffer
+            : Trackable< ChannelBuffer >
 	{
 	public:
         using Values = std::vector< ChannelValue >;
@@ -68,21 +80,13 @@ namespace sc {
 		Values::const_iterator cbegin() const { return begin(); }
 		Values::const_iterator cend() const { return end(); }
 
+        using Trackable_::tracker;
+
+        void statistics( std::ostream& os ) const;
+
 	private:
 		Values values_;
 	};
-
-    template<>
-    struct StatisticsWriter< ChannelValue >
-    {
-        void operator()( std::ostream& os, ChannelValue const& value );
-    };
-
-    template<>
-    struct StatisticsWriter< ChannelBuffer >
-    {
-        void operator()( std::ostream& os, ChannelBuffer const& values );
-    };
 
 } // namespace sc
 

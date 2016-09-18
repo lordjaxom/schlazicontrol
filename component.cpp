@@ -12,12 +12,23 @@ namespace sc {
      * class Component
      */
 
-    Component::Component( std::string&& id )
+    Component::Component( std::string&& id, bool statistics )
             : id_( move( id ) )
+            , statistics_( statistics )
     {
     }
 
-	Component::~Component() = default;
+    Component::~Component() = default;
+
+    void Component::statistics( ostream& os ) const
+    {
+        if ( !statistics_ ) {
+            return;
+        }
+
+        os << "\n\tComponent : category: " << *category_ << ", name: " << *name_ << ", id: " << id_;
+        doStatistics( os );
+    }
 
     /**
      * class ComponentFactory
@@ -60,18 +71,5 @@ namespace sc {
                     "unable to register component type \"", it.first->first, "\": type already registered" ) );
 		}
 	}
-
-    /**
-     * struct StatisticsWriter specialization
-     */
-
-    void StatisticsWriter< Component >::operator()( ostream& os, Component const& component )
-    {
-        if ( component.statistics() ) {
-            os << "\n\tcomponent {" << component.category() << "." << component.name() << ":" << component.id()
-               << "} : ";
-            component.statistics( os );
-        }
-    }
 
 } // namespace sc

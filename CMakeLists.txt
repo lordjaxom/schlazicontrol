@@ -98,7 +98,9 @@ set(SOURCE_FILES
         transition_shift.cpp
         transition_shift.hpp
         multiconnection.cpp
-        multiconnection.hpp)
+        multiconnection.hpp
+        trackable.cpp
+        trackable.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

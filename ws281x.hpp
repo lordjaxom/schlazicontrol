@@ -40,11 +40,12 @@ namespace sc {
 		Ws281x( std::string&& id, Manager& manager, PropertyNode const& properties );
         ~Ws281x();
 
-        virtual void statistics( std::ostream& os ) const override;
-
 		std::size_t ledCount() const { return ledCount_; }
 
 		void send( ChannelBuffer const& values );
+
+    protected:
+        virtual void doStatistics( std::ostream& os ) const override;
 
 	private:
 		void connect();

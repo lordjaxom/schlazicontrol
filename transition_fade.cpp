@@ -40,7 +40,7 @@ namespace sc {
     FadeTransition::FadeTransition( string&& id, Manager& manager, PropertyNode const& properties )
             : Transition( move( id ) )
             , manager_( manager )
-            , speed_( chrono::milliseconds( properties[ speedProperty ].as< chrono::milliseconds::rep >() ) )
+            , speed_( properties[ speedProperty ].as< chrono::nanoseconds >() )
     {
     }
 

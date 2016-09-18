@@ -453,9 +453,9 @@ namespace sc {
 		return false;
 	}
 
-	void Ws281x::statistics( std::ostream& os ) const
+	void Ws281x::doStatistics( ostream& os ) const
 	{
-		os << "connected: " << internals_->socket.is_open();
+		os << ", connected: " << internals_->socket.is_open();
 	}
 
 	Ws281xDevice::Ws281xDevice( Ws281x& ws281x )

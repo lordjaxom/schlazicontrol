@@ -19,7 +19,7 @@ namespace sc {
      */
 
     Transition::Transition( string&& id )
-            : Component( move( id ) )
+            : Component( move( id ), false )
     {
     }
 

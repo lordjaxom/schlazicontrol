@@ -57,25 +57,25 @@ namespace sc {
 
 	void Connection::transfer()
 	{
-        outputValues_ = inputValues_;
+        output_ = input_;
         for_each(
                 instances_.begin(), instances_.end(),
                 [this]( unique_ptr< TransitionInstance > const& instance ) {
-                    instance->transform( *this, outputValues_ );
+                    instance->transform( *this, output_ );
                 } );
-        inputChangeEvent_( outputValues_ );
+        inputChangeEvent_( output_ );
 	}
 
     void Connection::set( Input const& input, ChannelBuffer const& values )
     {
-        inputValues_ = values;
+        input_ = values;
         transfer();
     }
 
-    void Connection::statistics( ostream& os ) const
+    void Connection::doStatistics( ostream& os ) const
     {
-        os << "input values: " << makeStatistics( inputValues_ ) << "; "
-           << "output values: " << makeStatistics( outputValues_ );
+        os << "\n\t\tinput: " << makeStatistics( input_ )
+           << "\n\t\toutput: " << makeStatistics( output_ );
     }
 
     static ComponentRegistry< Connection > registry( "connection" );

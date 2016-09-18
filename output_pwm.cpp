@@ -42,9 +42,9 @@ namespace sc {
         }
 	}
 
-    void SoftPwmOutput::statistics( ostream& os ) const
+    void SoftPwmOutput::doStatistics( ostream& os ) const
     {
-        os << "values: " << makeStatistics( values_ );
+        os << "\n\t\tvalues: " << makeStatistics( values_ );
     }
 
     static OutputRegistry< SoftPwmOutput > registry( "softPwm" );

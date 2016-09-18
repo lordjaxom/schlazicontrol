@@ -107,7 +107,7 @@ namespace sc {
                             std::ostream& os, char const* quote, char const* delim, Arg0 value0, Args... values )
                     {
                         os << quote;
-                        std::copy( Arg0::cbegin(), Arg0::cend(), std::ostream_iterator< char >( os ) );
+                        std::copy( Arg0::cbegin(), Arg0::cend(), OutputStreamIterator( os ) );
                         os << quote;
                         if ( sizeof...( Args ) > 0 ) {
                             os << delim;

@@ -29,12 +29,13 @@ namespace sc {
 	public:
 		Vdcd( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-		virtual void statistics( std::ostream& os ) const override;
-
 		void add( VdcdDevice* device );
 		void remove( VdcdDevice* device );
 
-	private:
+    protected:
+        virtual void doStatistics( std::ostream& os ) const override;
+
+    private:
 		void connect();
 		void reconnect();
 		void retryConnect();
