@@ -1,5 +1,5 @@
 #include "logging.hpp"
-#include "output_debug.hpp"
+#include "output_console.hpp"
 #include "properties.hpp"
 #include "statistics.hpp"
 
@@ -10,30 +10,30 @@ namespace sc {
     static Logger logger( "output_debug" );
 
     /**
-     * class DebugOutput
+     * class ConsoleOutput
      */
 
     static PropertyKey const inputProperty( "input" );
     static PropertyKey const channelsProperty( "channels" );
 
-    DebugOutput::DebugOutput( string&& id, Manager& manager, PropertyNode const& properties )
+    ConsoleOutput::ConsoleOutput( string&& id, Manager& manager, PropertyNode const& properties )
             : Component( move( id ) )
             , Output( manager, properties[ inputProperty ] )
             , channels_( properties[ channelsProperty ].as< size_t >() )
     {
     }
 
-    void DebugOutput::set( Input const& input, ChannelBuffer const& values )
+    void ConsoleOutput::set( Input const& input, ChannelBuffer const& values )
     {
         values_ = values;
         logger.debug( "set to ", makeStatistics( values_ ) );
     }
 
-    void DebugOutput::doStatistics( ostream& os ) const
+    void ConsoleOutput::doStatistics( ostream& os ) const
     {
         os << "\n\t\tvalues: " << makeStatistics( values_ );
     }
 
-    static OutputRegistry< DebugOutput > registry( "debug" );
+    static OutputRegistry< ConsoleOutput > registry( "debug" );
 
 } // namespace sc

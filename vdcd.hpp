@@ -61,13 +61,12 @@ namespace sc {
 		std::vector< VdcdDevice* > devices_;
 	};
 
-	class VdcdDevice
+	class VdcdDevice final
 	{
 	public:
 		using SetEvent = Event< void ( double ) >;
 
-		VdcdDevice( Vdcd& vdcd, std::string const& name, std::string const& dsuid, int group,
-                    std::string const& outputType, bool dimmable );
+		VdcdDevice( Vdcd& vdcd, std::string name, std::string dsuid, int group, std::string outputType, bool dimmable );
 		VdcdDevice( VdcdDevice const& ) = delete;
 		~VdcdDevice();
 

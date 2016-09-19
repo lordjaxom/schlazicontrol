@@ -276,12 +276,12 @@ namespace sc {
         os << ", connected: " << internals_->socket.is_open();
     }
 
-    VdcdDevice::VdcdDevice( Vdcd& vdcd, string const& name, string const& dsuid, int group, string const& outputType, bool dimmable )
+    VdcdDevice::VdcdDevice( Vdcd& vdcd, string name, string dsuid, int group, string outputType, bool dimmable )
 		: vdcd_( vdcd )
-		, name_( name )
-		, dsuid_( dsuid )
+		, name_( move( name ) )
+		, dsuid_( move( dsuid ) )
 		, group_( group )
-		, outputType_( outputType )
+		, outputType_( move( outputType ) )
 		, dimmable_( dimmable )
 	{
 		vdcd_.add( this );

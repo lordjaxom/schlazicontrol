@@ -347,8 +347,6 @@ namespace sc {
 		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
-    Ws281x::~Ws281x() = default;
-
 	void Ws281x::send( ChannelBuffer const& values )
 	{
 		assert( values.size() == ledCount_ * 3 );

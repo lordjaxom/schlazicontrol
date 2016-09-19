@@ -1,5 +1,5 @@
-#ifndef SCHLAZICONTROL_OUTPUT_DEBUG_HPP
-#define SCHLAZICONTROL_OUTPUT_DEBUG_HPP
+#ifndef SCHLAZICONTROL_OUTPUT_CONSOLE_HPP
+#define SCHLAZICONTROL_OUTPUT_CONSOLE_HPP
 
 #include "output.hpp"
 #include "types.hpp"
@@ -7,14 +7,14 @@
 namespace sc {
 
     /**
-     * class DebugOutput
+     * class ConsoleOutput
      */
 
-    class DebugOutput final
+    class ConsoleOutput final
             : public Output
     {
     public:
-        DebugOutput( std::string&& id, Manager& manager, PropertyNode const& properties );
+        ConsoleOutput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
         virtual bool acceptsChannels( std::size_t channels ) const override { return channels == channels_; }
 

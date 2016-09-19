@@ -9,17 +9,15 @@
 #include <system_error>
 
 #include "component.hpp"
-#include "types.hpp"
 
 namespace sc {
 
-	class Manager;
-	class PropertyNode;
+    class ChannelBuffer;
 	class Ws281xClient;
 	class Ws281xLauncher;
 	class Ws281xServer;
 
-	class Ws281xLaunchException
+	class Ws281xLaunchException final
 	{
 	public:
 		Ws281xLaunchException( std::uint16_t gpioPin, std::size_t ledCount );
@@ -33,12 +31,11 @@ namespace sc {
 
     struct Ws281xInternals;
 
-    class Ws281x
+    class Ws281x final
 		: public Component
 	{
 	public:
 		Ws281x( std::string&& id, Manager& manager, PropertyNode const& properties );
-        ~Ws281x();
 
 		std::size_t ledCount() const { return ledCount_; }
 
