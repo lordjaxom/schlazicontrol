@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <vector>
 
-#include <boost/iterator/zip_iterator.hpp>
-
 #include "connection.hpp"
 #include "event.hpp"
 #include "manager.hpp"
@@ -12,6 +10,7 @@
 #include "timer.hpp"
 #include "transition_fade.hpp"
 #include "types.hpp"
+#include "utility.hpp"
 
 using namespace std;
 
@@ -52,7 +51,7 @@ namespace sc {
     void FadeTransition::transform( FadeTransitionState& state, Connection& connection, ChannelBuffer& values ) const
     {
         if ( state.output.empty() ) {
-            state.output.resize( values.size() );
+            state.output = ChannelBuffer( values.size() );
             state.deltas.resize( values.size() );
         }
 
@@ -93,13 +92,12 @@ namespace sc {
     bool FadeTransition::calculateDeltas( FadeTransitionState& state ) const
     {
         auto changed = false;
-        std::transform(
-                state.target.begin(), state.target.end(), state.output.begin(), state.deltas.begin(),
-                [&changed]( ChannelValue const& target, ChannelValue const& output ) {
-                    auto delta = target.get() - output.get();
-                    changed = changed || abs( delta ) > 0.0;
-                    return delta;
-                } );
+        std::transform( state.target.begin(), state.target.end(), state.output.begin(), state.deltas.begin(),
+                        [&changed]( ChannelValue const& target, ChannelValue const& output ) {
+                            auto delta = target.get() - output.get();
+                            changed = changed || abs( delta ) > 0.0;
+                            return delta;
+                        } );
         return changed;
     }
 
@@ -107,18 +105,14 @@ namespace sc {
     {
         auto changed = false;
         auto factor = state.factor;
-        std::transform(
-                state.output.begin(), state.output.end(),
-                boost::make_zip_iterator( boost::make_tuple( state.deltas.begin(), state.target.begin() ) ),
-                state.output.begin(),
-                [&changed, factor]( ChannelValue const& output, boost::tuple< double, ChannelValue const& > const& inputs ) {
-                    double delta = inputs.get< 0 >();
-                    double target = inputs.get< 1 >().get();
-                    double result = output.get() + factor * delta;
-                    result = ( delta > 0.0 && result > target ) || ( delta < 0.0 && result < target ) ? target : result;
-                    changed = changed || result != output.get();
-                    return result;
-                } );
+        sc::transform( [&changed, factor]( auto const& output, auto const& delta, auto const& target ) {
+                           double result = output.get() + factor * delta;
+                           result = ( delta > 0.0 && result > target.get() ) || ( delta < 0.0 && result < target.get() )
+                                    ? target.get() : result;
+                           changed = changed || result != output.get();
+                           return result;
+                       }, state.output.begin(), state.output.end(), state.output.begin(), state.deltas.begin(),
+                       state.target.begin() );
         return changed;
     }
 

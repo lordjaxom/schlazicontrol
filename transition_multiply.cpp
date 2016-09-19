@@ -28,13 +28,7 @@ namespace sc {
 
     void MultiplyTransition::transform( Connection& connection, ChannelBuffer& values ) const
     {
-        size_t oldSize = values.size();
-        size_t newSize = oldSize * factor_;
-        values.resize( newSize );
-
-        for ( auto it = next( values.begin(), oldSize ) ; it != values.end() ; ) {
-            it = copy_n( values.begin(), oldSize, it );
-        }
+        values.multiply( factor_ );
     }
 
     static TransitionRegistry< MultiplyTransition > registry( "multiply" );

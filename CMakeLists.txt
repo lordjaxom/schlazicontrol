@@ -100,7 +100,11 @@ set(SOURCE_FILES
         multiconnection.cpp
         multiconnection.hpp
         trackable.cpp
-        trackable.hpp)
+        trackable.hpp
+        input_debug.cpp
+        input_debug.hpp
+        output_debug.cpp
+        output_debug.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

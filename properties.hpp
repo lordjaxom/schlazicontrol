@@ -129,8 +129,10 @@ namespace sc {
         {
         }
 
-        const_iterator begin() const { return const_iterator( node_.begin() ); }
-        const_iterator end() const { return const_iterator( node_.end() ); }
+        const_iterator cbegin() const { return const_iterator( node_.begin() ); }
+        const_iterator cend() const { return const_iterator( node_.end() ); }
+        const_iterator begin() const { return cbegin(); }
+        const_iterator end() const { return cend(); }
 
     private:
         PropertyNode node_;

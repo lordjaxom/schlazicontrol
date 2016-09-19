@@ -137,7 +137,7 @@ namespace sc {
                 return;
             }
 
-            logger.info( "statistics", makeStatistics( components_ ), makeStatistics( ChannelBuffer::tracker() ) );
+            logger.info( makeStatistics( components_ ), makeStatistics( ChannelBuffer::tracker() ) );
 
             startStatistics();
         } );

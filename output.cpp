@@ -20,14 +20,14 @@ namespace sc {
         }
     }
 
-    void Output::initialize( Manager& manager, PropertyNode const& inputsNode, false_type )
+    void Output::initialize( Manager& manager, PropertyNode const& inputsNode, SingleInputTag )
     {
         auto& input = manager.get< Input >( *this, inputsNode );
         manager.readyEvent().subscribe( [this, &input] { setup( input ); }, true );
         inputs_.emplace_back( &input );
     }
 
-    void Output::initialize( Manager& manager, PropertyNode const& inputsNode, true_type )
+    void Output::initialize( Manager& manager, PropertyNode const& inputsNode, MultipleInputsTag )
     {
         for_each(
                 inputsNode.begin(), inputsNode.end(),

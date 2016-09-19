@@ -6,6 +6,7 @@
 #include "manager.hpp"
 #include "output_pwm.hpp"
 #include "types.hpp"
+#include "utility.hpp"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ namespace sc {
 	{
 		auto gpioPins = properties[ gpioPinsProperty ].as< uint16_t[] >();
 		transform(
-                gpioPins.begin(), gpioPins.end(), back_inserter( gpioPins_ ),
+                gpioPins.cbegin(), gpioPins.cend(), back_inserter( gpioPins_ ),
 				[this]( uint16_t gpioPin ) {
 					device_.pinMode( gpioPin, GpioMode::output );
 					device_.softPwmCreate( gpioPin );
@@ -35,11 +36,9 @@ namespace sc {
 	void SoftPwmOutput::set( Input const& input, ChannelBuffer const& values )
 	{
         values_ = values;
-        auto valuesIt = values_.begin(), valuesEnd = values_.end();
-        auto pinsIt = gpioPins_.begin();
-        for ( ; valuesIt != valuesEnd ; ++valuesIt, ++pinsIt ) {
-            device_.softPwmWrite( *pinsIt, (uint16_t) valuesIt->get() );
-        }
+        forEach( [this]( auto const& value, auto const& pin ) {
+                     device_.softPwmWrite( pin, (uint16_t) value.get() );
+                 }, values_.cbegin(), values_.cend(), gpioPins_.cbegin() );
 	}
 
     void SoftPwmOutput::doStatistics( ostream& os ) const

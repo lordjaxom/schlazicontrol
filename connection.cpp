@@ -59,7 +59,7 @@ namespace sc {
 	{
         output_ = input_;
         for_each(
-                instances_.begin(), instances_.end(),
+                instances_.cbegin(), instances_.cend(),
                 [this]( unique_ptr< TransitionInstance > const& instance ) {
                     instance->transform( *this, output_ );
                 } );

@@ -23,21 +23,25 @@ namespace sc {
     class Output
             : public virtual Component
     {
+        struct SingleInputTag {};
+        struct MultipleInputsTag {};
+
     public:
         static void checkConnection(
                 Component const& input, Component const& output, std::size_t emitsChannels, bool acceptsChannels );
 
-        static constexpr std::true_type multiInput {};
+        static constexpr SingleInputTag singleInput {};
+        static constexpr MultipleInputsTag multipleInputs {};
 
         template< typename = void >
         Output()
         {
         }
 
-        template< typename MultiInput = std::false_type >
-        Output( Manager& manager, PropertyNode const& inputsNode, MultiInput multiInput = {} )
+        template< typename Tag = SingleInputTag >
+        Output( Manager& manager, PropertyNode const& inputsNode, Tag tag = {} )
         {
-            initialize( manager, inputsNode, multiInput );
+            initialize( manager, inputsNode, tag );
         }
 
         virtual bool acceptsChannels( std::size_t channels ) const = 0;
@@ -48,8 +52,8 @@ namespace sc {
         std::vector< Input const* > const& inputs() const { return inputs_; }
 
     private:
-        void initialize( Manager& manager, PropertyNode const& inputsNode, std::false_type = {} );
-        void initialize( Manager& manager, PropertyNode const& inputsNode, std::true_type );
+        void initialize( Manager& manager, PropertyNode const& inputsNode, SingleInputTag = {} );
+        void initialize( Manager& manager, PropertyNode const& inputsNode, MultipleInputsTag );
         void setup( Input& input );
 
         std::vector< Input const* > inputs_;

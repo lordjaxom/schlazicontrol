@@ -6,6 +6,7 @@
 #include <iosfwd>
 #include <vector>
 
+#include <boost/iterator/iterator_facade.hpp>
 #include <boost/operators.hpp>
 
 #include "statistics.hpp"
@@ -27,7 +28,7 @@ namespace sc {
 		static constexpr ChannelValue offValue() { return ChannelValue { minimum }; }
 		static constexpr ChannelValue fullOnValue() { return ChannelValue { maximum }; }
 
-		ChannelValue();
+		constexpr ChannelValue() : value_() {}
 		constexpr ChannelValue( double value ) : value_( value ) {}
 		ChannelValue( double value, double min, double max );
 		ChannelValue( bool value );
@@ -43,8 +44,6 @@ namespace sc {
 		bool on() const { return value_ != minimum; }
 		bool fullOn() const { return value_ == maximum; }
 
-        void statistics( std::ostream& os ) const;
-
 	private:
 		double value_;
 	};
@@ -53,38 +52,88 @@ namespace sc {
      * class ChannelBuffer
      */
 
+    class ChannelBuffer;
+
+    namespace detail {
+
+        using ChannelBufferValues = std::vector< ChannelValue >;
+
+        class ChannelBufferIterator
+                : public boost::iterator_facade<
+                        ChannelBufferIterator,
+                        ChannelValue const,
+                        boost::forward_traversal_tag
+                        >
+        {
+            friend class boost::iterator_core_access;
+
+            using Values = ChannelBufferValues;
+
+            struct EndIteratorTag {};
+
+        public:
+            static constexpr EndIteratorTag endIterator {};
+
+            explicit ChannelBufferIterator( ChannelBuffer const& owner );
+            ChannelBufferIterator( ChannelBuffer const& owner, EndIteratorTag );
+
+            void increment();
+            bool equal( ChannelBufferIterator const& other ) const;
+            ChannelValue const& dereference() const;
+
+        private:
+            ChannelBuffer const* owner_;
+            std::size_t offsetIt_;
+            std::size_t repeatIt_;
+            Values::const_iterator valuesIt_;
+            Values::const_iterator valuesLast_;
+        };
+
+    } // namespace detail
+
 	class ChannelBuffer
             : Trackable< ChannelBuffer >
 	{
+        friend class detail::ChannelBufferIterator;
+
 	public:
         using Values = std::vector< ChannelValue >;
+
+        using iterator = Values::iterator;
+        using const_iterator = detail::ChannelBufferIterator;
 
 		ChannelBuffer();
 		explicit ChannelBuffer( std::initializer_list< ChannelValue > initializer );
 		explicit ChannelBuffer( std::size_t size );
 
-		bool empty() const { return values_.empty(); }
-		std::size_t size() const { return values_.size(); }
+		bool empty() const { return offset_ == 0 && values_.size() == 0; }
+		std::size_t size() const { return offset_ + values_.size() * repeat_; }
 
-		void resize( std::size_t size );
         void shift( std::size_t offset );
+        void multiply( std::size_t repeat );
         void clear();
 
-		ChannelValue& operator[]( std::size_t index ) { return values_[ index ]; }
-		ChannelValue const& operator[]( std::size_t index ) const { return values_[ index ]; }
+		ChannelValue& operator[]( std::size_t index );
+		ChannelValue const& operator[]( std::size_t index ) const;
 
-		Values::iterator begin() { return values_.begin(); }
-		Values::iterator end() { return values_.end(); }
-		Values::const_iterator begin() const { return values_.begin(); }
-		Values::const_iterator end() const { return values_.end(); }
-		Values::const_iterator cbegin() const { return begin(); }
-		Values::const_iterator cend() const { return end(); }
+		iterator begin();
+		iterator end();
+        const_iterator cbegin() const;
+        const_iterator cend() const;
+		const_iterator begin() const { return cbegin(); }
+		const_iterator end() const { return cend(); }
 
         using Trackable_::tracker;
 
         void statistics( std::ostream& os ) const;
 
 	private:
+        static constexpr ChannelValue emptyValue_ {};
+
+        void expand( std::size_t index = 0 );
+
+        std::size_t offset_;
+        std::size_t repeat_;
 		Values values_;
 	};
 
