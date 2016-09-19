@@ -55,7 +55,7 @@ namespace sc {
 
         void toggle();
 
-        ChangeEvent::Interface& setEvent() { return changeEvent_.interface(); }
+        ChangeEvent::Interface& changeEvent() { return changeEvent_.interface(); }
 
     private:
         Console& console_;

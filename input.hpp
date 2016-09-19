@@ -3,10 +3,10 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 
 #include "component.hpp"
 #include "event.hpp"
-#include "utility.hpp"
 
 namespace sc {
 
@@ -44,8 +44,8 @@ namespace sc {
 		: public ComponentRegistry< Type >
 	{
 	public:
-		InputRegistry( char const* name )
-                : ComponentRegistry< Type >( "input", name )
+		InputRegistry( std::string name )
+                : ComponentRegistry< Type >( "input", std::move( name ) )
         {
         }
 	};

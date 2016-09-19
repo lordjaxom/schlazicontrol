@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "statistics.hpp"
@@ -20,11 +21,32 @@ namespace sc {
      * class Component
      */
 
+    class Component;
+
+    namespace detail {
+
+        struct ComponentDescription
+        {
+            std::string const& category;
+            std::string const& nameOrType;
+            std::string const& id;
+            Component const* requester;
+        };
+
+        std::ostream& operator<<( std::ostream& os, ComponentDescription const& description );
+
+    } // namespace detail
+
 	class Component
 	{
         template< typename Type > friend class ComponentRegistry;
 
+        using Description = detail::ComponentDescription;
+
     public:
+        static Description describe( std::string const& type, std::string const& id,
+                                     Component const* requester = nullptr );
+
         Component();
 		explicit Component( std::string&& id, bool statistics = true );
         Component( Component const& ) = delete;
@@ -33,6 +55,8 @@ namespace sc {
         std::string const& id() const { return id_; }
         std::string const& category() const { return *category_; }
         std::string const& name() const { return *name_; }
+
+        Description describe( Component const* requester = nullptr ) const;
 
         void statistics( std::ostream& os ) const;
 
@@ -69,7 +93,7 @@ namespace sc {
 		ComponentFactory();
 		ComponentFactory( ComponentFactory const& ) = delete;
 
-		void put( std::string&& name, Factory factory );
+		void put( std::string&& name, Factory&& factory );
 
 		std::map< std::string, Factory > components_;
         std::size_t generatedId_;
@@ -83,18 +107,28 @@ namespace sc {
 	class ComponentRegistry
 	{
 	public:
-		ComponentRegistry( std::string const& category, std::string const& name )
-                : ComponentRegistry( category, name, str( category, ".", name ) )
+		ComponentRegistry( std::string category, std::string name )
+                //: ComponentRegistry( std::move( category ), std::move( name ), str( category, ".", name ) )
 		{
+            using namespace std::placeholders;
+            auto type = category.empty() ? name : str( category, ".", name );
+            auto wrapper = []( auto&& c, auto&& n, auto&& id, auto&& manager, auto&& properties ) {
+                std::unique_ptr< Component > result( new Type( std::move( id ), manager, properties ));
+                result->category_ = &c;
+                result->name_ = &n;
+                return result;
+            };
+            ComponentFactory::instance().put( std::move( type ), std::bind( std::move( wrapper ), std::move( category ), std::move( name ), _1, _2, _3 ) );
 		}
 
-        ComponentRegistry( std::string const& name )
-                : ComponentRegistry( name, name, name )
+        ComponentRegistry( std::string name )
+                : ComponentRegistry( {}, std::move( name ) )
+                //: ComponentRegistry( {}, name, name )
         {
         }
-
+/*
     private:
-        ComponentRegistry( std::string const& category, std::string const& name, std::string type )
+        ComponentRegistry( std::string&& category, std::string&& name, std::string type )
         {
             ComponentFactory::instance().put(
                     std::move( type ),
@@ -104,7 +138,7 @@ namespace sc {
                         result->name_ = &name;
                         return result;
                     } );
-        }
+        }*/
     };
 
 } // namespace sc

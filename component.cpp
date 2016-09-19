@@ -12,6 +12,29 @@ namespace sc {
      * class Component
      */
 
+    namespace detail {
+
+        ostream& operator<<( ostream& os, ComponentDescription const& description )
+        {
+            os << "\"" << description.id << "\" (of type \"";
+            if ( !description.category.empty() ) {
+                os << description.category << ".";
+            }
+            os << description.nameOrType << "\")";
+            if ( description.requester != nullptr ) {
+                os << " defined by " << description.requester->describe();
+            }
+            return os;
+        }
+
+    } // namespace detail
+
+    Component::Description Component::describe( string const& type, string const& id, Component const* requester )
+    {
+        static string category; // must stay alive
+        return { category, type, id, requester };
+    }
+
     Component::Component( std::string&& id, bool statistics )
             : id_( move( id ) )
             , statistics_( statistics )
@@ -19,6 +42,11 @@ namespace sc {
     }
 
     Component::~Component() = default;
+
+    Component::Description Component::describe( Component const* requester ) const
+    {
+        return { *category_, *name_, id_ /*, requester*/ };
+    }
 
     void Component::statistics( ostream& os ) const
     {
@@ -63,7 +91,7 @@ namespace sc {
 		return it->second( move( id ), manager, properties );
 	}
 
-	void ComponentFactory::put( string&& name, Factory factory )
+	void ComponentFactory::put( string&& name, Factory&& factory )
 	{
 		auto it = components_.emplace( move( name ), move( factory ) );
 		if ( !it.second ) {

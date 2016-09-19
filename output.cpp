@@ -13,10 +13,8 @@ namespace sc {
             Component const& input, Component const& output, size_t emitsChannels, bool acceptsChannels )
     {
         if ( !acceptsChannels ) {
-            throw runtime_error( str(
-                    "invalid connection between ", input.name(), " ", input.category(), " \"", input.id(), "\" and ",
-                    output.name(), " ", output.category(), " \"", output.id(), "\": ", output.category(),
-                    " doesn't accept ", emitsChannels, " output channels" ) );
+            throw runtime_error( str( "invalid connection between ", input.describe(), " and ", output.describe(),
+                                      " receiver doesn't accept ", emitsChannels, " output channels" ) );
         }
     }
 

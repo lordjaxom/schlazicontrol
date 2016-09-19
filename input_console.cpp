@@ -24,6 +24,7 @@ namespace sc {
             , device_( manager.get< Console >( *this, properties[ consoleProperty ] ),
                        properties[ tagProperty ].as< std::string >() )
     {
+        device_.changeEvent().subscribe( [this]( bool value ) { change( value ); } );
     }
 
     void ConsoleInput::doStatistics( ostream& os ) const

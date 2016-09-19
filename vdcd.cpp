@@ -58,7 +58,7 @@ namespace sc {
 
 	void Vdcd::add( VdcdDevice* device )
 	{
-		devices_.push_back( device );
+		devices_.emplace_back( device );
 	}
 
 	void Vdcd::remove( VdcdDevice* device )

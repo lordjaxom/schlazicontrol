@@ -53,7 +53,7 @@ namespace sc {
         {
             auto& component = node.is< std::string >()
                     ? findComponent( requester, node.as< std::string >() )
-                    : createComponent( node, true );
+                    : *createComponent( node, &requester );
             Type* result = dynamic_cast< Type* >( &component );
             checkValidComponent( requester, component, result );
             return *result;
@@ -65,7 +65,7 @@ namespace sc {
 		void run();
 
 	private:
-        Component& createComponent( PropertyNode const& properties, bool adhoc );
+        Component* createComponent( PropertyNode const& properties, Component const* requester = nullptr );
         Component& findComponent( Component const& requester, std::string const& id ) const;
         void checkValidComponent( Component const& requester, Component const& component, void const* cast ) const;
 

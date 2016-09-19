@@ -46,6 +46,9 @@ namespace sc {
     static PropertyKey const updateIntervalProperty( "updateInterval", 40 );
     static PropertyKey const statisticsIntervalProperty( "statisticsInterval", 0 );
     static PropertyKey const componentsProperty( "components" );
+    static PropertyKey const componentTypeProperty( "type" );
+    static PropertyKey const componentIdProperty( "id" );
+    static PropertyKey const componentDisabledProperty( "disabled", false );
 
     Manager::Manager( CommandLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
@@ -54,7 +57,7 @@ namespace sc {
         , internals_( new ManagerInternals )
 	{
         for ( auto componentNode : properties_[ componentsProperty ] ) {
-            createComponent( componentNode, false );
+            createComponent( componentNode );
         }
 
 		internals_->signals.async_wait( [this] ( error_code ec, int ) {
@@ -78,28 +81,38 @@ namespace sc {
         internals_->service.run();
 	}
 
-    Component& Manager::createComponent( PropertyNode const& properties, bool adhoc )
+    Component* Manager::createComponent( PropertyNode const& properties, Component const* requester )
     {
-        auto type = properties[ "type" ].as< string >();
-        auto id = !adhoc || properties.has( "id" )
-                  ? properties[ "id" ].as< string >()
-				  : ComponentFactory::instance().generateId( type );
+        auto& factory = ComponentFactory::instance();
+        auto type = properties[ componentTypeProperty ].as< string >();
+        auto disabled = properties[ componentDisabledProperty ].as< bool >();
+        auto id = requester == nullptr || properties.has( "id" )
+                  ? properties[ "id" ].as< string >() : factory.generateId( type );
+        if ( disabled ) {
+            if ( requester != nullptr ) {
+                throw runtime_error( str( "cannot disable component ", Component::describe( type, id, requester ),
+                                          ": only top-level component may be disabled" ) );
+            }
+            return nullptr;
+        }
 
         auto ptr = ComponentFactory::instance().create( type, move( id ), *this, properties );
         auto it = components_.emplace( ptr->id(), move( ptr ) );
         if ( !it.second ) {
-            throw runtime_error( str( "unable to create component \"", it.first->first,
-                                      "\": another component with the same id exists" ) );
+            throw runtime_error( str( "unable to create component ",
+                                      Component::describe( type, it.first->first, requester ), ": another component ",
+                                      it.first->second->describe(), " already exists" ) );
         }
-        logger.info( "component \"", it.first->first, "\" of type \"", type, "\" created" );
-        return *it.first->second;
+        logger.info( "component ", it.first->second->describe( requester ), " created" );
+        return it.first->second.get();
     }
 
     Component& Manager::findComponent( Component const& requester, string const& id ) const
 	{
 		auto it = components_.find( id );
 		if ( it == components_.end() ) {
-			throw runtime_error( str( "component \"", requester.id(), "\" depends on unknown component \"", id, "\"" ) );
+			throw runtime_error( str( "component ", requester.describe(), " depends on unknown component \"", id,
+                                      "\"" ) );
 		}
 		return *it->second;
 	}
@@ -107,8 +120,8 @@ namespace sc {
     void Manager::checkValidComponent( Component const& requester, Component const& component, void const* cast ) const
 	{
         if ( cast == nullptr ) {
-            throw runtime_error( str( "component \"", requester.id(), "\" depends on component \"", component.id(),
-                                      "\", but \"", component.id(), "\" is not of the required type" ) );
+            throw runtime_error( str( "component ", requester.describe(), " depends on component \"", component.id(),
+                                      "\" which is not of the required type" ) );
         }
 	}
 
