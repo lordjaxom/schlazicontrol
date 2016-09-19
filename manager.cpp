@@ -44,7 +44,7 @@ namespace sc {
      */
 
     static PropertyKey const updateIntervalProperty( "updateInterval", 40 );
-    static PropertyKey const statisticsIntervalProperty( "statisticsInterval", 0 );
+    static PropertyKey const statisticsIntervalProperty( "statisticsInterval", "0s" );
     static PropertyKey const componentsProperty( "components" );
     static PropertyKey const componentTypeProperty( "type" );
     static PropertyKey const componentIdProperty( "id" );
