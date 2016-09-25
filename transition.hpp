@@ -6,7 +6,6 @@
 
 #include "input.hpp"
 #include "output.hpp"
-#include "utility.hpp"
 
 namespace sc {
 

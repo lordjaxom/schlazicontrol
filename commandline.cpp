@@ -4,7 +4,7 @@
 #include <getopt.h>
 
 #include "commandline.hpp"
-#include "utility.hpp"
+#include "utility_string.hpp"
 
 using namespace std;
 
@@ -46,10 +46,10 @@ namespace sc {
 		while ( ( optchar = getopt_long( argc, argv, ":hp:l:d", options, &optind ) ) != -1 ) {
 			switch ( optchar ) {
 				case ':':
-					throw runtime_error( str( "error: missing argument to --", cmdLineMapShortToLong( optopt ) ) );
+					throw runtime_error( str( "missing argument to --", cmdLineMapShortToLong( optopt ) ) );
 
 				case '?':
-					throw runtime_error( str( "error: unknown option -", optopt ) );
+					throw runtime_error( str( "unknown option -", optopt ) );
 
 				case 'h':
 					throw runtime_error( str( "Usage: ", argv[ 0 ], " [...]" ) );

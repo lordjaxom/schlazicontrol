@@ -3,13 +3,9 @@
 #include <iomanip>
 #include <iterator>
 #include <ostream>
-#include <thread>
 #include <utility>
 
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <signal.h>
-#include <unistd.h>
 
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
@@ -31,107 +27,190 @@ namespace sc {
 
 	static constexpr char const ws281xSeparator[] = "\015\012";
 
-    static void killGracefully( pid_t pid, size_t timeoutMs = 2000 )
-    {
-        logger.debug( "terminating process ", pid );
+    /**
+     * class Ws281xWrapper
+     */
 
-        kill( pid, SIGTERM );
-
-        while ( timeoutMs > 0 ) {
-            int status;
-            if ( waitpid( pid, &status, WNOHANG ) == pid ) {
-                return;
-            }
-
-            this_thread::sleep_for( chrono::milliseconds( 100 ) );
-            timeoutMs = timeoutMs > 100 ? timeoutMs - 100 : 0;
-        }
-
-        logger.debug( "termination failed, killing process ", pid );
-
-        kill( pid, SIGKILL );
-    }
-
-	class Ws2811Wrapper
+	class Ws281xWrapper
 	{
 	public:
-		Ws2811Wrapper(
-				uint16_t gpioPin, size_t ledCount, int stripType = WS2811_STRIP_GRB,
-				uint32_t frequency = WS2811_TARGET_FREQ, int dmaNumber = 5 );
+		Ws281xWrapper( uint16_t gpioPin, size_t ledCount, int stripType = WS2811_STRIP_GRB,
+                       uint32_t frequency = WS2811_TARGET_FREQ, int dmaNumber = 5 )
+                : wrapped_()
+                , channel_( &wrapped_.channel[ 0 ] )
+                , pending_()
+        {
+            wrapped_.freq = frequency;
+            wrapped_.dmanum = dmaNumber;
 
-		size_t ledCount() const { return channel_->count; }
+            channel_->count = ledCount;
+            channel_->gpionum = gpioPin;
+            channel_->strip_type = stripType;
+            channel_->brightness = 255;
+
+            logger.debug( "initializing rpi_ws281x api" );
+
+            if ( ws2811_init( &wrapped_ ) ) {
+                throw runtime_error( str( "couldn't initialize ws2811 api on pin ", gpioPin ) );
+            }
+
+            fill_n( channel_->leds, channel_->count, 0 );
+            update();
+        }
+
+		size_t ledCount() const { return (size_t) channel_->count; }
 
 		ws2811_led_t const* pixels() const { return channel_->leds; }
 		ws2811_led_t* pixels() { wait(); return channel_->leds; }
 
-		void update();
+		void update()
+        {
+            wait();
+            ws2811_render( &wrapped_ );
+            pending_ = true;
+        }
 
 	private:
-		void wait();
+		void wait()
+        {
+            if ( pending_ ) {
+                ws2811_wait( &wrapped_ );
+                pending_ = false;
+            }
+        }
 
-		ws2811_t wrapped_;
+        ws2811_t wrapped_;
 		ws2811_channel_t* channel_;
 		bool pending_;
 	};
 
-	Ws2811Wrapper::Ws2811Wrapper(
-			uint16_t gpioPin, size_t ledCount, int stripType, uint32_t frequency, int dmaNumber )
-		: wrapped_()
-		, channel_( &wrapped_.channel[ 0 ] )
-		, pending_()
-	{
-		wrapped_.freq = frequency;
-		wrapped_.dmanum = dmaNumber;
-
-		channel_->count = ledCount;
-		channel_->gpionum = gpioPin;
-		channel_->strip_type = stripType;
-		channel_->brightness = 255;
-
-		logger.debug( "initializing rpi_ws281x api" );
-
-		if ( ws2811_init( &wrapped_ ) ) {
-			throw runtime_error( str( "couldn't initialize ws2811 api on pin ", gpioPin ) );
-		}
-
-		fill_n( channel_->leds, channel_->count, 0 );
-		update();
-	}
-
-	void Ws2811Wrapper::update()
-	{
-		wait();
-		ws2811_render( &wrapped_ );
-		pending_ = true;
-	}
-
-	void Ws2811Wrapper::wait()
-	{
-		if ( pending_ ) {
-			ws2811_wait( &wrapped_ );
-			pending_ = false;
-		}
-	}
+    /**
+     * class Ws281xServer
+     */
 
 	class Ws281xServer
 	{
 	public:
-		Ws281xServer( uint16_t gpioPin, size_t ledCount );
-		~Ws281xServer();
+		Ws281xServer( uint16_t gpioPin, size_t ledCount )
+                : wrapper_( gpioPin, ledCount )
+                , signaled_()
+                , signals_( service_, SIGINT, SIGTERM )
+                , acceptor_( service_, tcp::endpoint( tcp::v4(), 9999 ) )
+                , socket_( service_ )
+        {
+            signals_.async_wait( [this]( error_code ec, int signo ) {
+                logger.info( "received signal, shutting down" );
+                signaled_ = true;
+                service_.stop();
+            } );
+        }
 
-		void run();
+        bool signaled() const { return signaled_; }
+
+		void run()
+        {
+            start();
+            service_.run();
+        }
 
 	private:
-		void start();
-		void restart();
+		void start()
+        {
+            logger.info(
+                    "waiting for connections on ", acceptor_.local_endpoint().address(),
+                    ":", acceptor_.local_endpoint().port() );
 
-		void sendInitMessage();
+            acceptor_.async_accept( socket_, [this]( error_code ec ) {
+                if ( handleError( ec ) ) {
+                    return;
+                }
 
-		void receive();
+                auto&& endpoint = socket_.remote_endpoint();
+                logger.info( "connection from ", endpoint.address(), ":", endpoint.port() );
+                sendInitMessage();
+            } );
+        }
 
-		bool handleError( error_code const& ec );
+        void restart()
+        {
+            socket_.close();
+            incoming_.consume( incoming_.size() );
+            outgoing_.consume( outgoing_.size() );
+            start();
+        }
 
-		Ws2811Wrapper wrapper_;
+        void sendInitMessage()
+        {
+            ostream os( &outgoing_ );
+            os << wrapper_.ledCount() << ws281xSeparator << flush;
+            async_write( socket_, outgoing_, [this] ( error_code ec, size_t ) {
+                if ( handleError( ec ) ) {
+                    return;
+                }
+                receive();
+            } );
+        }
+
+        void receive()
+        {
+            async_read_until( socket_, incoming_, ws281xSeparator, [this] ( error_code ec, size_t ) {
+                if ( handleError( ec ) ) {
+                    return;
+                }
+
+                auto srcBegin = buffers_begin( incoming_.data() );
+                auto srcEnd = buffers_end( incoming_.data() );
+                auto src = srcBegin;
+                auto dstBegin = wrapper_.pixels();
+                auto dstEnd = next( dstBegin, wrapper_.ledCount() );
+                auto dst = dstBegin;
+                while ( dst != dstEnd ) {
+                    if ( distance( src, srcEnd ) >= 6 ) {
+                        auto next = std::next( src, 6 );
+
+                        size_t pos;
+                        unsigned long long value;
+                        try {
+                            value = stoull( string( src, next ), &pos, 16 );
+                        }
+                        catch ( runtime_error const& ) {
+                            pos = 0;
+                        }
+                        if ( pos == 6 ) {
+                            *dst++ = value;
+                            src = next;
+                            continue;
+                        }
+                    }
+
+                    logger.error( "protocol violation: message not made up of ", wrapper_.ledCount(), " six digit hex colors" );
+                    restart();
+                    return;
+                }
+
+                if ( distance( src, srcEnd ) < 2 || !equal( src, next( src, 2 ), ws281xSeparator ) ) {
+                    logger.error( "protocol violation: message not terminated with separator" );
+                    restart();
+                    return;
+                }
+
+                incoming_.consume( (size_t) distance( srcBegin, src ) + 2 );
+                wrapper_.update();
+                receive();
+            } );
+        }
+
+        bool handleError( error_code const& ec )
+        {
+            if ( ec ) {
+                logger.error( "socket error in ws281x server: ", ec.message() );
+                restart();
+                return true;
+            }
+            return false;
+        }
+
+		Ws281xWrapper wrapper_;
         bool signaled_;
 		io_service service_;
 		signal_set signals_;
@@ -141,185 +220,9 @@ namespace sc {
 		asio::streambuf outgoing_;
 	};
 
-	Ws281xServer::Ws281xServer( uint16_t gpioPin, size_t ledCount )
-		: wrapper_( gpioPin, ledCount )
-        , signaled_()
-		, signals_( service_, SIGINT, SIGTERM )
-		, acceptor_( service_, tcp::endpoint( tcp::v4(), 9999 ) )
-		, socket_( service_ )
-	{
-		signals_.async_wait( [this]( error_code ec, int signo ) {
-			logger.info( "received signal, shutting down" );
-            signaled_ = true;
-			service_.stop();
-		} );
-	}
-
-	Ws281xServer::~Ws281xServer()
-	{
-        if ( !signaled_ ) {
-            killGracefully( getppid() );
-        }
-	}
-
-	void Ws281xServer::run()
-	{
-		start();
-		service_.run();
-	}
-
-	void Ws281xServer::start()
-	{
-        logger.info(
-                "waiting for connections on ", acceptor_.local_endpoint().address(),
-                ":", acceptor_.local_endpoint().port() );
-
-		acceptor_.async_accept( socket_, [this]( error_code ec ) {
-			if ( handleError( ec ) ) {
-				return;
-			}
-
-			auto&& endpoint = socket_.remote_endpoint();
-			logger.info( "connection from ", endpoint.address(), ":", endpoint.port() );
-			sendInitMessage();
-		} );
-	}
-
-	void Ws281xServer::restart()
-	{
-		socket_.close();
-		incoming_.consume( incoming_.size() );
-		outgoing_.consume( outgoing_.size() );
-		start();
-	}
-
-	void Ws281xServer::sendInitMessage()
-	{
-		ostream os( &outgoing_ );
-		os << wrapper_.ledCount() << ws281xSeparator << flush;
-		async_write( socket_, outgoing_, [this] ( error_code ec, size_t ) {
-			if ( handleError( ec ) ) {
-				return;
-			}
-			receive();
-		} );
-	}
-
-	void Ws281xServer::receive()
-	{
-		async_read_until( socket_, incoming_, ws281xSeparator, [this] ( error_code ec, size_t ) {
-			if ( handleError( ec ) ) {
-				return;
-			}
-
-			auto srcBegin = buffers_begin( incoming_.data() );
-			auto srcEnd = buffers_end( incoming_.data() );
-			auto src = srcBegin;
-			auto dstBegin = wrapper_.pixels();
-			auto dstEnd = next( dstBegin, wrapper_.ledCount() );
-			auto dst = dstBegin;
-			while ( dst != dstEnd ) {
-				if ( distance( src, srcEnd ) >= 6 ) {
-					auto next = std::next( src, 6 );
-
-					size_t pos;
-					unsigned long long value;
-					try {
-						value = stoull( string( src, next ), &pos, 16 );
-					}
-					catch ( runtime_error const& ) {
-						pos = 0;
-					}
-					if ( pos == 6 ) {
-						*dst++ = value;
-						src = next;
-						continue;
-					}
-				}
-
-				logger.error( "protocol violation: message not made up of ", wrapper_.ledCount(), " six digit hex colors" );
-				restart();
-				return;
-			}
-
-			if ( distance( src, srcEnd ) < 2 || !equal( src, next( src, 2 ), ws281xSeparator ) ) {
-				logger.error( "protocol violation: message not terminated with separator" );
-				restart();
-				return;
-			}
-
-			incoming_.consume( (size_t) distance( srcBegin, src ) + 2 );
-			wrapper_.update();
-			receive();
-		} );
-	}
-
-	bool Ws281xServer::handleError( error_code const& ec )
-	{
-		if ( ec ) {
-			logger.error( "socket error in ws281x server: ", ec.message() );
-			restart();
-			return true;
-		}
-		return false;
-	}
-
-	class Ws281xLauncher
-	{
-	public:
-		Ws281xLauncher( Manager& manager, uint16_t gpioPin, size_t ledCount );
-		~Ws281xLauncher();
-
-	private:
-		void start();
-
-		Manager& manager_;
-		uint16_t gpioPin_;
-		size_t ledCount_;
-		pid_t pid_;
-	};
-
-	Ws281xLauncher::Ws281xLauncher( Manager& manager, uint16_t gpioPin, size_t ledCount )
-		: manager_( manager )
-		, gpioPin_( gpioPin )
-		, ledCount_( ledCount )
-		, pid_()
-	{
-		start();
-	}
-
-	Ws281xLauncher::~Ws281xLauncher()
-	{
-        killGracefully( pid_ );
-	}
-
-	void Ws281xLauncher::start()
-	{
-		auto& service = manager_.service();
-		service.notify_fork( io_service::fork_prepare );
-		auto pid = fork();
-		if ( pid == -1 ) {
-			throw system_error( errno, std::system_category(), "couldn't start ws281x server process" );
-		}
-		if ( pid == 0 ) {
-			service.notify_fork( io_service::fork_child );
-			throw Ws281xLaunchException( gpioPin_, ledCount_ );
-		}
-		service.notify_fork( io_service::fork_parent );
-		pid_ = pid;
-	}
-
-	Ws281xLaunchException::Ws281xLaunchException( uint16_t gpioPin, size_t ledCount )
-		: gpioPin_( gpioPin )
-		, ledCount_( ledCount )
-	{
-	}
-
-	void Ws281xLaunchException::run()
-	{
-		Ws281xServer( gpioPin_, ledCount_ ).run();
-	}
-
+    /**
+     * class Ws281x
+     */
 
     struct Ws281xInternals
     {
@@ -341,13 +244,23 @@ namespace sc {
             , manager_( manager )
             , gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
             , ledCount_( properties[ ledCountProperty ].as< size_t >() )
-            , launcher_( new Ws281xLauncher( manager_, gpioPin_, ledCount_ ) )
             , internals_( new Ws281xInternals( manager_.service() ) )
 	{
 		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
-	void Ws281x::send( ChannelBuffer const& values )
+    function< bool() > Ws281x::forkedProcess() const
+    {
+        auto gpioPin = gpioPin_;
+        auto ledCount = ledCount_;
+        return [gpioPin, ledCount] {
+            Ws281xServer server( gpioPin, ledCount );
+            server.run();
+            return server.signaled();
+        };
+    }
+
+    void Ws281x::send( ChannelBuffer const& values )
 	{
 		assert( values.size() == ledCount_ * 3 );
 
@@ -357,7 +270,7 @@ namespace sc {
 
 		ostream os( &internals_->outgoing );
         for ( auto it = values.begin() ; it != values.end() ; ++it ) {
-			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) it->scale( 0, 255 );
+			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) it->scale< uint16_t >( 0, 255 );
 		}
 		os << ws281xSeparator << flush;
 
@@ -455,6 +368,10 @@ namespace sc {
 	{
 		os << ", connected: " << internals_->socket.is_open();
 	}
+
+    /**
+     * class Ws281xDevice
+     */
 
 	Ws281xDevice::Ws281xDevice( Ws281x& ws281x )
 	    	: ws281x_( ws281x )

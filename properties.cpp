@@ -8,7 +8,7 @@
 #include "expression.hpp"
 #include "logging.hpp"
 #include "properties.hpp"
-#include "utility.hpp"
+#include "utility_string.hpp"
 
 using namespace std;
 

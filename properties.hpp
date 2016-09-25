@@ -12,7 +12,7 @@
 #include <json/value.h>
 
 #include "typeinfo.hpp"
-#include "utility.hpp"
+#include "utility_string.hpp"
 
 namespace sc {
 

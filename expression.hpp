@@ -18,7 +18,8 @@
 
 #include "typeinfo.hpp"
 #include "typetraits.hpp"
-#include "utility.hpp"
+#include "utility_stream.hpp"
+#include "utility_string.hpp"
 
 namespace sc {
 

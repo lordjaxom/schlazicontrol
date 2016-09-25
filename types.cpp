@@ -1,11 +1,11 @@
 #include <cassert>
+#include <cmath>
 #include <algorithm>
 #include <iterator>
 #include <ostream>
 
 #include "logging.hpp"
 #include "types.hpp"
-#include "utility.hpp"
 
 using namespace std;
 
@@ -15,19 +15,25 @@ namespace sc {
 
     static constexpr size_t maxOutputCount = 3;
 
+
     /**
      * class ChannelValue
      */
 
-	ChannelValue::ChannelValue( double value, double min, double max )
-		    : ChannelValue( sc::scale( value, min, max, minimum, maximum ) )
-	{
-	}
+    ChannelValue::operator bool() const
+    {
+        return abs( value_ ) > 0.0;
+    }
 
-	ChannelValue::ChannelValue( bool value )
-		    : ChannelValue( value ? maximum : minimum )
-	{
-	}
+    bool ChannelValue::operator==( ChannelValue const& other ) const
+    {
+        return abs( value_ - other.value_ ) < epsilon;
+    }
+
+    bool ChannelValue::operator<( ChannelValue const& other ) const
+    {
+        return value_ - other.value_ < -epsilon;
+    }
 
     /**
      * class ChannelBuffer
@@ -48,6 +54,13 @@ namespace sc {
 	{
         allocate< ChannelValue >( values_.size() );
 	}
+
+    ChannelBuffer::ChannelBuffer( ChannelValue const& value )
+            : offset_()
+            , repeat_( 1 )
+            , values_ { value }
+    {
+    }
 
 	ChannelBuffer::ChannelBuffer( size_t size )
             : offset_( size )
@@ -75,9 +88,16 @@ namespace sc {
         }
     }
 
-    void ChannelBuffer::clear()
+    void ChannelBuffer::resize( size_t size )
     {
-        fill( values_.begin(), values_.end(), emptyValue_ );
+        offset_ = size;
+        repeat_ = 1;
+        vector< ChannelValue >().swap( values_ );
+    }
+
+    void ChannelBuffer::fill( const ChannelValue& value )
+    {
+        std::fill( values_.begin(), values_.end(), value );
     }
 
     ChannelValue& ChannelBuffer::operator[]( size_t index )

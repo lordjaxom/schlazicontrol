@@ -69,7 +69,6 @@ set(SOURCE_FILES
         schlazicontrol.cpp
         types.cpp
         types.hpp
-        utility.hpp
         vdcd.cpp
         vdcd.hpp
         ws281x.cpp
@@ -106,7 +105,11 @@ set(SOURCE_FILES
         output_console.cpp
         output_console.hpp
         console.cpp
-        console.hpp)
+        console.hpp
+        utility_stream.hpp
+        utility_string.hpp
+        utility_algorithm.hpp
+        utility_math.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

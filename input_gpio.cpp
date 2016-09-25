@@ -29,7 +29,7 @@ namespace sc {
 		bool lastValue = value_;
 		value_ = device_.digitalRead( gpioPin_ );
 		if ( lastValue != value_ ) {
-			inputChangeEvent_( ChannelBuffer { value_ } );
+			inputChangeEvent_( ChannelValue( value_ ) );
 		}
 	}
 

@@ -36,7 +36,7 @@ namespace sc {
     {
         value_ = value;
         logger.debug( "console input \"", device_.tag(), "\" changed to ", value_ );
-        inputChangeEvent_( ChannelBuffer { value_ } );
+        inputChangeEvent_( ChannelValue( value_ ) );
     }
 
     static InputRegistry< ConsoleInput > registry( "debug" );

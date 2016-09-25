@@ -37,23 +37,22 @@ namespace sc {
 		}
 
 		template< size_t L >
-		string buildTag( char const* tag )
+		string buildTag( string&& tag )
 		{
-			string s( tag );
-			if ( s.length() == L ) {
-				return s;
+			if ( tag.length() == L ) {
+				return move( tag );
 			}
 
 			string result;
 			result.reserve( L );
-			if ( s.length() < L ) {
-				result.append( ( L - s.length() ) / 2, ' ' );
-				result.append( s );
-				result.append( ( L - s.length() ) - ( L - s.length() ) / 2, ' ' );
+			if ( tag.length() < L ) {
+				result.append( ( L - tag.length() ) / 2, ' ' );
+				result.append( tag );
+				result.append( ( L - tag.length() ) - ( L - tag.length() ) / 2, ' ' );
 			}
 			else {
 				result.append( "..." );
-				result.append( s.substr( s.length() - L + 3, L - 3 ) );
+				result.append( tag.substr( tag.length() - L + 3, L - 3 ) );
 			}
 			return result;
 		}
@@ -89,8 +88,8 @@ namespace sc {
 		output_.reset( new ofstream( output, ios::out | ios::app ) );
 	}
 
-	Logger::Logger( char const* tag )
-		: tag_( detail::buildTag< tagLength >( tag ) )
+	Logger::Logger( std::string tag )
+		: tag_( detail::buildTag< tagLength >( move( tag ) ) )
 	{
 	}
 

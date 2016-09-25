@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "component.hpp"
-#include "utility.hpp"
 
 namespace sc {
 

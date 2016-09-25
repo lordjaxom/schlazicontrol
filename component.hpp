@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "statistics.hpp"
-#include "utility.hpp"
+#include "utility_string.hpp"
 
 namespace sc {
 
@@ -60,8 +60,9 @@ namespace sc {
 
         void statistics( std::ostream& os ) const;
 
+        virtual std::function< bool () > forkedProcess() const { return nullptr; }
+
     protected:
-        virtual bool hasStatistics() const { return true; }
         virtual void doStatistics( std::ostream& os ) const = 0;
 
     private:
@@ -126,19 +127,6 @@ namespace sc {
                 //: ComponentRegistry( {}, name, name )
         {
         }
-/*
-    private:
-        ComponentRegistry( std::string&& category, std::string&& name, std::string type )
-        {
-            ComponentFactory::instance().put(
-                    std::move( type ),
-                    [category, name]( std::string&& id, Manager& manager, PropertyNode const& properties ) {
-                        std::unique_ptr< Component > result( new Type( std::move( id ), manager, properties ) );
-                        result->category_ = &category;
-                        result->name_ = &name;
-                        return result;
-                    } );
-        }*/
     };
 
 } // namespace sc

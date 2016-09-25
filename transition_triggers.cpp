@@ -27,11 +27,11 @@ namespace sc {
 
     struct ValueParser
             : expression::ArgParser< ValueParser, Value,
-                    expression::Range< intmax_t, (intmax_t) ChannelValue::minimum, (intmax_t) ChannelValue::maximum >,
+                    expression::Range< intmax_t, 0, 100 >,
                     expression::Enumeration< string, typestring_is( "off" ), typestring_is( "on" ), typestring_is( "fullOn" ) >
             >
     {
-        ValueParser( intmax_t value ) : BaseType( (double) value ) {}
+        ValueParser( intmax_t value ) : BaseType( ChannelValue( value, (intmax_t) 0, (intmax_t) 100 ) ) {}
         ValueParser( string const& value ) : BaseType(
                 value == "off" ? Value { ChannelValue::offValue(), &ChannelValue::off } :
                 value == "on" ? Value { ChannelValue::fullOnValue(), &ChannelValue::on } :

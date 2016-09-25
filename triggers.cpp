@@ -15,11 +15,6 @@ namespace sc {
          * class Value
          */
 
-        Value::Value( double value )
-            : Value( value, [this]( ChannelValue const& other ) { return value_ == other; } )
-        {
-        }
-
         Value::Value( ChannelValue const& value, function< bool ( ChannelValue const& other ) > condition )
             : value_( value )
             , condition_( move( condition ) )

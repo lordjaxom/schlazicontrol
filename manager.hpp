@@ -2,6 +2,7 @@
 #define SCHLAZICONTROL_MANAGER_HPP
 
 #include <chrono>
+#include <functional>
 #include <unordered_map>
 #include <memory>
 #include <string>
@@ -20,12 +21,35 @@ namespace sc {
     class Component;
 
     /**
+     * class ManagerProcess
+     */
+
+    class ManagerProcess final
+    {
+    public:
+        ManagerProcess();
+        ManagerProcess( Component const& component, std::function< bool () >&& handler );
+
+        operator bool() const;
+
+        std::string const& name() const { return name_; }
+        std::string const& id() const { return id_; }
+
+        void operator()() const;
+
+    private:
+        std::string name_;
+        std::string id_;
+        std::function< bool () > handler_;
+    };
+
+    /**
      * class Manager
      */
 
     struct ManagerInternals;
 
-	class Manager
+	class Manager final
 	{
         using ReadyEvent = Event< void () >;
         using PollEvent = Event< void ( std::chrono::nanoseconds ) >;
@@ -61,6 +85,8 @@ namespace sc {
 
         ReadyEvent::Interface& readyEvent() { return readyEvent_.interface(); }
         PollEvent::Interface& pollEvent() { return pollEvent_.interface(); }
+
+        ManagerProcess forkProcesses();
 
 		void run();
 

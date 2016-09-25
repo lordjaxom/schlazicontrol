@@ -11,6 +11,7 @@
 
 #include "statistics.hpp"
 #include "trackable.hpp"
+#include "utility_math.hpp"
 
 namespace sc {
 
@@ -18,29 +19,36 @@ namespace sc {
      * class ChannelValue
      */
 
-	class ChannelValue : public boost::totally_ordered< ChannelValue >
+	class ChannelValue
+            : public boost::totally_ordered< ChannelValue >
 	{
 	public:
 		static constexpr double minimum = 0.0;
 		static constexpr double maximum = 100.0;
-		static constexpr double epsilon = 0.1;
+		static constexpr double epsilon = 0.01;
 
 		static constexpr ChannelValue offValue() { return ChannelValue { minimum }; }
 		static constexpr ChannelValue fullOnValue() { return ChannelValue { maximum }; }
 
 		constexpr ChannelValue() : value_() {}
-		constexpr ChannelValue( double value ) : value_( value ) {}
-		ChannelValue( double value, double min, double max );
-		ChannelValue( bool value );
+        constexpr explicit ChannelValue( double value ) : value_( value ) {}
+		constexpr explicit ChannelValue( bool value ) : value_( value ? maximum : minimum ) {}
 
-        bool operator==( ChannelValue const& other ) const { return value_ == other.value_; }
-        bool operator<( ChannelValue const& other ) const { return value_ < other.value_; }
+        template< typename Other >
+        constexpr ChannelValue( Other value, Other min, Other max )
+                : value_( sc::scale< double >( value, min, max, minimum, maximum ) ) {}
 
-		double get() const { return value_; }
+        operator bool() const;
 
-		double scale( double min, double max ) const { return sc::scale( value_, minimum, maximum, min, max ); }
+        bool operator==( ChannelValue const& other ) const;
+        bool operator<( ChannelValue const& other ) const;
 
-		bool off() const { return value_ == minimum; }
+        double get() const { return value_; }
+
+        template< typename Other >
+        Other scale( Other min, Other max ) const { return sc::scale< Other >( value_, minimum, maximum, min, max ); }
+
+        bool off() const { return value_ == minimum; }
 		bool on() const { return value_ != minimum; }
 		bool fullOn() const { return value_ == maximum; }
 
@@ -103,15 +111,18 @@ namespace sc {
         using const_iterator = detail::ChannelBufferIterator;
 
 		ChannelBuffer();
+        ChannelBuffer( ChannelValue const& value );
 		explicit ChannelBuffer( std::initializer_list< ChannelValue > initializer );
-		explicit ChannelBuffer( std::size_t size );
+        explicit ChannelBuffer( std::size_t size );
 
 		bool empty() const { return offset_ == 0 && values_.size() == 0; }
 		std::size_t size() const { return offset_ + values_.size() * repeat_; }
 
+        void resize( std::size_t size );
+        void fill( ChannelValue const& value = {} );
+
         void shift( std::size_t offset );
         void multiply( std::size_t repeat );
-        void clear();
 
 		ChannelValue& operator[]( std::size_t index );
 		ChannelValue const& operator[]( std::size_t index ) const;

@@ -4,11 +4,10 @@
 #include <cstddef>
 #include <memory>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <utility>
 
-#include "utility.hpp"
+#include "utility_string.hpp"
 
 namespace sc {
 
@@ -20,11 +19,8 @@ namespace sc {
 		template< typename ...Args >
 		std::string logBuildMessage( std::string const& tag, char const* level, Args&&... args )
 		{
-			std::ostringstream os;
-			os << logTimestamp << " [" << logPid << "] [" << tag << "] [" << level << "] ";
-			strWrite( os, std::forward< Args >( args )... );
-			os << "\n";
-			return os.str();
+            return str( logTimestamp, " [", logPid, "] [", tag, "] [", level, "] ", std::forward< Args >( args )...,
+                        "\n" );
 		}
 
 	} // namespace detail
@@ -59,7 +55,8 @@ namespace sc {
 		static void output( std::ostream& output );
 		static void output( char const* output );
 
-		explicit Logger( char const* tag );
+        explicit Logger( std::string tag );
+		Logger( Logger const& ) = delete;
 
 		template< typename ...Args >
 		void debug( Args&&... args )
@@ -93,6 +90,7 @@ namespace sc {
 				std::string message =
 						detail::logBuildMessage( tag_, level.name, std::forward< Args >( args )... );
 				output_->write( message.c_str(), message.length() );
+				output_->flush();
 			}
 		}
 

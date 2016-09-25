@@ -4,7 +4,7 @@
 #include "manager.hpp"
 #include "multiconnection.hpp"
 #include "properties.hpp"
-#include "utility.hpp"
+#include "utility_stream.hpp"
 
 using namespace std;
 
@@ -28,7 +28,7 @@ namespace sc {
     {
         buffers_[ input.id() ] = values;
 
-        values_.clear();
+        values_.fill();
         for_each( buffers_.cbegin(), buffers_.cend(),
                   [this]( auto const& entry ) {
                       transform( entry.second.cbegin(), entry.second.cend(), values_.begin(), values_.begin(),

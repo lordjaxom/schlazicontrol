@@ -5,8 +5,7 @@
 #include "logging.hpp"
 #include "manager.hpp"
 #include "output_pwm.hpp"
-#include "types.hpp"
-#include "utility.hpp"
+#include "utility_algorithm.hpp"
 
 using namespace std;
 

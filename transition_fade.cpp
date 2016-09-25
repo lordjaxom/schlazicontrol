@@ -1,4 +1,3 @@
-#include <cmath>
 #include <algorithm>
 #include <vector>
 
@@ -10,7 +9,7 @@
 #include "timer.hpp"
 #include "transition_fade.hpp"
 #include "types.hpp"
-#include "utility.hpp"
+#include "utility_algorithm.hpp"
 
 using namespace std;
 
@@ -22,10 +21,10 @@ namespace sc {
 
     struct FadeTransitionState
     {
-        bool deltasKnown;
+        bool polling;
         ChannelBuffer output;
         ChannelBuffer target;
-        vector< double > deltas;
+        vector< int > deltas;
         double factor;
         EventScope pollEventScope;
     };
@@ -39,7 +38,8 @@ namespace sc {
     FadeTransition::FadeTransition( string&& id, Manager& manager, PropertyNode const& properties )
             : Transition( move( id ) )
             , manager_( manager )
-            , speed_( properties[ speedProperty ].as< chrono::nanoseconds >() )
+            , deltaPerNs_( ( ChannelValue::maximum - ChannelValue::minimum ) /
+                                   properties[ speedProperty ].as< chrono::nanoseconds >().count() )
     {
     }
 
@@ -55,11 +55,11 @@ namespace sc {
             state.deltas.resize( values.size() );
         }
 
-        Scoped scoped( [&state, &values] { values = state.output; state.deltasKnown = false; } );
+        Scoped scoped( [&state, &values] { values = state.output; state.polling = false; } );
         state.target = move( values );
 
         bool changed = false;
-        if ( !state.deltasKnown ) {
+        if ( !state.polling ) {
             changed = calculateDeltas( state );
         }
 
@@ -72,19 +72,19 @@ namespace sc {
             return;
         }
 
-        if ( !state.deltasKnown ) {
+        if ( !state.polling ) {
             Connection* safeConnection = &connection;
             FadeTransitionState* safeState = &state;
             state.pollEventScope = manager_.pollEvent().subscribe(
                     [this, safeConnection, safeState]( chrono::nanoseconds elapsed ) {
-                        poll( *safeState, *safeConnection, (double) elapsed.count() / speed_.count());
+                        poll( *safeState, *safeConnection, (double) elapsed.count() * deltaPerNs_ );
                     } );
         }
     }
 
     void FadeTransition::poll( FadeTransitionState& state, Connection& connection, double factor ) const
     {
-        state.deltasKnown = true;
+        state.polling = true;
         state.factor = factor;
         connection.transfer();
     }
@@ -94,9 +94,13 @@ namespace sc {
         auto changed = false;
         std::transform( state.target.begin(), state.target.end(), state.output.begin(), state.deltas.begin(),
                         [&changed]( ChannelValue const& target, ChannelValue const& output ) {
+
                             auto delta = target.get() - output.get();
-                            changed = changed || abs( delta ) > 0.0;
-                            return delta;
+                            if ( delta == 0.0 ) {
+                                return 0;
+                            }
+                            changed = true;
+                            return signbit( delta ) ? -1 : 1;
                         } );
         return changed;
     }
@@ -110,7 +114,7 @@ namespace sc {
                            result = ( delta > 0.0 && result > target.get() ) || ( delta < 0.0 && result < target.get() )
                                     ? target.get() : result;
                            changed = changed || result != output.get();
-                           return result;
+                           return ChannelValue( result );
                        }, state.output.begin(), state.output.end(), state.output.begin(), state.deltas.begin(),
                        state.target.begin() );
         return changed;

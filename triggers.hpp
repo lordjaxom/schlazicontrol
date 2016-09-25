@@ -28,8 +28,7 @@ namespace sc {
         class Value
         {
         public:
-            Value( double value );
-            Value( ChannelValue const& value, std::function< bool ( ChannelValue const& ) > condition );
+            Value( ChannelValue const& value, std::function< bool ( ChannelValue const& ) > condition = nullptr );
 
             ChannelValue const& get() const { return value_; }
             bool matches( ChannelValue const& value ) const;

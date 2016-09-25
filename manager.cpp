@@ -3,6 +3,13 @@
 #include <iterator>
 #include <stdexcept>
 #include <system_error>
+#include <thread>
+#include <vector>
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include <asio.hpp>
 
@@ -19,6 +26,30 @@ using namespace asio;
 namespace sc {
 
 	static Logger logger( "manager" );
+
+    static void killGracefully( pid_t pid, size_t timeoutMs = 1000 )
+    {
+        int status;
+
+        if ( ::waitpid( pid, &status, WNOHANG ) == pid ) {
+            return;
+        }
+
+        logger.debug( "terminating process ", pid );
+
+        ::kill( pid, SIGTERM );
+        while ( timeoutMs > 0 ) {
+            if ( ::waitpid( pid, &status, WNOHANG ) == pid ) {
+                return;
+            }
+            this_thread::sleep_for( chrono::milliseconds( 100 ) );
+            timeoutMs = timeoutMs > 100 ? timeoutMs - 100 : 0;
+        }
+
+        logger.debug( "termination failed, killing process ", pid );
+
+        ::kill( pid, SIGKILL );
+    }
 
     /**
      * struct ManagerInternals
@@ -37,7 +68,35 @@ namespace sc {
         signal_set signals;
         steady_timer pollingTimer;
         steady_timer statisticsTimer;
+        vector< pid_t > processes;
     };
+
+    /**
+     * class ManagerProcess
+     */
+
+    ManagerProcess::ManagerProcess()
+    {
+    }
+
+    ManagerProcess::ManagerProcess( Component const& component, std::function< bool () >&& handler )
+            : name_( component.name() )
+            , id_( component.id() )
+            , handler_( move( handler ) )
+    {
+    }
+
+    ManagerProcess::operator bool() const
+    {
+        return (bool) handler_;
+    }
+
+    void ManagerProcess::operator()() const
+    {
+        if ( !handler_() ) {
+            killGracefully( ::getppid() );
+        }
+    }
 
     /**
      * class Manager
@@ -66,11 +125,38 @@ namespace sc {
 		} );
 	}
 
-    Manager::~Manager() = default;
+    Manager::~Manager()
+    {
+        for_each( internals_->processes.begin(), internals_->processes.end(), []( pid_t pid ) {
+            killGracefully( pid );
+        } );
+    }
 
     io_service& Manager::service()
     {
         return internals_->service;
+    }
+
+    ManagerProcess Manager::forkProcesses()
+    {
+        ManagerProcess process;
+        for ( auto const& entry : components_ ) {
+            if ( auto handler = entry.second->forkedProcess() ) {
+                internals_->service.notify_fork( io_service::fork_prepare );
+                auto pid = ::fork();
+                if ( pid == -1 ) {
+                    throw system_error(
+                            errno, std::system_category(), str( "couldn't start process for component ", entry.first ) );
+                }
+                if ( pid == 0 ) {
+                    internals_->service.notify_fork( io_service::fork_child );
+                    return { *entry.second, move( handler ) };
+                }
+                internals_->service.notify_fork( io_service::fork_parent );
+                internals_->processes.emplace_back( pid );
+            }
+        };
+        return {};
     }
 
     void Manager::run()

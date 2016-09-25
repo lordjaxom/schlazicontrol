@@ -126,52 +126,59 @@ namespace sc {
 
 #include <iostream>
 
-#include "connection.hpp"
 #include "commandline.hpp"
-#include "input_gpio.hpp"
-#include "input_vdcd.hpp"
 #include "logging.hpp"
 #include "manager.hpp"
-#include "output_pwm.hpp"
-#include "output_ws281x.hpp"
 
 using namespace std;
 using namespace sc;
 
+static ManagerProcess runMainLoopOrForkProcess( int argc, char* argv[] )
+{
+    Logger logger( "schlazicontrol" );
+
+    try {
+        CommandLine commandLine( argv, argc );
+        if ( !commandLine.logFile().empty()) {
+            Logger::output( commandLine.logFile().c_str());
+        }
+
+        logger.info( "schlazicontrol starting" );
+        Manager manager( commandLine );
+
+        logger.debug( "collecting sub-processes" );
+        if ( ManagerProcess process = manager.forkProcesses() ) {
+            return process;
+        }
+
+        logger.info( "setup finished, running..." );
+        manager.run();
+        logger.info( "schlazicontrol exiting" );
+    }
+    catch ( exception const& e ) {
+        logger.error( e.what() );
+    }
+    return {};
+}
+
+static void runProcess( ManagerProcess const& process )
+{
+    Logger logger( process.name() );
+
+    try {
+        logger.info( process.name(), " starting" );
+        process();
+        logger.info( process.name(), " exiting" );
+    }
+    catch ( exception const& e ) {
+        logger.error( e.what() );
+    }
+}
+
 int main( int argc, char* argv[] )
 {
     LoggerScope loggerScope;
-
-    CommandLine cmdLine( argv, argc );
-    if ( !cmdLine.logFile().empty()) {
-        Logger::output( cmdLine.logFile().c_str());
-    }
-
-    try {
-        Logger logger( "schlazicontrol" );
-        try {
-            logger.info( "schlazicontrol starting" );
-
-            Manager manager( cmdLine );
-
-            logger.info( "setup finished, running..." );
-            manager.run();
-            logger.info( "exiting gracefully" );
-        }
-        catch ( exception const& e ) {
-            logger.error( "runtime error, attempting graceful exit: ", e.what() );
-        }
-        return EXIT_SUCCESS;
-    }
-    catch ( sc::Ws281xLaunchException& e ) {
-        Logger logger( "ws281x_server" );
-        try {
-            logger.info( "ws281x server starting" );
-            e.run();
-            logger.info( "exiting gracefully" );
-        }
-        catch ( exception const& e ) {
-            logger.error( "runtime error, attempting graceful exit: ", e.what() );
-        }
+    if ( ManagerProcess process = runMainLoopOrForkProcess( argc, argv ) ) {
+        runProcess( process );
     }
 }
