@@ -94,7 +94,6 @@ namespace sc {
         auto changed = false;
         std::transform( state.target.begin(), state.target.end(), state.output.begin(), state.deltas.begin(),
                         [&changed]( ChannelValue const& target, ChannelValue const& output ) {
-
                             auto delta = target.get() - output.get();
                             if ( delta == 0.0 ) {
                                 return 0;

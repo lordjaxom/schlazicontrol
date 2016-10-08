@@ -117,4 +117,10 @@ target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIB
 
 add_custom_command(TARGET schlazicontrol
         POST_BUILD
-        COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` osmc@schlazicontrol:')
+        COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:')
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    add_custom_command(TARGET schlazicontrol
+            POST_BUILD
+            COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:/usr/local/bin/')
+endif()

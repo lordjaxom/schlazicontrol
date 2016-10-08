@@ -14,8 +14,9 @@ namespace sc {
 	{
 		switch ( shortopt ) {
 			case 'h': return "help";
-			case 'p': return "properties";
+            case 'c': return "config-file";
 			case 'l': return "log-file";
+            case 'p': return "pid-file";
 			case 'd': return "daemonize";
 			default: throw invalid_argument( str( "cmdLineMapShortToLong( ", shortopt, ")" ) );
 		}
@@ -27,8 +28,9 @@ namespace sc {
 	{
 		struct option options[] = {
 			{ nullptr, no_argument,       nullptr, 'h' },
-			{ nullptr, required_argument, nullptr, 'p' },
-			{ nullptr, required_argument, nullptr, 'l' },
+			{ nullptr, required_argument, nullptr, 'c' },
+            { nullptr, required_argument, nullptr, 'l' },
+            { nullptr, required_argument, nullptr, 'p' },
 			{ nullptr, no_argument,       nullptr, 'd' },
 			{}
 		};
@@ -43,24 +45,28 @@ namespace sc {
 
 		int optchar;
 		int optind;
-		while ( ( optchar = getopt_long( argc, argv, ":hp:l:d", options, &optind ) ) != -1 ) {
+		while ( ( optchar = getopt_long( argc, argv, ":hc:l:p:d", options, &optind ) ) != -1 ) {
 			switch ( optchar ) {
 				case ':':
 					throw runtime_error( str( "missing argument to --", cmdLineMapShortToLong( optopt ) ) );
 
 				case '?':
-					throw runtime_error( str( "unknown option -", optopt ) );
+					throw runtime_error( str( "unknown option -", (char) optopt ) );
 
 				case 'h':
 					throw runtime_error( str( "Usage: ", argv[ 0 ], " [...]" ) );
 
-				case 'p':
+				case 'c':
 					propertiesFile_ = optarg;
 					break;
 
 				case 'l':
 					logFile_ = optarg;
 					break;
+
+                case 'p':
+                    pidFile_ = optarg;
+                    break;
 
 				case 'd':
 					daemon_ = true;

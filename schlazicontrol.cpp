@@ -124,7 +124,12 @@ namespace sc {
 } // namespace sc
 #endif // 0
 
+#include <fstream>
 #include <iostream>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "commandline.hpp"
 #include "logging.hpp"
@@ -133,12 +138,49 @@ namespace sc {
 using namespace std;
 using namespace sc;
 
+static void writePidToFile( string const& pidFile )
+{
+    ofstream( pidFile, ios::out | ios::trunc ) << ::getpid() << "\n";
+}
+
+static void daemonize()
+{
+    pid_t pid;
+
+    pid = ::fork();
+    if ( pid > 0 ) {
+        exit( EXIT_SUCCESS );
+    }
+    if ( pid != -1 && ::setsid() != -1 ) {
+        pid = fork();
+        if ( pid > 0 ) {
+            exit( EXIT_SUCCESS );
+        }
+        if ( pid != -1 && ::chdir( "/" ) != -1 ) {
+            ::umask( 0 );
+            for ( int fd = sysconf( _SC_OPEN_MAX ) ; fd > 0 ; --fd ) {
+                ::close( fd );
+            }
+            return;
+        }
+    }
+
+    cerr << "couldn't daemonize: " << strerror( errno ) << "\n";
+    exit( EXIT_FAILURE );
+}
+
 static ManagerProcess runMainLoopOrForkProcess( int argc, char* argv[] )
 {
     Logger logger( "schlazicontrol" );
 
     try {
         CommandLine commandLine( argv, argc );
+        if ( commandLine.daemon() ) {
+            daemonize();
+        }
+        if ( !commandLine.pidFile().empty() ) {
+            writePidToFile( commandLine.pidFile() );
+        }
         if ( !commandLine.logFile().empty()) {
             Logger::output( commandLine.logFile().c_str());
         }
