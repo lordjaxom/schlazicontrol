@@ -30,7 +30,7 @@ namespace sc {
         {
         }
 
-        ip::tcp::socket socket;
+        tcp::socket socket;
         asio::streambuf outgoing;
         asio::streambuf incoming;
     };
@@ -70,16 +70,25 @@ namespace sc {
 	{
 		logger.info( "connecting to vdcd at ", host_, ":", port_ );
 
-		tcp::resolver resolver( manager_.service() );
-		async_connect(
-				internals_->socket, resolver.resolve( tcp::resolver::query( host_, port_ ) ),
-				[this] ( error_code ec, tcp::resolver::iterator ) {
-					if ( handleError( ec ) ) {
-						return;
-					}
+		auto resolver = make_shared< tcp::resolver >( manager_.service() );
+        resolver->async_resolve(
+                tcp::resolver::query( host_, port_ ),
+                [this, resolver]( error_code ec, tcp::resolver::iterator it ) {
+                    if ( handleError( ec ) ) {
+                        return;
+                    }
 
-					sendInitMessage();
-				} );
+                    async_connect(
+                            internals_->socket, it,
+                            [this, resolver] ( error_code ec, tcp::resolver::iterator ) {
+                                if ( handleError( ec ) ) {
+                                    return;
+                                }
+
+                                sendInitMessage();
+                            } );
+                } );
+
 	}
 
 	void Vdcd::reconnect()
@@ -117,6 +126,8 @@ namespace sc {
 			jsonDevice[ "group" ] = device.group();
 			jsonDevice[ "sync" ] = true;
 			jsonDevice[ "ping" ] = true;
+			jsonDevice[ "controlvalues" ] = false;
+			jsonDevice[ "scenecommands" ] = false;
 			if ( !device.outputType().empty() ) {
 				jsonDevice[ "output" ] = device.outputType();
 				jsonDevice[ "dimmable" ] = device.dimmable();

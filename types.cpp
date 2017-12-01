@@ -95,7 +95,7 @@ namespace sc {
         vector< ChannelValue >().swap( values_ );
     }
 
-    void ChannelBuffer::fill( const ChannelValue& value )
+    void ChannelBuffer::fill( ChannelValue const& value )
     {
         std::fill( values_.begin(), values_.end(), value );
     }

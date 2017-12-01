@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iterator>
 #include <ostream>
+#include <ratio>
 #include <utility>
 
 #include <signal.h>
@@ -13,6 +14,7 @@
 #include "logging.hpp"
 #include "manager.hpp"
 #include "types.hpp"
+#include "utility_gamma.hpp"
 #include "ws281x.hpp"
 
 #include <ws2811.h>
@@ -249,7 +251,7 @@ namespace sc {
 		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
-    function< bool() > Ws281x::forkedProcess() const
+    function< bool () > Ws281x::forkedProcess() const
     {
         auto gpioPin = gpioPin_;
         auto ledCount = ledCount_;
@@ -270,7 +272,8 @@ namespace sc {
 
 		ostream os( &internals_->outgoing );
         for ( auto it = values.begin() ; it != values.end() ; ++it ) {
-			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) it->scale< uint16_t >( 0, 255 );
+            uint8_t value = GammaTable< ratio< 10, 25 > >::get( it->scale< uint8_t >( 0, 255 ) );
+			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) value;
 		}
 		os << ws281xSeparator << flush;
 

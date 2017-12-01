@@ -9,11 +9,9 @@
 
 namespace sc {
 
-    class ChannelBuffer;
-    class Connection;
     class Manager;
     class PropertyNode;
-    class FadeTransitionState;
+    struct FadeTransitionState;
 
     /**
      * class FadeTransition

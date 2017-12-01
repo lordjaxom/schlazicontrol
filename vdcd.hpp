@@ -88,7 +88,7 @@ namespace sc {
 		int group_;
 		std::string outputType_;
 		bool dimmable_;
-		double value_;
+		double value_ {};
         SetEvent setEvent_;
 	};
 

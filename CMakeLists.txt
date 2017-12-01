@@ -109,7 +109,10 @@ set(SOURCE_FILES
         utility_stream.hpp
         utility_string.hpp
         utility_algorithm.hpp
-        utility_math.hpp)
+        utility_math.hpp
+        utility_valuetable.hpp
+        utility_gamma.hpp
+        utility_colorwheel.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

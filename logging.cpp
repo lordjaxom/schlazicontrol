@@ -25,6 +25,9 @@ namespace sc {
 			tm tm; ::localtime_r( &tt, &tm );
 
 			return os
+					<< setw( 4 ) << setfill( '0' ) << ( tm.tm_year + 1900 ) << "/"
+					<< setw( 2 ) << setfill( '0' ) << ( tm.tm_mon + 1 ) << "/"
+					<< setw( 2 ) << setfill( '0' ) << tm.tm_mday << " "
 					<< setw( 2 ) << setfill( '0' ) << tm.tm_hour << ":"
 					<< setw( 2 ) << setfill( '0' ) << tm.tm_min << ":"
 					<< setw( 2 ) << setfill( '0' ) << tm.tm_sec << "."
