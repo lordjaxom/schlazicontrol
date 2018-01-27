@@ -25,13 +25,19 @@ namespace sc {
     static PropertyKey const outcomesProperty( "outcomes" );
     static PropertyKey const actionsProperty( "actions" );
 
+    struct ValueLimits
+    {
+        static constexpr intmax_t minimum = 0;
+        static constexpr intmax_t maximum = 100;
+    };
+
     struct ValueParser
             : expression::ArgParser< ValueParser, Value,
                     expression::Range< intmax_t, 0, 100 >,
                     expression::Enumeration< string, typestring_is( "off" ), typestring_is( "on" ), typestring_is( "fullOn" ) >
             >
     {
-        ValueParser( intmax_t value ) : BaseType( ChannelValue( value, (intmax_t) 0, (intmax_t) 100 ) ) {}
+        ValueParser( intmax_t value ) : BaseType( { ranged< ValueLimits >( value ) } ) {}
         ValueParser( string const& value ) : BaseType(
                 value == "off" ? Value { ChannelValue::offValue(), &ChannelValue::off } :
                 value == "on" ? Value { ChannelValue::fullOnValue(), &ChannelValue::on } :

@@ -7,6 +7,7 @@
 #include <system_error>
 
 #include "component.hpp"
+#include "forward.hpp"
 
 namespace sc {
 
@@ -14,7 +15,6 @@ namespace sc {
      * class Ws281x
      */
 
-    class ChannelBuffer;
     struct Ws281xInternals;
 
     class Ws281x final

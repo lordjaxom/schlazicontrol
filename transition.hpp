@@ -4,19 +4,15 @@
 #include <memory>
 #include <string>
 
+#include "forward.hpp"
 #include "input.hpp"
 #include "output.hpp"
 
 namespace sc {
 
-    class ChannelBuffer;
-    class Connection;
-
     /**
      * class TransitionInstance
      */
-
-    class Transition;
 
     class TransitionInstance
     {

@@ -7,13 +7,9 @@
 #include <vector>
 
 #include "component.hpp"
+#include "forward.hpp"
 
 namespace sc {
-
-    class ChannelBuffer;
-    class Input;
-    class Manager;
-    class PropertyNode;
 
     /**
      * class Output

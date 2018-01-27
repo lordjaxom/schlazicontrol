@@ -9,6 +9,7 @@
 
 #include "component.hpp"
 #include "event.hpp"
+#include "forward.hpp"
 
 namespace Json {
 	class StreamWriter;
@@ -17,11 +18,11 @@ namespace Json {
 
 namespace sc {
 
-	class Manager;
-	class PropertyNode;
-	class VdcdDevice;
-
     struct VdcdInternals;
+
+	/**
+	 * class Vdcd
+	 */
 
 	class Vdcd final
 		: public Component
@@ -60,6 +61,10 @@ namespace sc {
 		std::unique_ptr< Json::StreamWriter > jsonWriter_;
 		std::vector< VdcdDevice* > devices_;
 	};
+
+	/**
+	 * class VdcdDevice
+	 */
 
 	class VdcdDevice final
 	{

@@ -40,7 +40,7 @@ namespace sc {
 
 		static std::uint32_t get( std::size_t index )
 		{
-			return color( ValueTable< detail::ColorwheelFunction< N >, 0, N >::get( index ) );
+			return (std::uint32_t) ValueTable< detail::ColorwheelFunction< N >, 0, N >::get( index );
 		}
 	};
 

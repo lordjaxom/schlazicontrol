@@ -7,10 +7,9 @@
 
 #include "component.hpp"
 #include "event.hpp"
+#include "forward.hpp"
 
 namespace sc {
-
-    class ChannelBuffer;
 
     /**
      * class Input

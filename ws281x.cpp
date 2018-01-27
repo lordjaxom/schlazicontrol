@@ -272,7 +272,7 @@ namespace sc {
 
 		ostream os( &internals_->outgoing );
         for ( auto it = values.begin() ; it != values.end() ; ++it ) {
-            uint8_t value = GammaTable< ratio< 10, 25 > >::get( it->scale< uint8_t >( 0, 255 ) );
+            uint8_t value = GammaTable< ratio< 10, 25 > >::get( rangeCast< uint8_t >( *it ).get() );
 			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) value;
 		}
 		os << ws281xSeparator << flush;

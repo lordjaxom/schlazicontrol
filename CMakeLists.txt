@@ -69,6 +69,7 @@ set(SOURCE_FILES
         schlazicontrol.cpp
         types.cpp
         types.hpp
+        forward.hpp
         vdcd.cpp
         vdcd.hpp
         ws281x.cpp
@@ -112,7 +113,9 @@ set(SOURCE_FILES
         utility_math.hpp
         utility_valuetable.hpp
         utility_gamma.hpp
-        utility_colorwheel.hpp)
+        utility_colorwheel.hpp
+        transition_animate.cpp
+        transition_animate.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
@@ -122,8 +125,8 @@ add_custom_command(TARGET schlazicontrol
         POST_BUILD
         COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:')
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    add_custom_command(TARGET schlazicontrol
-            POST_BUILD
-            COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:/usr/local/bin/')
-endif()
+#if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+#    add_custom_command(TARGET schlazicontrol
+#            POST_BUILD
+#            COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:/usr/local/bin/')
+#endif()
