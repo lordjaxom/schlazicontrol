@@ -283,21 +283,21 @@ namespace sc {
         ColorProxy::ColorProxy( ChannelBuffer::iterator wrapped )
                 : wrapped_( wrapped ) {}
 
-        uint32_t ColorProxy::get() const
+        Rgb ColorProxy::get() const
         {
             auto it = wrapped_;
-            uint8_t r = ColorValue( *it++ ).get();
-            uint8_t g = ColorValue( *it++ ).get();
-            uint8_t b = ColorValue( *it++ ).get();
-            return ( r << 16 ) | ( g << 8 ) | ( b << 0 );
+            auto r = RangedType< std::uint8_t >( *it++ );
+            auto g = RangedType< std::uint8_t >( *it++ );
+            auto b = RangedType< std::uint8_t >( *it++ );
+            return { r.get(), g.get(), b.get() };
         }
 
-        void ColorProxy::set( std::uint32_t color )
+        void ColorProxy::set( Rgb const& color )
         {
             auto it = wrapped_;
-            *it++ = ColorValue( (std::uint8_t) ( ( color >> 16 ) & 0xff ) );
-            *it++ = ColorValue( (std::uint8_t) ( ( color >> 8 ) & 0xff ) );
-            *it++ = ColorValue( (std::uint8_t) ( ( color >> 0 ) & 0xff ) );
+            *it++ = rangedType( color.red() );
+            *it++ = rangedType( color.green() );
+            *it++ = rangedType( color.blue() );
         }
 
     } // namespace detail
@@ -319,7 +319,7 @@ namespace sc {
 
     ColorBuffer::iterator ColorBuffer::end()
     {
-        return ColorBuffer::iterator( *this, ColorBuffer::iterator::endIterator );
+        return { *this, ColorBuffer::iterator::endIterator };
     }
 
     ColorBuffer::Proxy ColorBuffer::operator[]( std::size_t index )

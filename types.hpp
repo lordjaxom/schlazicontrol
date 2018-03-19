@@ -15,95 +15,17 @@
 #include "forward.hpp"
 #include "statistics.hpp"
 #include "trackable.hpp"
-#include "utility_math.hpp"
+#include "utility_graphics.hpp"
+#include "utility_ranged.hpp"
 
 namespace sc {
-
-    /**
-     * class RangedValue
-     */
-
-    namespace detail {
-
-        template< typename T >
-        struct RangedValueLimits
-        {
-            static constexpr T minimum = std::numeric_limits< T >::min();
-            static constexpr T maximum = std::numeric_limits< T >::max();
-        };
-
-    } // namespace detail
-
-    template< typename T, typename Limits = detail::RangedValueLimits< T > >
-    class RangedValue
-            : public boost::totally_ordered< RangedValue< T, Limits > >
-            , public boost::totally_ordered< RangedValue< T, Limits >, T >
-    {
-    public:
-        using RangedValue_ = RangedValue;
-
-        static constexpr T minimum = Limits::minimum;
-        static constexpr T maximum = Limits::maximum;
-
-        constexpr RangedValue( std::enable_if_t< T() >= minimum && T() <= maximum >* = nullptr ) : value_() {}
-        constexpr explicit RangedValue( T value ) : value_( requireValid( value ) ) {}
-        constexpr explicit RangedValue( bool value ) : value_( value ? maximum : minimum ) {}
-
-        template< typename Other >
-        constexpr RangedValue( Other const& other ) : value_( sc::scale( other.get(), Other::minimum, Other::maximum, minimum, maximum ) ) {}
-
-        template< typename Other >
-        constexpr RangedValue& operator=( Other const& other ) { *this = RangedValue( other ); }
-
-        constexpr operator bool() const { return value_ != minimum; }
-
-        constexpr bool operator==( T value ) const { return value_ == value; }
-        constexpr bool operator<( T value ) const { return value_ < value; }
-
-        constexpr bool operator==( RangedValue const& other ) const { return value_ == other; }
-        constexpr bool operator<( RangedValue const& other ) const { return value_ < other; }
-
-        constexpr T get() const { return value_; }
-
-    private:
-        static T invalid( T value )
-        {
-            assert( value >= minimum && value <= maximum );
-            return value;
-        }
-
-        static constexpr T requireValid( T value )
-        {
-            return ( value >= minimum && value <= maximum )
-                ? value
-                : invalid( value ); // ( assert( value >= minimum && value <= maximum ), T() );
-        }
-
-        T value_;
-    };
-
-    template< typename Limits, typename T >
-    RangedValue< T, Limits > ranged( T value ) { return RangedValue< T, Limits >( value ); }
-
-    template< typename T, typename Limits = detail::RangedValueLimits< T >, typename Other >
-    RangedValue< T, Limits > rangeCast( Other const& other ) { return RangedValue< T, Limits >( other ); }
 
     /**
      * class ChannelValue
      */
 
-    namespace detail {
-
-        struct ChannelValueLimits
-        {
-            static constexpr double minimum = 0.0;
-            static constexpr double maximum = 100.0;
-        };
-
-    } // namespace detail
-
 	class ChannelValue
-            : public RangedValue< double, detail::ChannelValueLimits >
+            : public RangedPercent< double >
 	{
 	public:
 		static constexpr double epsilon = 0.01;
@@ -111,12 +33,7 @@ namespace sc {
 		static constexpr ChannelValue offValue() { return ChannelValue { minimum }; }
 		static constexpr ChannelValue fullOnValue() { return ChannelValue { maximum }; }
 
-        using RangedValue_::RangedValue;
-
-        // bool operator==( ChannelValue const& other ) const;
-        // bool operator<( ChannelValue const& other ) const;
-
-        // double get() const { return value_.get(); }
+        using RangedValue_::Ranged;
 
         bool off() const { return get() == minimum; }
 		bool on() const { return get() != minimum; }
@@ -226,7 +143,6 @@ namespace sc {
         {
 		public:
 			using Values = std::vector< ChannelValue >;
-            using Tracker = std::array< char, 0 >;
 
 			using iterator = Values::iterator;
 			using const_iterator = Values::const_iterator;
@@ -261,7 +177,6 @@ namespace sc {
 
 		private:
 			static constexpr ChannelValue emptyValue_ {};
-            static constexpr Tracker emptyTracker_ {};
 
 			Values values_;
 		};
@@ -278,8 +193,6 @@ namespace sc {
 
     namespace detail {
 
-        using ColorValue = RangedValue< std::uint8_t >;
-
         /**
          * class ColorProxy
          */
@@ -289,13 +202,11 @@ namespace sc {
         public:
             explicit ColorProxy( ChannelBuffer::iterator wrapped );
 
-            std::uint32_t get() const;
+            Rgb get() const;
+            void set( Rgb const& color );
 
-            void set( std::uint32_t color );
-
-            operator std::uint32_t() const { return get(); }
-
-            ColorProxy& operator=( std::uint32_t color ) { set( color ); return *this; }
+            operator Rgb() const { return get(); }
+            ColorProxy& operator=( Rgb const& color ) { set( color ); return *this; }
 
         private:
             ChannelBuffer::iterator wrapped_;

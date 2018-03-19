@@ -5,12 +5,11 @@
 #include <chrono>
 #include <string>
 
+#include "forward.hpp"
 #include "transition.hpp"
 
 namespace sc {
 
-    class Manager;
-    class PropertyNode;
     struct FadeTransitionState;
 
     /**

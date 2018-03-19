@@ -8,12 +8,6 @@ using namespace std;
 
 namespace sc {
 
-	struct VdcdInputLimits
-	{
-		static constexpr double minimum = 0.0;
-		static constexpr double maximum = 100.0;
-	};
-
 	static PropertyKey const vdcdProperty( "vdcd" );
 	static PropertyKey const dsuidProperty( "dsuid" );
 	static PropertyKey const groupProperty( "group" );
@@ -33,7 +27,7 @@ namespace sc {
 	{
         if ( value != value_ ) {
             value_ = value;
-            inputChangeEvent_( ChannelBuffer { ranged< VdcdInputLimits >( value ) } );
+            inputChangeEvent_( ChannelBuffer { rangedPercent( value ) } );
         }
 	}
 

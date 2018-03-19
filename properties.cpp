@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <stdexcept>
 #include <system_error>
 
@@ -212,6 +213,25 @@ namespace sc {
                 throw invalidType( node, "duration string" );
             }
             return expression::parseDuration( node.value_->asString() );
+        }
+
+        bool PropertyConverter< Rgb >::is( PropertyNode const& node )
+        {
+            if ( !node.value_->isString() ) {
+                return false;
+            }
+
+            string digits = "0123456789abcdef";
+            string value = node.value_->asString();
+            return value.length() == 6 && value.find_first_not_of( "0123456789abcdef" ) == string::npos;
+        }
+
+        Rgb PropertyConverter< Rgb >::convert( PropertyNode const& node )
+        {
+            if ( !is( node ) ) {
+                throw invalidType( node, "rgb color string" );
+            }
+            return Rgb( stoul( node.value_->asString(), 0, 16 ) );
         }
 
     } // namespace detail

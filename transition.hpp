@@ -30,7 +30,7 @@ namespace sc {
     };
 
     /**
-     * class TransitionState
+     * class TransitionInstanceImpl
      */
 
     template< typename Transition, typename State = std::nullptr_t >

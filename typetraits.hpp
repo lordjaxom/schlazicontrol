@@ -6,6 +6,7 @@
 namespace sc {
 
     template< typename Type > constexpr bool IsIntegral() { return std::is_integral< Type >::value; }
+    template< typename Type > constexpr bool IsFloatingPoint() { return std::is_floating_point< Type >::value; }
     template< typename Type > constexpr bool IsArithmetic() { return std::is_arithmetic< Type >::value; }
     template< typename Type > constexpr bool IsUnsigned() { return std::is_unsigned< Type >::value; }
     template< typename Type > constexpr bool IsSigned() { return std::is_signed< Type >::value; }

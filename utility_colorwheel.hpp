@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cmath>
 
+#include "utility_graphics.hpp"
 #include "utility_valuetable.hpp"
 
 namespace sc {
@@ -38,9 +39,9 @@ namespace sc {
 	{
 		static std::size_t const size = N;
 
-		static std::uint32_t get( std::size_t index )
+		static Rgb get( std::size_t index )
 		{
-			return (std::uint32_t) ValueTable< detail::ColorwheelFunction< N >, 0, N >::get( index );
+			return Rgb( ValueTable< detail::ColorwheelFunction< N >, 0, N >::get( index ) );
 		}
 	};
 

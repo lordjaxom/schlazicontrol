@@ -37,7 +37,7 @@ namespace sc {
                     expression::Enumeration< string, typestring_is( "off" ), typestring_is( "on" ), typestring_is( "fullOn" ) >
             >
     {
-        ValueParser( intmax_t value ) : BaseType( { ranged< ValueLimits >( value ) } ) {}
+        ValueParser( intmax_t value ) : BaseType( { rangedPercent( value ) } ) {}
         ValueParser( string const& value ) : BaseType(
                 value == "off" ? Value { ChannelValue::offValue(), &ChannelValue::off } :
                 value == "on" ? Value { ChannelValue::fullOnValue(), &ChannelValue::on } :

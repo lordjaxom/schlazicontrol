@@ -18,6 +18,8 @@ namespace sc {
         template<> struct TypeName< std::string > : TypeString< typestring_is( "identifier" ) > {};
         template< typename Type > struct TypeName< Type, std::enable_if_t< IsIntegral< Type >() > >
                 : TypeString< typestring_is( "number" ) > {};
+        template< typename Type > struct TypeName< Type, std::enable_if_t< IsFloatingPoint< Type >() > >
+                : TypeString< typestring_is( "decimal" ) > {};
         template< typename Rep, typename Period > struct TypeName< std::chrono::duration< Rep, Period > >
                 : TypeString< typestring_is( "duration" ) > {};
 

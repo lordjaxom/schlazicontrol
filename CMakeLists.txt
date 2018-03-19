@@ -37,7 +37,7 @@ set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
 include_directories("${TYPESTRING_ROOT}")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -flto")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 set(SOURCE_FILES
         component.cpp
@@ -115,7 +115,15 @@ set(SOURCE_FILES
         utility_gamma.hpp
         utility_colorwheel.hpp
         transition_animate.cpp
-        transition_animate.hpp)
+        transition_animate.hpp
+        transition_animate_waves.cpp
+        utility_graphics.cpp
+        utility_graphics.hpp
+        utility_ranged.hpp
+        transition_color.cpp
+        transition_color.hpp
+        transition_color_fill.cpp
+        transition_color_gradient.cpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})

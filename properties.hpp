@@ -12,6 +12,7 @@
 #include <json/value.h>
 
 #include "typeinfo.hpp"
+#include "utility_graphics.hpp"
 #include "utility_string.hpp"
 
 namespace sc {
@@ -285,6 +286,25 @@ namespace sc {
             }
         };
 
+        template< typename Type >
+        struct PropertyConverter< Type, std::enable_if_t< IsFloatingPoint< Type >() > >
+        {
+            static bool is( PropertyNode const& node )
+            {
+                Json::Value const& value = *node.value_;
+                return value.type() == Json::realValue;
+            }
+
+            static Type convert( PropertyNode const& node )
+            {
+                Json::Value const& value = *node.value_;
+                if ( value.type() == Json::realValue ) {
+                    return value.asDouble();
+                }
+                throw invalidType( node, typeName< Type >() );
+            }
+        };
+
         template<>
         struct PropertyConverter< std::chrono::nanoseconds >
         {
@@ -303,6 +323,13 @@ namespace sc {
             {
                 return std::chrono::duration_cast< std::chrono::duration< Rep, Period > >( BaseType::convert( node ) );
             };
+        };
+
+        template<>
+        struct PropertyConverter< Rgb >
+        {
+            static bool is( PropertyNode const& node );
+            static Rgb convert( PropertyNode const& node );
         };
 
         template< typename Type, typename Enable >
