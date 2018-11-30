@@ -36,6 +36,11 @@ link_directories("${RPIWS281X_ROOT}")
 set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
 include_directories("${TYPESTRING_ROOT}")
 
+set(MOSQUITTO_ROOT "${THIRDPARTY_HOME}/mosquitto-1.5.4")
+set(mosquitto_LIBRARIES mosquitto)
+include_directories("${MOSQUITTO_ROOT}/lib")
+link_directories("${MOSQUITTO_ROOT}")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
@@ -127,7 +132,7 @@ set(SOURCE_FILES
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
-target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES})
+target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES} ${mosquitto_LIBRARIES})
 
 add_custom_command(TARGET schlazicontrol
         POST_BUILD
