@@ -57,8 +57,8 @@ set(SOURCE_FILES
         input_gpio.hpp
         input.cpp
         input.hpp
-        input_vdcd.cpp
-        input_vdcd.hpp
+#        input_vdcd.cpp
+#        input_vdcd.hpp
         logging.cpp
         logging.hpp
         manager.cpp
@@ -75,8 +75,8 @@ set(SOURCE_FILES
         types.cpp
         types.hpp
         forward.hpp
-        vdcd.cpp
-        vdcd.hpp
+#        vdcd.cpp
+#        vdcd.hpp
         ws281x.cpp
         ws281x.hpp
         commandline.cpp
@@ -128,7 +128,13 @@ set(SOURCE_FILES
         transition_color.cpp
         transition_color.hpp
         transition_color_fill.cpp
-        transition_color_gradient.cpp)
+        transition_color_gradient.cpp
+        mqtt.cpp
+        mqtt.hpp
+        input_subscribe.cpp
+        input_subscribe.hpp
+        output_publish.cpp
+        output_publish.hpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
