@@ -95,19 +95,15 @@ namespace sc {
 	public:
 		Ws281xServer( uint16_t gpioPin, size_t ledCount )
                 : wrapper_( gpioPin, ledCount )
-                , signaled_()
                 , signals_( service_, SIGINT, SIGTERM )
                 , acceptor_( service_, tcp::endpoint( tcp::v4(), 9999 ) )
                 , socket_( service_ )
         {
             signals_.async_wait( [this]( error_code ec, int signo ) {
                 logger.info( "received signal, shutting down" );
-                signaled_ = true;
                 service_.stop();
             } );
         }
-
-        bool signaled() const { return signaled_; }
 
 		void run()
         {
@@ -213,7 +209,6 @@ namespace sc {
         }
 
 		Ws281xWrapper wrapper_;
-        bool signaled_;
 		io_service service_;
 		signal_set signals_;
 		tcp::acceptor acceptor_;
@@ -251,15 +246,11 @@ namespace sc {
 		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
-    function< bool () > Ws281x::forkedProcess() const
+    function< void () > Ws281x::forkedProcess() const
     {
         auto gpioPin = gpioPin_;
         auto ledCount = ledCount_;
-        return [gpioPin, ledCount] {
-            Ws281xServer server( gpioPin, ledCount );
-            server.run();
-            return server.signaled();
-        };
+        return [gpioPin, ledCount] { Ws281xServer( gpioPin, ledCount ).run(); };
     }
 
     void Ws281x::send( ChannelBuffer const& values )

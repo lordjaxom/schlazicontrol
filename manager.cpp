@@ -27,11 +27,16 @@ namespace sc {
 
 	static Logger logger( "manager" );
 
+	static bool processExited( pid_t pid )
+    {
+	    int status;
+	    auto result = ::waitpid( pid, &status, WNOHANG );
+	    return result == pid || ( result == -1 && errno == ECHILD );
+    }
+
     static void killGracefully( pid_t pid, size_t timeoutMs = 1000 )
     {
-        int status;
-
-        if ( ::waitpid( pid, &status, WNOHANG ) == pid ) {
+        if ( processExited( pid ) ) {
             return;
         }
 
@@ -39,6 +44,7 @@ namespace sc {
 
         ::kill( pid, SIGTERM );
         while ( timeoutMs > 0 ) {
+            int status;
             if ( ::waitpid( pid, &status, WNOHANG ) == pid ) {
                 return;
             }
@@ -79,7 +85,7 @@ namespace sc {
     {
     }
 
-    ManagerProcess::ManagerProcess( Component const& component, std::function< bool () >&& handler )
+    ManagerProcess::ManagerProcess( Component const& component, std::function< void () >&& handler )
             : name_( component.name() )
             , id_( component.id() )
             , handler_( move( handler ) )
@@ -93,9 +99,7 @@ namespace sc {
 
     void ManagerProcess::operator()() const
     {
-        if ( !handler_() ) {
-            killGracefully( ::getppid() );
-        }
+        handler_();
     }
 
     /**
@@ -148,7 +152,7 @@ namespace sc {
                     return { *entry.second, move( handler ) };
                 }
                 internals_->service.notify_fork( io_service::fork_parent );
-                internals_->processes.emplace_back( pid );
+                internals_->processes.push_back( pid );
             }
         };
         return {};
@@ -164,9 +168,8 @@ namespace sc {
 
 	void Manager::stop()
     {
-        for_each( internals_->processes.begin(), internals_->processes.end(), []( pid_t pid ) {
-            killGracefully( pid );
-        } );
+        for_each( internals_->processes.begin(), internals_->processes.end(),
+                  []( auto pid ) { killGracefully( pid ); } );
 
         internals_->service.stop();
         components_.clear();
@@ -224,6 +227,7 @@ namespace sc {
 				return;
 			}
 
+			checkProcesses();
             pollEvent_( updateInterval_ );
 			startPolling();
 		} );
@@ -245,6 +249,16 @@ namespace sc {
 
             startStatistics();
         } );
+    }
+
+    void Manager::checkProcesses()
+    {
+        auto it = find_if( internals_->processes.cbegin(), internals_->processes.cend(),
+                           []( auto pid ) { return processExited( pid ); } );
+        if ( it != internals_->processes.cend() ) {
+            logger.error( "process ", *it, " died unexpectedly, shutting down" );
+            stop();
+        }
     }
 
 } // namespace sc

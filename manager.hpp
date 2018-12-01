@@ -28,7 +28,7 @@ namespace sc {
     {
     public:
         ManagerProcess();
-        ManagerProcess( Component const& component, std::function< bool () >&& handler );
+        ManagerProcess( Component const& component, std::function< void () >&& handler );
 
         operator bool() const;
 
@@ -40,7 +40,7 @@ namespace sc {
     private:
         std::string name_;
         std::string id_;
-        std::function< bool () > handler_;
+        std::function< void () > handler_;
     };
 
     /**
@@ -97,6 +97,7 @@ namespace sc {
 
 		void startPolling();
         void startStatistics();
+        void checkProcesses();
 
         void stop();
 
