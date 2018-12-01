@@ -57,8 +57,6 @@ set(SOURCE_FILES
         input_gpio.hpp
         input.cpp
         input.hpp
-#        input_vdcd.cpp
-#        input_vdcd.hpp
         logging.cpp
         logging.hpp
         manager.cpp
@@ -75,8 +73,6 @@ set(SOURCE_FILES
         types.cpp
         types.hpp
         forward.hpp
-#        vdcd.cpp
-#        vdcd.hpp
         ws281x.cpp
         ws281x.hpp
         commandline.cpp
