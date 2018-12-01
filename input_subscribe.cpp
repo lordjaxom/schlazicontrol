@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "logging.hpp"
 #include "manager.hpp"
 #include "properties.hpp"
 #include "mqtt.hpp"
@@ -11,8 +10,6 @@
 using namespace std;
 
 namespace sc {
-
-    static Logger logger( "input_subscribe" );
 
     static PropertyKey const mqttProperty( "mqtt" );
     static PropertyKey const topicProperty( "topic" );

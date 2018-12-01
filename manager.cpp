@@ -121,16 +121,11 @@ namespace sc {
 
 		internals_->signals.async_wait( [this] ( error_code ec, int ) {
 			logger.info( "received signal, shutting down" );
-            internals_->service.stop();
+			stop();
 		} );
 	}
 
-    Manager::~Manager()
-    {
-        for_each( internals_->processes.begin(), internals_->processes.end(), []( pid_t pid ) {
-            killGracefully( pid );
-        } );
-    }
+    Manager::~Manager() = default;
 
     io_service& Manager::service()
     {
@@ -166,6 +161,16 @@ namespace sc {
         startStatistics();
         internals_->service.run();
 	}
+
+	void Manager::stop()
+    {
+        for_each( internals_->processes.begin(), internals_->processes.end(), []( pid_t pid ) {
+            killGracefully( pid );
+        } );
+
+        internals_->service.stop();
+        components_.clear();
+    }
 
     Component* Manager::createComponent( PropertyNode const& properties, Component const* requester )
     {

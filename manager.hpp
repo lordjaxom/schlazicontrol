@@ -98,6 +98,8 @@ namespace sc {
 		void startPolling();
         void startStatistics();
 
+        void stop();
+
 		Properties properties_;
 		std::chrono::nanoseconds updateInterval_;
         std::chrono::nanoseconds statisticsInterval_;

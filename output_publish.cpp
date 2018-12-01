@@ -26,12 +26,11 @@ namespace sc {
 
     void MqttPublish::set( Input const& input, ChannelBuffer const& values )
     {
-        mqtt_.publish( topic_, to_string( values[ 0 ].get() ) );
+        mqtt_.publish( topic_, values[ 0 ].on() ? "ON" : "OFF" );
     }
 
     void MqttPublish::doStatistics( std::ostream& os ) const
     {
-
     }
 
 

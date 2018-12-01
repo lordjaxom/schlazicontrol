@@ -82,12 +82,11 @@ namespace sc {
 
             void publish( string&& topic, string&& payload )
             {
-                logger.debug( info_, "registering publication to ", topic );
-
                 Publication publication { move( topic ), move( payload ) };
                 if ( connected_ ) {
                     doPublish( move( publication ) );
                 } else {
+                    logger.debug( info_, "registering publication to ", topic );
                     publications_.push_back( move( publication ) );
                 }
             }
@@ -132,7 +131,7 @@ namespace sc {
 
             void doPublish( Publication&& publication )
             {
-                logger.info( info_, "publishing message to ", publication.topic );
+                logger.info( info_, "publishing ", publication.payload, " to ", publication.topic );
 
                 if ( int rc = mosquitto_publish( mosq_, nullptr, publication.topic.c_str(), publication.payload.length(),
                                                  publication.payload.data(), 0, false ) ) {
@@ -186,10 +185,10 @@ namespace sc {
 
             void on_message( mosquitto_message const* message )
             {
-                logger.debug( info_, "received message from topic ", message->topic );
-
                 auto topic = make_shared< string >( message->topic );
                 auto payload = make_shared< string >( static_cast< char const* >( message->payload ), static_cast< size_t >( message->payloadlen ) );
+
+                logger.debug( info_, "received ", *payload, " from topic ", *topic );
 
                 manager_.service().post( [this, topic, payload] {
                     auto subscriptions = subscriptions_.equal_range( *topic );
