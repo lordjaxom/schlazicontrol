@@ -22,6 +22,7 @@ namespace sc {
     static PropertyKey const hostProperty( "host" );
     static PropertyKey const portProperty( "port", 1883 );
     static PropertyKey const clientIdProperty( "clientId", "" );
+    static PropertyKey const willTopicProperty( "willTopic", "" );
 
     namespace detail {
 
@@ -47,6 +48,7 @@ namespace sc {
             {
                 string topic;
                 string payload;
+                bool retain;
             };
 
         public:
@@ -56,6 +58,7 @@ namespace sc {
                         properties[ hostProperty ].as< string >(),
                         properties[ portProperty ].as< uint16_t >(),
                         properties[ clientIdProperty ].as< string >() }
+                    , willTopic_( properties[ willTopicProperty ].as< string >() )
             {
                 if ( !initialized ) {
                     mosquitto_lib_init();
@@ -66,9 +69,14 @@ namespace sc {
                 mosquitto_connect_callback_set( mosq_, []( mosquitto*, void* obj, int rc ) { static_cast< Mqtt* >( obj )->on_connect( rc ); } );
                 mosquitto_disconnect_callback_set( mosq_, []( mosquitto*, void* obj, int rc ) { static_cast< Mqtt* >( obj )->on_disconnect( rc ); } );
                 mosquitto_message_callback_set( mosq_, []( mosquitto*, void* obj, mosquitto_message const* msg ) { static_cast< Mqtt* >( obj )->on_message( msg ); } );
+                if ( !willTopic_.empty() ) {
+                    mosquitto_will_set( mosq_, willTopic_.c_str(), 2, "NO", 1, true );
+                }
 
                 manager_.readyEvent().subscribe( [this] { connect(); }, true );
             }
+
+            Mqtt( Mqtt const& ) = delete;
 
             ~Mqtt()
             {
@@ -76,13 +84,17 @@ namespace sc {
                 mosquitto_disconnect_callback_set( mosq_, nullptr );
                 mosquitto_message_callback_set( mosq_, nullptr );
 
+                if ( connected_ ) {
+                    doPublish( { willTopic_, "NO", true } );
+                }
+
                 mosquitto_disconnect( mosq_ );
-                mosquitto_loop_stop( mosq_, true );
+                mosquitto_loop_stop( mosq_, false );
             }
 
-            void publish( string&& topic, string&& payload )
+            void publish( string&& topic, string&& payload, bool retain = false )
             {
-                Publication publication { move( topic ), move( payload ) };
+                Publication publication { move( topic ), move( payload ), retain };
                 if ( connected_ ) {
                     doPublish( move( publication ) );
                 } else {
@@ -134,7 +146,7 @@ namespace sc {
                 logger.info( info_, "publishing ", publication.payload, " to ", publication.topic );
 
                 if ( int rc = mosquitto_publish( mosq_, nullptr, publication.topic.c_str(), publication.payload.length(),
-                                                 publication.payload.data(), 0, false ) ) {
+                                                 publication.payload.data(), 1, publication.retain ) ) {
                     logger.error( info_, "couldn't publish to ", publication.topic, ": ", mosquitto_strerror( rc ) );
                     // TODO: what now?
                 }
@@ -163,6 +175,9 @@ namespace sc {
                 manager_.service().post( [this] {
                     connected_ = true;
                     retries_ = 0;
+                    if ( !willTopic_.empty() ) {
+                        this->doPublish( { willTopic_, "YES" } );
+                    }
                     for_each( subscriptions_.begin(), subscriptions_.end(), [&]( auto const& subscription ) {
                         this->doSubscribe( subscription.first );
                     } );
@@ -202,6 +217,7 @@ namespace sc {
 
             Manager& manager_;
             MqttInfo info_;
+            string willTopic_;
 
             mosquitto* mosq_;
             bool connected_ {};

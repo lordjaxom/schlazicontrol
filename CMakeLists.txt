@@ -136,9 +136,9 @@ add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
 target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES} ${mosquitto_LIBRARIES})
 
-add_custom_command(TARGET schlazicontrol
-        POST_BUILD
-        COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:')
+#add_custom_command(TARGET schlazicontrol
+#        POST_BUILD
+#        COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:')
 
 #if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 #    add_custom_command(TARGET schlazicontrol
