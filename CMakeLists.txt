@@ -23,7 +23,10 @@ set(jsoncpp_LIBRARIES jsoncpp)
 include_directories("${JSONCPP_ROOT}/include")
 link_directories("${JSONCPP_ROOT}/src/lib_json")
 
-set(WIRINGPI_ROOT "${THIRDPARTY_HOME}/wiringPi")
+# for Raspberry Pi:
+# set(WIRINGPI_ROOT "${THIRDPARTY_HOME}/wiringPi")
+# for Banana Pi:
+set(WIRINGPI_ROOT "${THIRDPARTY_HOME}/BPI-WiringPi2")
 set(wiringPi_LIBRARIES wiringPi)
 include_directories("${WIRINGPI_ROOT}/wiringPi")
 link_directories("${WIRINGPI_ROOT}/wiringPi")
