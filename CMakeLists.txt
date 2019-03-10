@@ -72,7 +72,6 @@ set(SOURCE_FILES
         output_ws281x.hpp
         properties.cpp
         properties.hpp
-        schlazicontrol.cpp
         types.cpp
         types.hpp
         forward.hpp
@@ -135,9 +134,16 @@ set(SOURCE_FILES
         output_publish.cpp
         output_publish.hpp)
 
-add_executable(schlazicontrol ${SOURCE_FILES})
+add_library(libschlazicontrol STATIC ${SOURCE_FILES})
+target_compile_definitions(libschlazicontrol PRIVATE ${asio_DEFINITIONS})
+
+add_executable(schlazicontrol schlazicontrol.cpp)
 target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
-target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES} ${mosquitto_LIBRARIES})
+target_link_libraries(schlazicontrol libschlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES} ${mosquitto_LIBRARIES})
+
+add_executable(schlazicontrol-ws281x schlazicontrol-ws281x.cpp)
+target_compile_definitions(schlazicontrol-ws281x PRIVATE ${asio_DEFINITIONS})
+target_link_libraries(schlazicontrol-ws281x libschlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES} ${mosquitto_LIBRARIES})
 
 #add_custom_command(TARGET schlazicontrol
 #        POST_BUILD
