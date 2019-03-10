@@ -1,7 +1,6 @@
 #include <utility>
 
-#include "input.hpp"
-#include "output.hpp"
+#include "core/input.hpp"
 
 using namespace std;
 

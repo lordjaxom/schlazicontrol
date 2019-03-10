@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "input.hpp"
+#include "core/input.hpp"
 
 namespace sc {
 

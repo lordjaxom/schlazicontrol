@@ -5,15 +5,14 @@
 #include <string>
 #include <vector>
 
-#include "input.hpp"
-#include "output.hpp"
+#include "core/input.hpp"
+#include "core/output.hpp"
 #include "transition.hpp"
 #include "types.hpp"
 
 namespace sc {
 
 	class Manager;
-    class Output;
 	class PropertyNode;
 
 	class Connection final
@@ -23,15 +22,15 @@ namespace sc {
 	public:
 		Connection( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-        virtual bool acceptsChannels( std::size_t channels ) const override;
-        virtual std::size_t emitsChannels() const override { return channels_; }
+        bool acceptsChannels( std::size_t channels ) const override;
+        std::size_t emitsChannels() const override { return channels_; }
 
         void transfer();
 
     protected:
-        virtual void set( Input const& input, ChannelBuffer const& values ) override;
+        void set( Input const& input, ChannelBuffer const& values ) override;
 
-        virtual void doStatistics( std::ostream& os ) const override;
+        void doStatistics( std::ostream& os ) const override;
 
 	private:
 		std::vector< std::unique_ptr< TransitionInstance > > instances_;

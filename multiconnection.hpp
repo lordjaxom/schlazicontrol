@@ -3,8 +3,8 @@
 
 #include <unordered_map>
 
-#include "input.hpp"
-#include "output.hpp"
+#include "core/input.hpp"
+#include "core/output.hpp"
 #include "types.hpp"
 
 namespace sc {

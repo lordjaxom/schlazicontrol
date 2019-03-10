@@ -5,8 +5,8 @@
 #include <string>
 
 #include "forward.hpp"
-#include "input.hpp"
-#include "output.hpp"
+#include "core/input.hpp"
+#include "core/output.hpp"
 
 namespace sc {
 

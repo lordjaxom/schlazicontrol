@@ -28,10 +28,7 @@ namespace sc {
         static constexpr SingleInputTag singleInput {};
         static constexpr MultipleInputsTag multipleInputs {};
 
-        template< typename = void >
-        Output()
-        {
-        }
+        template< typename = void > Output() {}
 
         template< typename Tag = SingleInputTag >
         Output( Manager& manager, PropertyNode const& inputsNode, Tag tag = {} )
@@ -63,10 +60,8 @@ namespace sc {
 		: public ComponentRegistry< Type >
 	{
 	public:
-		OutputRegistry( char const* name )
-                : ComponentRegistry< Type >( "output", name )
-        {
-        }
+		explicit OutputRegistry( char const* name ) noexcept
+                : ComponentRegistry< Type >( "output", name ) {}
 	};
 
 } // namespace sc

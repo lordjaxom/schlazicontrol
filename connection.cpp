@@ -6,7 +6,7 @@
 #include <boost/iterator/transform_iterator.hpp>
 
 #include "connection.hpp"
-#include "input.hpp"
+#include "core/input.hpp"
 #include "manager.hpp"
 #include "types.hpp"
 

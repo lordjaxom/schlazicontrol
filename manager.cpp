@@ -12,7 +12,7 @@
 
 #include "core/config.hpp"
 #include "core/component.hpp"
-#include "commandline.hpp"
+#include "core/commandline.hpp"
 #include "core/logging.hpp"
 #include "manager.hpp"
 #include "statistics.hpp"

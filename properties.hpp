@@ -9,11 +9,12 @@
 
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/lexical_cast.hpp>
-#include <json/value.h>
+#include <nlohmann/json.hpp>
 
 #include "typeinfo.hpp"
 #include "utility_graphics.hpp"
 #include "utility_string.hpp"
+#include "utility/string_view.hpp"
 
 namespace sc {
 
@@ -24,14 +25,14 @@ namespace sc {
 	class PropertyKey
 	{
 	public:
-		explicit PropertyKey( std::string name, Json::Value defaultValue = {} );
+		explicit PropertyKey( std::string name, nlohmann::json defaultValue = {} );
 
 		std::string const& name() const { return name_; }
-        Json::Value const& defaultValue() const { return defaultValue_; }
+        nlohmann::json const& defaultValue() const { return defaultValue_; }
 
 	private:
 		std::string name_;
-        Json::Value defaultValue_;
+        nlohmann::json defaultValue_;
 	};
 
     /**
@@ -51,12 +52,12 @@ namespace sc {
         using const_iterator = detail::PropertyNodeIterator;
 
         PropertyNode();
-        PropertyNode( std::string path, Json::Value const& value );
+        PropertyNode( std::string path, nlohmann::json const& value );
 
-        explicit operator bool() const { return !value_->isNull(); }
+        explicit operator bool() const { return !value_->is_null(); }
 
         std::string const& path() const { return path_; }
-        char const* typeName() const;
+        string_view typeName() const;
 
 		template< typename Type >
 		bool is() const
@@ -79,12 +80,12 @@ namespace sc {
         PropertyNode operator[]( PropertyKey const& key ) const;
 
     private:
-        const_iterator iter( Json::Value::const_iterator it ) const;
+        const_iterator iter( nlohmann::json::const_iterator it ) const;
 
-        PropertyNode get( std::string const& key, Json::Value const& defaultValue = {} ) const;
+        PropertyNode get( std::string const& key, nlohmann::json const& defaultValue = nullptr ) const;
 
         std::string path_;
-        Json::Value const* value_;
+        nlohmann::json const* value_;
 	};
 
 	namespace detail {
@@ -92,7 +93,7 @@ namespace sc {
         struct PropertyNodeIterator
                 : boost::iterator_adaptor<
                         PropertyNodeIterator,
-                        Json::Value::const_iterator,
+                        nlohmann::json::const_iterator,
                         PropertyNode,
                         boost::use_default,
                         PropertyNode >
@@ -100,13 +101,13 @@ namespace sc {
             friend class boost::iterator_core_access;
 
             PropertyNodeIterator(
-                    std::string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it );
+                    std::string const& path, nlohmann::json::const_iterator first, nlohmann::json::const_iterator it );
 
         private:
             reference dereference() const;
 
             std::string const* path_;
-            Json::Value::const_iterator first_;
+            nlohmann::json::const_iterator first_;
         };
 
 	} // namespace detail
@@ -180,7 +181,7 @@ namespace sc {
         using PropertyNode::operator[];
 
 	private:
-		Json::Value value_;
+		nlohmann::json value_;
 	};
 
     /**
@@ -192,25 +193,25 @@ namespace sc {
         std::runtime_error invalidType( PropertyNode const& node, char const* expectedType );
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestInt value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::intmax_t value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
         {
             return value >= std::numeric_limits< Type >::min() && value <= std::numeric_limits< Type >::max();
         }
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestUInt value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::uintmax_t value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
         {
-            return value <= (Json::LargestUInt) std::numeric_limits< Type >::max();
+            return value <= static_cast< std::uintmax_t >( std::numeric_limits< Type >::max() );
         }
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestInt value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::intmax_t value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
         {
             return value >= 0;
         }
 
         template< typename Type >
-        bool propertyIsInRange( Json::LargestUInt value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::uintmax_t value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
         {
             return value <= std::numeric_limits< Type >::max();
         }
@@ -221,7 +222,7 @@ namespace sc {
             if ( !propertyIsInRange< Type >( value ) ) {
                 throw std::runtime_error( str( "property at ", node.path(), " outside allowed range" ) );
             }
-            return (Type) value;
+            return static_cast< Type >( value );
         }
 
         template< typename Derived, typename Type >
@@ -268,19 +269,19 @@ namespace sc {
         {
             static bool is( PropertyNode const& node )
             {
-                Json::Value const& value = *node.value_;
-                return ( value.type() == Json::intValue && propertyIsInRange< Type >( value.asLargestInt() ) ) ||
-                       ( value.type() == Json::uintValue && propertyIsInRange< Type >( value.asLargestUInt() ) );
+                nlohmann::json const& value = *node.value_;
+                return ( value.type() == nlohmann::json::value_t::number_integer && propertyIsInRange< Type >( value.get< std::intmax_t >() ) ) ||
+                       ( value.type() == nlohmann::json::value_t::number_unsigned && propertyIsInRange< Type >( value.get< std::uintmax_t >() ) );
             }
 
             static Type convert( PropertyNode const& node )
             {
-                Json::Value const& value = *node.value_;
-                if ( value.type() == Json::intValue ) {
-                    return propertyCheckRange< Type >( node, value.asLargestInt() );
+                nlohmann::json const& value = *node.value_;
+                if ( value.type() == nlohmann::json::value_t::number_integer ) {
+                    return propertyCheckRange< Type >( node, value.get< std::intmax_t >() );
                 }
-                if ( value.type() == Json::uintValue ) {
-                    return propertyCheckRange< Type >( node, value.asLargestUInt() );
+                if ( value.type() == nlohmann::json::value_t::number_unsigned ) {
+                    return propertyCheckRange< Type >( node, value.get< std::uintmax_t >() );
                 }
                 throw invalidType( node, typeName< Type >() );
             }
@@ -291,15 +292,15 @@ namespace sc {
         {
             static bool is( PropertyNode const& node )
             {
-                Json::Value const& value = *node.value_;
-                return value.type() == Json::realValue;
+                nlohmann::json const& value = *node.value_;
+                return value.is_number_float();
             }
 
             static Type convert( PropertyNode const& node )
             {
-                Json::Value const& value = *node.value_;
-                if ( value.type() == Json::realValue ) {
-                    return value.asDouble();
+                nlohmann::json const& value = *node.value_;
+                if ( value.is_number_float() ) {
+                    return value.get< double >();
                 }
                 throw invalidType( node, typeName< Type >() );
             }
@@ -348,7 +349,7 @@ namespace sc {
         {
             static bool is( PropertyNode const& node )
             {
-                return node.value_->isArray();
+                return node.value_->is_array();
             }
 
             static PropertyList< Type > convert( PropertyNode node )

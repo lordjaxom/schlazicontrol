@@ -46,22 +46,23 @@ namespace sc {
 		}
 
 		template< size_t L >
-		string buildTag( string&& tag )
+		string logBuildTag( string_view rawTag )
 		{
-			if ( tag.length() == L ) {
-				return move( tag );
+			if ( rawTag.length() == L ) {
+				return rawTag.to_string();
 			}
 
 			string result;
 			result.reserve( L );
-			if ( tag.length() < L ) {
-				result.append( ( L - tag.length() ) / 2, ' ' );
-				result.append( tag );
-				result.append( ( L - tag.length() ) - ( L - tag.length() ) / 2, ' ' );
+			if ( rawTag.length() < L ) {
+				result.append( ( L - rawTag.length() ) / 2, ' ' );
+				result.append( rawTag.begin(), rawTag.end() );
+				result.append( ( L - rawTag.length() ) - ( L - rawTag.length() ) / 2, ' ' );
 			}
 			else {
 				result.append( "..." );
-				result.append( tag.substr( tag.length() - L + 3, L - 3 ) );
+                auto abbrev = rawTag.substr( rawTag.length() - L + 3, L - 3 );
+				result.append( abbrev.begin(), abbrev.end() );
 			}
 			return result;
 		}
@@ -75,12 +76,18 @@ namespace sc {
 
 	bool Logger::active_;
 	Logger::Level const* Logger::level_ = &Logger::Debug;
-	shared_ptr< ostream > Logger::output_( &cerr, []( ostream const* ) {} );
+    mutex Logger::mutex_;
 
 	bool Logger::is( Logger::Level const& level )
 	{
 		return active_ && level_->level >= level.level;
 	}
+
+    shared_ptr< ostream >& Logger::output()
+    {
+        static shared_ptr< ostream > instance( &cerr, []( ostream const* ) {} );
+        return instance;
+    }
 
 	void Logger::level( Logger::Level const& level )
 	{
@@ -89,36 +96,26 @@ namespace sc {
 
 	void Logger::output( ostream& output )
 	{
-		output_.reset( &output, []( ostream const* ) {} );
+		Logger::output().reset( &output, []( ostream const* ) {} );
 	}
 
 	void Logger::output( char const* output )
 	{
-		output_.reset( new ofstream( output, ios::out | ios::app ) );
+		Logger::output().reset( new ofstream( output, ios::out | ios::app ) );
 	}
 
-	Logger::Logger( std::string tag )
-		: tag_( detail::buildTag< tagLength >( move( tag ) ) )
-	{
-	}
+	Logger::Logger( char const* tag ) noexcept
+		    : rawTag_( tag ) {}
 
-	LoggerScope::LoggerScope()
-		: owned_( true )
-	{
-		Logger::active_ = true;
-	}
+    Logger::Logger( string tag )
+            : tag_( detail::logBuildTag< tagLength >( tag ) ) {}
 
-	LoggerScope::LoggerScope( LoggerScope&& other )
-		: LoggerScope()
-	{
-		other.owned_ = false;
-	}
-
-	LoggerScope::~LoggerScope()
-	{
-		if ( owned_ ) {
-			Logger::active_ = false;
-		}
-	}
+    string const& Logger::tag() const
+    {
+        if ( tag_ == nullopt ) {
+            tag_ = detail::logBuildTag< tagLength >( rawTag_ );
+        }
+        return *tag_;
+    }
 
 } // namespace sc

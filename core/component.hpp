@@ -82,17 +82,21 @@ namespace sc {
     namespace detail {
 
         using MakeComponent = std::add_pointer_t<
-                std::unique_ptr< Component >( std::string&& id, Manager& manager, PropertyNode const& properties ) >;
+				std::unique_ptr< Component >( std::string&& id, Manager& manager, PropertyNode const& properties ) >;
+
+        using ComponentEntryHook = boost::intrusive::set_member_hook< boost::intrusive::link_mode< boost::intrusive::auto_unlink > >;
 
         struct ComponentEntry
         {
-            ComponentEntry( string_view category, string_view name, MakeComponent makeComponent ) noexcept;
+            ComponentEntry( string_view category, string_view name, MakeComponent makeComponent );
 
             string_view category;
             string_view name;
             MakeComponent makeComponent;
-            boost::intrusive::set_member_hook<> hook;
+            ComponentEntryHook hook;
         };
+
+        using ComponentEntryHookOption = boost::intrusive::member_hook< ComponentEntry, ComponentEntryHook, &ComponentEntry::hook >;
 
     } // namespace detail
 
@@ -100,12 +104,13 @@ namespace sc {
 	{
         friend class detail::ComponentEntry;
 
-        using EntryMember = boost::intrusive::member_hook<
-                detail::ComponentEntry, boost::intrusive::set_member_hook<>, &detail::ComponentEntry::hook >;
-        using EntrySet = boost::intrusive::set< detail::ComponentEntry, EntryMember >;
+        using EntrySet = boost::intrusive::set<
+				detail::ComponentEntry,
+				detail::ComponentEntryHookOption,
+				boost::intrusive::constant_time_size< false > >;
 
     public:
-        static ComponentFactory& instance() noexcept;
+        static ComponentFactory& instance();
 
         ComponentFactory( ComponentFactory const& ) = delete;
 
@@ -115,7 +120,7 @@ namespace sc {
                 std::string const& type, std::string id, Manager& manager, PropertyNode const& properties );
 
 	private:
-		ComponentFactory() noexcept;
+		ComponentFactory();
 
         EntrySet components_;
         std::size_t generatedId_;
@@ -129,14 +134,17 @@ namespace sc {
     template< typename Type >
 	class ComponentRegistry
 	{
-	public:
-		ComponentRegistry( string_view category, string_view name ) noexcept
-                : entry_( category, name, []( auto&& id, auto& manager, auto const& properties ) {
-                    return std::unique_ptr< Component >( new Type( std::move( id ), manager, properties ) );
-                } ) {}
+        static std::unique_ptr< Component > makeComponent( std::string&& id, Manager& manager, PropertyNode const& properties )
+        {
+            return std::make_unique< Type >( std::move( id ), manager, properties );
+        }
 
-        explicit ComponentRegistry( string_view category ) noexcept
-                : ComponentRegistry( category, "" ) {}
+    public:
+		ComponentRegistry( char const* category, char const* name ) noexcept
+                : entry_( category, name, &makeComponent ) {}
+
+        explicit ComponentRegistry( char const* name ) noexcept
+                : ComponentRegistry( "", name ) {}
 
         ComponentRegistry( ComponentRegistry const& ) = delete;
 

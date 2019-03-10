@@ -3,6 +3,7 @@
 
 #include <getopt.h>
 
+#include "core/config.hpp"
 #include "commandline.hpp"
 #include "utility_string.hpp"
 
@@ -17,7 +18,9 @@ namespace sc {
             case 'c': return "config-file";
 			case 'l': return "log-file";
             case 'p': return "pid-file";
+#if defined( SCHLAZICONTROL_FORK )
 			case 'd': return "daemonize";
+#endif
 			default: throw invalid_argument( str( "cmdLineMapShortToLong( ", shortopt, ")" ) );
 		}
 	}
@@ -31,7 +34,9 @@ namespace sc {
 			{ nullptr, required_argument, nullptr, 'c' },
             { nullptr, required_argument, nullptr, 'l' },
             { nullptr, required_argument, nullptr, 'p' },
+#if defined( SCHLAZICONTROL_FORK )
 			{ nullptr, no_argument,       nullptr, 'd' },
+#endif
 			{}
 		};
 

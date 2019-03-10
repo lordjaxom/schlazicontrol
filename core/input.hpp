@@ -21,10 +21,7 @@ namespace sc {
     public:
         using InputChangeEvent = Event< void ( ChannelBuffer const& ) >;
 
-        template< typename = void >
-        Input()
-        {
-        }
+        template< typename = void > Input() {}
 
         virtual std::size_t emitsChannels() const = 0;
 
@@ -43,10 +40,8 @@ namespace sc {
 		: public ComponentRegistry< Type >
 	{
 	public:
-		InputRegistry( std::string name )
-                : ComponentRegistry< Type >( "input", std::move( name ) )
-        {
-        }
+		explicit InputRegistry( char const* name ) noexcept
+                : ComponentRegistry< Type >( "input", name ) {}
 	};
 
 } // namespace sc

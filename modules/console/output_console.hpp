@@ -1,7 +1,7 @@
 #ifndef SCHLAZICONTROL_OUTPUT_CONSOLE_HPP
 #define SCHLAZICONTROL_OUTPUT_CONSOLE_HPP
 
-#include "output.hpp"
+#include "core/output.hpp"
 #include "types.hpp"
 
 namespace sc {

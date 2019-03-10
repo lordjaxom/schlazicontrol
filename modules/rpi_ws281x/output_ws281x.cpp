@@ -1,7 +1,7 @@
 #include <limits>
 #include <utility>
 
-#include "input.hpp"
+#include "core/input.hpp"
 #include "manager.hpp"
 #include "output_ws281x.hpp"
 #include "properties.hpp"

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "input.hpp"
+#include "core/input.hpp"
 #include "core/logging.hpp"
 #include "manager.hpp"
 #include "output_pwm.hpp"

@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <string>
 
-#include "output.hpp"
+#include "core/output.hpp"
 #include "types.hpp"
 #include "ws281x.hpp"
 

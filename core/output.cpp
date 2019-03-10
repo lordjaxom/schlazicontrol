@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <utility>
 
-#include "input.hpp"
+#include "core/input.hpp"
 #include "manager.hpp"
-#include "output.hpp"
+#include "core/output.hpp"
 
 using namespace std;
 

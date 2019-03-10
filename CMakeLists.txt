@@ -20,6 +20,7 @@ set(ASIO_ROOT "${THIRDPARTY_HOME}/asio-1.12.1")
 set(asio_DEFINITIONS ASIO_STANDALONE)
 set(asio_INCLUDE_DIRS "${ASIO_ROOT}/include")
 
+set(Json_ROOT "${THIRDPARTY_HOME}/json-master/include")
 # for Raspberry Pi:
 # set(WiringPi_ROOT "${THIRDPARTY_HOME}/wiringPi")
 # for Banana Pi:
@@ -27,10 +28,7 @@ set(WiringPi_ROOT "${THIRDPARTY_HOME}/BPI-WiringPi2/wiringPi")
 set(Mosquitto_ROOT "${THIRDPARTY_HOME}/mosquitto-1.5.4/lib")
 set(RpiWs281x_ROOT "${THIRDPARTY_HOME}/rpi_ws281x")
 
-set(JSONCPP_ROOT "${THIRDPARTY_HOME}/jsoncpp-master")
-set(jsoncpp_LIBRARIES jsoncpp)
-include_directories("${JSONCPP_ROOT}/include")
-link_directories("${JSONCPP_ROOT}/src/lib_json")
+find_package(Json REQUIRED)
 
 set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
 include_directories("${TYPESTRING_ROOT}")
@@ -40,11 +38,18 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 set(SOURCE_FILES
         core/config.hpp
+        core/commandline.cpp
+        core/commandline.hpp
         core/component.cpp
         core/component.hpp
         core/logging.cpp
         core/logging.hpp
-        utility/string_view.hpp)
+        core/input.cpp
+        core/input.hpp
+        core/output.cpp
+        core/output.hpp
+        utility/string_view.hpp
+        utility/optional.hpp)
 
 find_package(WiringPi)
 if(WiringPi_FOUND)
@@ -105,26 +110,19 @@ else()
     message("Module console: false")
 endif()
 
-set(SOURCE_FILES
-        ${SOURCE_FILES}
+set(SOURCE_FILES ${SOURCE_FILES}
         connection.cpp
         connection.hpp
         event.hpp
         event.cpp
-        input.cpp
-        input.hpp
         manager.cpp
         manager.hpp
-        output.cpp
-        output.hpp
         properties.cpp
         properties.hpp
         schlazicontrol.cpp
         types.cpp
         types.hpp
         forward.hpp
-        commandline.cpp
-        commandline.hpp
         transition.hpp
         transition.cpp
         transition_triggers.cpp
@@ -175,12 +173,13 @@ target_include_directories(schlazicontrol PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${Boost_INCLUDE_DIRS}
         ${asio_INCLUDE_DIRS}
-        ${jsoncpp_INCLUDE_DIRS}
+        ${Json_INCLUDE_DIRS}
         ${typestring_INCLUDE_DIRS}
         ${MODULE_INCLUDE_DIRS})
 target_link_libraries(schlazicontrol
-        pthread
-        ${jsoncpp_LIBRARIES}
-        ${rpiWS281X_LIBRARIES}
-        ${mosquitto_LIBRARIES}
         ${MODULE_LIBRARIES})
+if(WIN32)
+    target_link_libraries(schlazicontrol ws2_32)
+else()
+    target_link_libraries(schlazicontrol pthread)
+endif()

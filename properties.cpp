@@ -4,87 +4,85 @@
 #include <stdexcept>
 #include <system_error>
 
-#include <json/reader.h>
-
 #include "expression.hpp"
 #include "core/logging.hpp"
 #include "properties.hpp"
 #include "utility_string.hpp"
 
 using namespace std;
+using namespace nlohmann;
 
 namespace sc {
 
 	static Logger logger( "properties" );
 
-    static Json::Value readJsonFile( string const& fileName )
-    {
-        ifstream ifs( fileName, ios::in );
-        if ( !ifs ) {
-            throw system_error( errno, system_category(), str( "couldn't open ", fileName ) );
+    namespace detail {
+
+        json readJsonFile( string const& fileName )
+        {
+            ifstream ifs( fileName, ios::in );
+            if ( !ifs ) {
+                throw system_error( errno, system_category(), "couldn't open " + fileName );
+            }
+
+            json props;
+            ifs >> props;
+            return move( props );
         }
 
-        Json::CharReaderBuilder builder;
-        builder[ "allowComments" ] = true;
-        builder[ "collectComments" ] = false;
-        builder[ "allowSingleQuotes" ] = true;
-
-        Json::Value result;
-        string errors;
-        if ( !Json::parseFromStream( builder, ifs, &result, &errors ) ) {
-            throw runtime_error( str( "couldn't parse ", fileName, ": ", errors ) );
-        }
-        return result;
-    }
+    } // namespace detail
 
     /**
      * class PropertyKey
      */
 
-	PropertyKey::PropertyKey( std::string name, Json::Value defaultValue )
+	PropertyKey::PropertyKey( std::string name, nlohmann::json defaultValue )
 		: name_( move( name ) )
-		, defaultValue_( move( defaultValue ) )
-	{
-	}
+		, defaultValue_( move( defaultValue ) ) {}
 
     /**
      * class PropertyNode
      */
 
-    static char const* valueType( Json::ValueType type )
-    {
-        switch ( type ) {
-            case Json::nullValue: return "null";
-            case Json::intValue:
-            case Json::uintValue: return "number";
-            case Json::realValue: return "decimal";
-            case Json::stringValue: return "string";
-            case Json::booleanValue: return "boolean";
-            case Json::arrayValue: return "array";
-            case Json::objectValue: return "object";
-        }
-        throw invalid_argument( "invalid enum constant for Json::ValueType" );
-    }
+    namespace detail {
 
-    static void assertValueType( string const& path, Json::ValueType type, Json::ValueType expected )
-    {
-        if ( type != expected ) {
-            throw runtime_error( str( "expected property \"", path, "\" to be of type ", valueType( expected ),
-                                      " but was ", valueType( type ) ) );
+        string_view to_string( json::value_t type )
+        {
+            switch ( type ) {
+                case json::value_t::null: return "null";
+                case json::value_t::number_integer:
+                case json::value_t::number_unsigned: return "number";
+                case json::value_t::number_float: return "decimal";
+                case json::value_t::string: return "string";
+                case json::value_t::boolean: return "boolean";
+                case json::value_t::array: return "array";
+                case json::value_t::object: return "object";
+                case json::value_t::discarded: break;
+            }
+            throw invalid_argument( "invalid enum constant for json::value_t" );
         }
-    }
+
+        inline void assertValueType( string const& path, json::value_t type, json::value_t expected )
+        {
+            if ( type != expected ) {
+                throw runtime_error( str( "expected property \"", path, "\" to be of type ", to_string( expected ),
+                                          " but was ", to_string( type ) ) );
+            }
+        }
+
+    } // namespace detail
 
     PropertyNode::PropertyNode() = default;
 
-    PropertyNode::PropertyNode( string path, Json::Value const& value )
+    PropertyNode::PropertyNode( string path, nlohmann::json const& value )
             : path_( move( path ) )
             , value_( &value )
     {
     }
 
-    char const* PropertyNode::typeName() const
+    string_view PropertyNode::typeName() const
     {
-        return valueType( value_->type() );
+        return detail::to_string( value_->type() );
     }
 
     PropertyNode::const_iterator PropertyNode::begin() const
@@ -99,7 +97,7 @@ namespace sc {
 
     bool PropertyNode::has( string const& key ) const
     {
-        return !( *value_ )[ key ].isNull();
+        return value_->find( key ) != value_->end();
     }
 
     PropertyNode PropertyNode::operator[]( string const& key ) const
@@ -112,29 +110,28 @@ namespace sc {
         return get( key.name(), key.defaultValue() );
     }
 
-    PropertyNode::const_iterator PropertyNode::iter( Json::Value::const_iterator it ) const
+    PropertyNode::const_iterator PropertyNode::iter( json::const_iterator it ) const
     {
-        assertValueType( path_, value_->type(), Json::arrayValue );
+        detail::assertValueType( path_, value_->type(), json::value_t::array );
         return { path_, value_->begin(), it };
     }
 
-    PropertyNode PropertyNode::get( string const& key, Json::Value const& defaultValue ) const
+    PropertyNode PropertyNode::get( string const& key, nlohmann::json const& defaultValue ) const
     {
-        assertValueType( path_, value_->type(), Json::objectValue );
+        detail::assertValueType( path_, value_->type(), json::value_t::object );
 
-        string path = str( path_, "/", key );
-        auto const& stored = ( *value_ )[ key ];
-        auto const& value = !stored.isNull() ? stored : defaultValue;
-        if ( value.isNull() ) {
-            throw runtime_error( str( "required property \"", path, "\" not found" ) );
+        auto stored = value_->find( key );
+        auto const& value = stored != value_->end() ? *stored : defaultValue;
+        if ( value.is_null() ) {
+            throw runtime_error( str( "required property \"", path_, "/", key, "\" not found" ) );
         }
-        return PropertyNode( move( path ), value );
+        return PropertyNode( str( path_, "/", key ), value );
     }
 
     namespace detail {
 
         PropertyNodeIterator::PropertyNodeIterator(
-                string const& path, Json::Value::const_iterator first, Json::Value::const_iterator it )
+                string const& path, json::const_iterator first, json::const_iterator it )
                 : PropertyNodeIterator::iterator_adaptor_( it )
                 , path_( &path )
                 , first_( first )
@@ -155,7 +152,7 @@ namespace sc {
 
     Properties::Properties( string const& propertiesFile )
 		: PropertyNode( "", value_ )
-		, value_( readJsonFile( propertiesFile ) )
+		, value_( detail::readJsonFile( propertiesFile ) )
 	{
 	}
 
@@ -174,27 +171,27 @@ namespace sc {
 
         bool PropertyConverter< string >::is( PropertyNode const& node )
         {
-            return node.value_->isString();
+            return node.value_->is_string();
         }
 
         string PropertyConverter< string >::unckeckedConvert( PropertyNode const& node )
         {
-            return node.value_->asString();
+            return *node.value_;
         }
 
         bool PropertyConverter< bool >::is( PropertyNode const& node )
         {
-            return node.value_->isBool();
+            return node.value_->is_boolean();
         }
 
         bool PropertyConverter< bool >::unckeckedConvert( PropertyNode const& node )
         {
-            return node.value_->asBool();
+            return *node.value_;
         }
 
         bool PropertyConverter< chrono::nanoseconds >::is( PropertyNode const& node )
         {
-            if ( !node.value_->isString() ) {
+            if ( !node.value_->is_string() ) {
                 return false;
             }
 
@@ -209,20 +206,20 @@ namespace sc {
 
         chrono::nanoseconds PropertyConverter< chrono::nanoseconds >::convert( PropertyNode const& node )
         {
-            if ( !node.value_->isString() ) {
+            if ( !node.value_->is_string() ) {
                 throw invalidType( node, "duration string" );
             }
-            return expression::parseDuration( node.value_->asString() );
+            return expression::parseDuration( *node.value_ );
         }
 
         bool PropertyConverter< Rgb >::is( PropertyNode const& node )
         {
-            if ( !node.value_->isString() ) {
+            if ( !node.value_->is_string() ) {
                 return false;
             }
 
             string digits = "0123456789abcdef";
-            string value = node.value_->asString();
+            string const& value = *node.value_;
             return value.length() == 6 && value.find_first_not_of( "0123456789abcdef" ) == string::npos;
         }
 
@@ -231,7 +228,7 @@ namespace sc {
             if ( !is( node ) ) {
                 throw invalidType( node, "rgb color string" );
             }
-            return Rgb( stoul( node.value_->asString(), 0, 16 ) );
+            return Rgb( stoul( node.value_->get< string >(), 0, 16 ) );
         }
 
     } // namespace detail

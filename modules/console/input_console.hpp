@@ -2,7 +2,7 @@
 #define SCHLAZICONTROL_INPUT_CONSOLE_HPP
 
 #include "console.hpp"
-#include "input.hpp"
+#include "core/input.hpp"
 
 namespace sc {
 

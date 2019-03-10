@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "gpio.hpp"
-#include "output.hpp"
+#include "core/output.hpp"
 #include "types.hpp"
 
 namespace sc {

@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "core/config.hpp"
-#include "commandline.hpp"
+#include "core/commandline.hpp"
 #include "core/logging.hpp"
 #include "manager.hpp"
 
@@ -98,7 +98,6 @@ static void runProcess( ManagerProcess const& process )
 
 int main( int argc, char* argv[] )
 {
-    LoggerScope loggerScope;
     if ( ManagerProcess process = runMainLoopOrForkProcess( argc, argv ) ) {
         runProcess( process );
     }

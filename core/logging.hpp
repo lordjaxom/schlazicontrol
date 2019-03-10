@@ -3,11 +3,12 @@
 
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <ostream>
-#include <string>
 #include <utility>
 
-#include "utility_string.hpp"
+#include "utility/optional.hpp"
+#include "utility/string_view.hpp"
 
 namespace sc {
 
@@ -16,20 +17,31 @@ namespace sc {
 		std::ostream& logTimestamp( std::ostream& os );
 		std::ostream& logPid( std::ostream& os );
 
-		template< typename ...Args >
-		std::string logBuildMessage( std::string const& tag, char const* level, Args&&... args )
+		inline void logWrite( std::ostream &os )
 		{
-            return str( logTimestamp, " [", logPid, "] [", tag, "] [", level, "] ", std::forward< Args >( args )...,
-                        "\n" );
+			os << std::endl;
 		}
+
+		template< typename Arg0, typename ...Args >
+		void logWrite( std::ostream& os, Arg0&& arg0, Args&&... args )
+		{
+			os << std::forward< Arg0 >( arg0 );
+			logWrite( os, std::forward<Args>( args )... );
+		}
+
+		template< typename ...Args >
+		void logMessage( std::ostream& os, std::string const& tag, char const* level, Args&&... args )
+		{
+			logWrite( os, logTimestamp, " [", logPid, "] [", tag, "] [", level, "] ", std::forward< Args >( args )... );
+		}
+
+        std::shared_ptr< std::ostream >& logOutput();
 
 	} // namespace detail
 
-	class LoggerScope;
-
 	class Logger
 	{
-		friend class LoggerScope;
+        using Lock = std::lock_guard< std::mutex >;
 
 		struct Level
 		{
@@ -41,9 +53,11 @@ namespace sc {
 
 		static bool is( Level const& level );
 
+        static std::shared_ptr< std::ostream >& output();
+
 		static bool active_;
 		static Level const* level_;
-		static std::shared_ptr< std::ostream > output_;
+        static std::mutex mutex_;
 
 	public:
 		static Level const Debug;
@@ -55,6 +69,7 @@ namespace sc {
 		static void output( std::ostream& output );
 		static void output( char const* output );
 
+        explicit Logger( char const* tag ) noexcept;
         explicit Logger( std::string tag );
 		Logger( Logger const& ) = delete;
 
@@ -83,30 +98,19 @@ namespace sc {
 		}
 
 	private:
+        std::string const& tag() const;
+
 		template< typename ...Args >
 		void log( Level const& level, Args&&... args )
 		{
 			if ( is( level ) ) {
-				std::string message =
-						detail::logBuildMessage( tag_, level.name, std::forward< Args >( args )... );
-				output_->write( message.c_str(), message.length() );
-				output_->flush();
+                Lock lock( mutex_ );
+                detail::logMessage( *output(), tag(), level.name, std::forward< Args >( args )... );
 			}
 		}
 
-		std::string tag_;
-	};
-
-	class LoggerScope
-	{
-	public:
-		LoggerScope();
-		LoggerScope( LoggerScope const& ) = delete;
-		LoggerScope( LoggerScope&& other );
-		~LoggerScope();
-
-	private:
-		bool owned_;
+		string_view rawTag_;
+        mutable optional< std::string > tag_;
 	};
 
 } // namespace sc

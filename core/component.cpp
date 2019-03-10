@@ -66,18 +66,12 @@ namespace sc {
 
     namespace detail {
 
-        template< typename Type >
-        unique_ptr< Component > makeComponent( string&& id, Manager& manager, PropertyNode const& properties )
-        {
-            return { new Type( move( id ), manager, properties ) };
-        }
-
-        bool operator<( ComponentEntry const& lhs, ComponentEntry const& rhs ) noexcept
+        bool operator<( ComponentEntry const& lhs, ComponentEntry const& rhs )
         {
             return forward_as_tuple( lhs.category, lhs.name ) < forward_as_tuple( rhs.category, rhs.name );
         }
 
-        ComponentEntry::ComponentEntry( string_view category, string_view name, MakeComponent makeComponent ) noexcept
+        ComponentEntry::ComponentEntry( string_view category, string_view name, MakeComponent makeComponent )
                 : category( category )
                 , name( name )
                 , makeComponent( makeComponent )
@@ -87,10 +81,10 @@ namespace sc {
 
         auto splitComponentType( string_view type )
         {
-            auto separator = type.find( '.' );
-            auto category = type.substr( 0, separator );
-            auto name = separator != string_view::npos ? type.substr( separator + 1 ) : "";
-            return make_tuple( category, name );
+            auto separator = type.find( ':' );
+            return separator != string_view::npos
+                    ? make_tuple( type.substr( 0, separator ), type.substr( separator + 1 ) )
+                    : make_tuple( "", type );
         }
 
         struct ComponentEntryLookup
@@ -108,13 +102,13 @@ namespace sc {
 
     } // namespace detail
 
-    ComponentFactory& ComponentFactory::instance() noexcept
+    ComponentFactory& ComponentFactory::instance()
     {
         static ComponentFactory instance;
         return instance;
     }
 
-    ComponentFactory::ComponentFactory() noexcept
+    ComponentFactory::ComponentFactory()
         : generatedId_( 924536 ) {}
 
 	string ComponentFactory::generateId( string const& name )

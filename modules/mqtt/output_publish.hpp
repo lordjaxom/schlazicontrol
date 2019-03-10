@@ -1,7 +1,7 @@
 #ifndef SCHLAZICONTROL_MQTT_OUTPUT_PUBLISH_HPP
 #define SCHLAZICONTROL_MQTT_OUTPUT_PUBLISH_HPP
 
-#include "output.hpp"
+#include "core/output.hpp"
 
 namespace sc {
 

@@ -4,7 +4,7 @@
 #include <cstdint>
 
 #include "gpio.hpp"
-#include "input.hpp"
+#include "core/input.hpp"
 
 namespace sc {
 
