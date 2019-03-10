@@ -17,4 +17,8 @@ find_path(Mosquitto_INCLUDE_DIRS
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Mosquitto DEFAULT_MSG Mosquitto_LIBRARIES Mosquitto_INCLUDE_DIRS)
 
+if(NOT WIN32)
+    set(Mosquitto_LIBRARIES ${Mosquitto_LIBRARIES} pthread)
+endif()
+
 mark_as_advanced(Mosquitto_LIBRARIES Mosquitto_INCLUDE_DIRS)

@@ -14,12 +14,7 @@ include(Toolchain.cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_68_0")
-set(Boost_INCLUDE_DIRS "${BOOST_ROOT}")
-
-set(ASIO_ROOT "${THIRDPARTY_HOME}/asio-1.12.1")
-set(asio_DEFINITIONS ASIO_STANDALONE)
-set(asio_INCLUDE_DIRS "${ASIO_ROOT}/include")
-
+set(Asio_ROOT "${THIRDPARTY_HOME}/asio-1.12.1/include")
 set(Json_ROOT "${THIRDPARTY_HOME}/json-master/include")
 # for Raspberry Pi:
 # set(WiringPi_ROOT "${THIRDPARTY_HOME}/wiringPi")
@@ -28,6 +23,9 @@ set(WiringPi_ROOT "${THIRDPARTY_HOME}/BPI-WiringPi2/wiringPi")
 set(Mosquitto_ROOT "${THIRDPARTY_HOME}/mosquitto-1.5.4/lib")
 set(RpiWs281x_ROOT "${THIRDPARTY_HOME}/rpi_ws281x")
 
+set(Boost_INCLUDE_DIRS "${BOOST_ROOT}")
+
+find_package(Asio REQUIRED)
 find_package(Json REQUIRED)
 
 set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
@@ -167,18 +165,14 @@ set(SOURCE_FILES ${SOURCE_FILES}
 
 add_executable(schlazicontrol ${SOURCE_FILES})
 target_compile_definitions(schlazicontrol PRIVATE
-        ${asio_DEFINITIONS})
+        ${Asio_DEFINITIONS})
 target_include_directories(schlazicontrol PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${Boost_INCLUDE_DIRS}
-        ${asio_INCLUDE_DIRS}
+        ${Asio_INCLUDE_DIRS}
         ${Json_INCLUDE_DIRS}
         ${typestring_INCLUDE_DIRS}
         ${MODULE_INCLUDE_DIRS})
 target_link_libraries(schlazicontrol
+        ${Asio_LIBRARIES}
         ${MODULE_LIBRARIES})
-if(WIN32)
-    target_link_libraries(schlazicontrol ws2_32)
-else()
-    target_link_libraries(schlazicontrol pthread)
-endif()
