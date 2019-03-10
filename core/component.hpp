@@ -10,6 +10,7 @@
 
 #include <boost/intrusive/set.hpp>
 
+#include "core/config.hpp"
 #include "statistics.hpp"
 #include "utility_string.hpp"
 #include "utility/string_view.hpp"
@@ -62,7 +63,7 @@ namespace sc {
 
         void statistics( std::ostream& os ) const;
 
-        virtual std::function< void () > forkedProcess() const { return nullptr; }
+        virtual std::function< bool () > forkedProcess() const SCHLAZICONTROL_UNLESS( FORK, final ) { return nullptr; }
 
     protected:
         virtual void doStatistics( std::ostream& os ) const = 0;

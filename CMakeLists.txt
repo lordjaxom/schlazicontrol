@@ -24,19 +24,13 @@ set(asio_INCLUDE_DIRS "${ASIO_ROOT}/include")
 # set(WiringPi_ROOT "${THIRDPARTY_HOME}/wiringPi")
 # for Banana Pi:
 set(WiringPi_ROOT "${THIRDPARTY_HOME}/BPI-WiringPi2/wiringPi")
-
 set(Mosquitto_ROOT "${THIRDPARTY_HOME}/mosquitto-1.5.4/lib")
-
+set(RpiWs281x_ROOT "${THIRDPARTY_HOME}/rpi_ws281x")
 
 set(JSONCPP_ROOT "${THIRDPARTY_HOME}/jsoncpp-master")
 set(jsoncpp_LIBRARIES jsoncpp)
 include_directories("${JSONCPP_ROOT}/include")
 link_directories("${JSONCPP_ROOT}/src/lib_json")
-
-set(RPIWS281X_ROOT "${THIRDPARTY_HOME}/rpi_ws281x")
-set(rpiWS281X_LIBRARIES rpi_ws281x)
-include_directories("${RPIWS281X_ROOT}")
-link_directories("${RPIWS281X_ROOT}")
 
 set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
 include_directories("${TYPESTRING_ROOT}")
@@ -45,6 +39,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 set(SOURCE_FILES
+        core/config.hpp
         core/component.cpp
         core/component.hpp
         core/logging.cpp
@@ -52,14 +47,14 @@ set(SOURCE_FILES
         utility/string_view.hpp)
 
 find_package(WiringPi)
-if (WiringPi_FOUND)
+if(WiringPi_FOUND)
     set(SOURCE_FILES ${SOURCE_FILES}
-            modules/wiring/gpio.cpp
-            modules/wiring/gpio.hpp
-            modules/wiring/input_gpio.cpp
-            modules/wiring/input_gpio.hpp
-            modules/wiring/output_pwm.cpp
-            modules/wiring/output_pwm.hpp)
+            modules/wiringPi/gpio.cpp
+            modules/wiringPi/gpio.hpp
+            modules/wiringPi/input_gpio.cpp
+            modules/wiringPi/input_gpio.hpp
+            modules/wiringPi/output_pwm.cpp
+            modules/wiringPi/output_pwm.hpp)
     set(MODULE_INCLUDE_DIRS ${MODULE_INCLUDE_DIRS} ${WiringPi_INCLUDE_DIRS})
     set(MODULE_LIBRARIES ${MODULE_LIBRARIES} ${WiringPi_LIBRARIES})
     message("Module wiringPi: true")
@@ -68,7 +63,7 @@ else()
 endif()
 
 find_package(Mosquitto)
-if (Mosquitto_FOUND)
+if(Mosquitto_FOUND)
     set(SOURCE_FILES ${SOURCE_FILES}
             modules/mqtt/mqtt.cpp
             modules/mqtt/mqtt.hpp
@@ -83,6 +78,33 @@ else()
     message("Module mqtt: false")
 endif()
 
+find_package(RpiWs281x)
+if(RpiWs281x_FOUND)
+    set(SOURCE_FILES ${SOURCE_FILES}
+            modules/rpi_ws281x/ws281x.cpp
+            modules/rpi_ws281x/ws281x.hpp
+            modules/rpi_ws281x/output_ws281x.cpp
+            modules/rpi_ws281x/output_ws281x.hpp)
+    set(MODULE_INCLUDE_DIRS ${MODULE_INCLUDE_DIRS} ${RpiWs281x_INCLUDE_DIRS})
+    set(MODULE_LIBRARIES ${MODULE_LIBRARIES} ${RpiWs281x_LIBRARIES})
+    message("Module rpi_ws281x: true")
+else()
+    message("Module rpi_ws281x: false")
+endif()
+
+if(NOT WIN32)
+    set(SOURCE_FILES ${SOURCE_FILES}
+            modules/console/input_console.cpp
+            modules/console/input_console.hpp
+            modules/console/output_console.cpp
+            modules/console/output_console.hpp
+            modules/console/console.cpp
+            modules/console/console.hpp)
+    message("Module console: true")
+else()
+    message("Module console: false")
+endif()
+
 set(SOURCE_FILES
         ${SOURCE_FILES}
         connection.cpp
@@ -95,16 +117,12 @@ set(SOURCE_FILES
         manager.hpp
         output.cpp
         output.hpp
-        output_ws281x.cpp
-        output_ws281x.hpp
         properties.cpp
         properties.hpp
         schlazicontrol.cpp
         types.cpp
         types.hpp
         forward.hpp
-        ws281x.cpp
-        ws281x.hpp
         commandline.cpp
         commandline.hpp
         transition.hpp
@@ -132,12 +150,6 @@ set(SOURCE_FILES
         multiconnection.hpp
         trackable.cpp
         trackable.hpp
-        input_console.cpp
-        input_console.hpp
-        output_console.cpp
-        output_console.hpp
-        console.cpp
-        console.hpp
         utility_stream.hpp
         utility_string.hpp
         utility_algorithm.hpp

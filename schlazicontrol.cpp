@@ -1,13 +1,16 @@
 #include <fstream>
 #include <iostream>
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
+#include "core/config.hpp"
 #include "commandline.hpp"
 #include "core/logging.hpp"
 #include "manager.hpp"
+
+#if SCHLAZICONTROL_FORK
+#   include <sys/stat.h>
+#   include <sys/types.h>
+#   include <unistd.h>
+#endif
 
 using namespace std;
 using namespace sc;
@@ -19,6 +22,7 @@ static void writePidToFile( string const& pidFile )
 
 static void daemonize()
 {
+#if SCHLAZICONTROL_FORK
     pid_t pid;
 
     pid = ::fork();
@@ -38,6 +42,7 @@ static void daemonize()
             return;
         }
     }
+#endif
 
     cerr << "couldn't daemonize: " << strerror( errno ) << "\n";
     exit( EXIT_FAILURE );

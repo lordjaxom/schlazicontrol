@@ -6,15 +6,11 @@
 #include <thread>
 #include <vector>
 
-#if !defined( WIN32 )
-#   include <sys/types.h>
-#   include <sys/wait.h>
-#   include <unistd.h>
-#endif
 #include <signal.h>
 
 #include <asio.hpp>
 
+#include "core/config.hpp"
 #include "core/component.hpp"
 #include "commandline.hpp"
 #include "core/logging.hpp"
@@ -22,13 +18,20 @@
 #include "statistics.hpp"
 #include "types.hpp"
 
+#if SCHLAZICONTROL_FORK
+#   include <sys/types.h>
+#   include <sys/wait.h>
+#   include <unistd.h>
+#endif
+
 using namespace std;
 using namespace asio;
 
 namespace sc {
 
-	static Logger logger( "manager" );
+    static Logger logger( "manager" );
 
+#if SCHLAZICONTROL_FORK
 	static bool processExited( pid_t pid )
     {
 	    int status;
@@ -58,6 +61,7 @@ namespace sc {
 
         ::kill( pid, SIGKILL );
     }
+#endif
 
     /**
      * struct ManagerInternals
@@ -72,22 +76,23 @@ namespace sc {
         {
         }
 
-        io_service service;
-        signal_set signals;
-        steady_timer pollingTimer;
-        steady_timer statisticsTimer;
+        asio::io_context service;
+        asio::signal_set signals;
+        asio::steady_timer pollingTimer;
+        asio::steady_timer statisticsTimer;
+#if SCHLAZICONTROL_FORK
         vector< pid_t > processes;
+#endif
     };
 
     /**
      * class ManagerProcess
      */
 
-    ManagerProcess::ManagerProcess()
-    {
-    }
+    ManagerProcess::ManagerProcess() = default;
 
-    ManagerProcess::ManagerProcess( Component const& component, std::function< void () >&& handler )
+#if SCHLAZICONTROL_FORK
+    ManagerProcess::ManagerProcess( Component const& component, std::function< bool () >&& handler )
             : name_( component.name() )
             , id_( component.id() )
             , handler_( move( handler ) )
@@ -103,6 +108,7 @@ namespace sc {
     {
         handler_();
     }
+#endif
 
     /**
      * class Manager
@@ -120,7 +126,7 @@ namespace sc {
 		, updateInterval_( properties_[ updateIntervalProperty ].as< std::chrono::nanoseconds >() )
         , statisticsInterval_( properties_[ statisticsIntervalProperty ].as< std::chrono::nanoseconds >() )
         , internals_( new ManagerInternals )
-	{
+    {
         for ( auto componentNode : properties_[ componentsProperty ] ) {
             createComponent( componentNode );
         }
@@ -133,14 +139,14 @@ namespace sc {
 
     Manager::~Manager() = default;
 
-    io_service& Manager::service()
+    asio::io_context& Manager::service()
     {
         return internals_->service;
     }
 
     ManagerProcess Manager::forkProcesses()
     {
-        ManagerProcess process;
+#if SCHLAZICONTROL_FORK
         for ( auto const& entry : components_ ) {
             if ( auto handler = entry.second->forkedProcess() ) {
                 internals_->service.notify_fork( io_service::fork_prepare );
@@ -156,22 +162,25 @@ namespace sc {
                 internals_->service.notify_fork( io_service::fork_parent );
                 internals_->processes.push_back( pid );
             }
-        };
+        }
+#endif
         return {};
     }
 
     void Manager::run()
-	{
-		readyEvent_();
-		startPolling();
+    {
+        readyEvent_();
+        startPolling();
         startStatistics();
         internals_->service.run();
-	}
+    }
 
 	void Manager::stop()
     {
+#if SCHLAZICONTROL_FORK
         for_each( internals_->processes.begin(), internals_->processes.end(),
                   []( auto pid ) { killGracefully( pid ); } );
+#endif
 
         internals_->service.stop();
         components_.clear();
@@ -204,36 +213,36 @@ namespace sc {
     }
 
     Component& Manager::findComponent( Component const& requester, string const& id ) const
-	{
-		auto it = components_.find( id );
-		if ( it == components_.end() ) {
-			throw runtime_error( str( "component ", requester.describe(), " depends on unknown component \"", id,
+    {
+        auto it = components_.find( id );
+        if ( it == components_.end() ) {
+            throw runtime_error( str( "component ", requester.describe(), " depends on unknown component \"", id,
                                       "\"" ) );
-		}
-		return *it->second;
-	}
+        }
+        return *it->second;
+    }
 
     void Manager::checkValidComponent( Component const& requester, Component const& component, void const* cast ) const
-	{
+    {
         if ( cast == nullptr ) {
             throw runtime_error( str( "component ", requester.describe(), " depends on component \"", component.id(),
                                       "\" which is not of the required type" ) );
         }
-	}
+    }
 
-	void Manager::startPolling()
-	{
+    void Manager::startPolling()
+    {
         internals_->pollingTimer.expires_from_now( updateInterval_ );
         internals_->pollingTimer.async_wait( [this]( error_code ec ) {
-			if ( ec.value() == (int) errc::operation_canceled ) {
-				return;
-			}
+            if ( ec == make_error_code( asio::error::operation_aborted ) ) {
+                return;
+            }
 
 			checkProcesses();
             pollEvent_( updateInterval_ );
-			startPolling();
-		} );
-	}
+            startPolling();
+        } );
+    }
 
     void Manager::startStatistics()
     {
@@ -243,7 +252,7 @@ namespace sc {
 
         internals_->statisticsTimer.expires_from_now( statisticsInterval_ );
         internals_->statisticsTimer.async_wait( [this]( error_code ec ) {
-            if ( ec.value() == (int) errc::operation_canceled ) {
+            if ( ec == make_error_code( asio::error::operation_aborted ) ) {
                 return;
             }
 

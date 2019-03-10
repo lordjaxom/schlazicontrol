@@ -23,7 +23,7 @@ namespace sc {
 	public:
 		Ws281x( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-        virtual std::function< void () > forkedProcess() const override;
+        virtual std::function< bool () > forkedProcess() const override;
 
 		std::size_t ledCount() const { return ledCount_; }
 

@@ -246,11 +246,11 @@ namespace sc {
 		manager_.readyEvent().subscribe( [this] { connect(); }, true );
 	}
 
-    function< void () > Ws281x::forkedProcess() const
+    function< bool () > Ws281x::forkedProcess() const
     {
         auto gpioPin = gpioPin_;
         auto ledCount = ledCount_;
-        return [gpioPin, ledCount] { Ws281xServer( gpioPin, ledCount ).run(); };
+        return [gpioPin, ledCount] { Ws281xServer( gpioPin, ledCount ).run(); return true; };
     }
 
     void Ws281x::send( ChannelBuffer const& values )

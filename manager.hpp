@@ -10,6 +10,7 @@
 
 #include <asio/io_context.hpp>
 
+#include "core/config.hpp"
 #include "event.hpp"
 #include "properties.hpp"
 
@@ -26,19 +27,23 @@ namespace sc {
     {
     public:
         ManagerProcess();
-        ManagerProcess( Component const& component, std::function< void () >&& handler );
+#if SCHLAZICONTROL_FORK
+        ManagerProcess( Component const& component, std::function< bool () >&& handler );
+#endif
 
-        explicit operator bool() const;
+        explicit operator bool() const SCHLAZICONTROL_UNLESS( FORK, { return false; } );
 
         std::string const& name() const { return name_; }
         std::string const& id() const { return id_; }
 
-        void operator()() const;
+        void operator()() const SCHLAZICONTROL_UNLESS( FORK, {} );
 
     private:
         std::string name_;
         std::string id_;
-        std::function< void () > handler_;
+#if SCHLAZICONTROL_FORK
+        std::function< bool () > handler_;
+#endif
     };
 
     /**
