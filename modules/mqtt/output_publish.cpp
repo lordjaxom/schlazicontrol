@@ -34,6 +34,6 @@ namespace sc {
     }
 
 
-    static OutputRegistry< MqttPublish > registry( "mqtt.publish" );
+    static OutputRegistry< MqttPublish > registry( "mqtt" );
 
 } // namespace sc

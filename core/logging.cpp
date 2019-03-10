@@ -74,7 +74,7 @@ namespace sc {
 	Logger::Level const Logger::Warning { "WARN ", 1 };
 	Logger::Level const Logger::Error   { "ERROR", 0 };
 
-	bool Logger::active_;
+	bool Logger::active_ = true;
 	Logger::Level const* Logger::level_ = &Logger::Debug;
     mutex Logger::mutex_;
 

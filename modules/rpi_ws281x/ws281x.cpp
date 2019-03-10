@@ -52,8 +52,9 @@ namespace sc {
 
             logger.debug( "initializing rpi_ws281x api" );
 
-            if ( ws2811_init( &wrapped_ ) ) {
-                throw runtime_error( str( "couldn't initialize ws2811 api on pin ", gpioPin ) );
+            if ( auto state = ws2811_init( &wrapped_ )) {
+                throw runtime_error(
+                        str( "couldn't initialize ws2811 api on pin ", gpioPin, ": ", ws2811_get_return_t_str( state )));
             }
 
             fill_n( channel_->leds, channel_->count, 0 );

@@ -45,7 +45,7 @@ namespace sc {
     }
 
 
-    static InputRegistry< MqttSubscribe > registry( "mqtt.subscribe" );
+    static InputRegistry< MqttSubscribe > registry( "mqtt" );
 
 } // namespace sc
 

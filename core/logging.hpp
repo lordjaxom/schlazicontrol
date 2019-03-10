@@ -9,6 +9,7 @@
 
 #include "utility/optional.hpp"
 #include "utility/string_view.hpp"
+#include "utility_string.hpp"
 
 namespace sc {
 
@@ -17,32 +18,17 @@ namespace sc {
 		std::ostream& logTimestamp( std::ostream& os );
 		std::ostream& logPid( std::ostream& os );
 
-		inline void logWrite( std::ostream &os )
-		{
-			os << std::endl;
-		}
-
-		template< typename Arg0, typename ...Args >
-		void logWrite( std::ostream& os, Arg0&& arg0, Args&&... args )
-		{
-			os << std::forward< Arg0 >( arg0 );
-			logWrite( os, std::forward<Args>( args )... );
-		}
-
 		template< typename ...Args >
-		void logMessage( std::ostream& os, std::string const& tag, char const* level, Args&&... args )
+		std::string logBuildMessage( std::string const& tag, char const* level, Args&&... args )
 		{
-			logWrite( os, logTimestamp, " [", logPid, "] [", tag, "] [", level, "] ", std::forward< Args >( args )... );
+			return str( logTimestamp, " [", logPid, "] [", tag, "] [", level, "] ",
+					    std::forward< Args >( args )..., "\n" );
 		}
-
-        std::shared_ptr< std::ostream >& logOutput();
 
 	} // namespace detail
 
 	class Logger
 	{
-        using Lock = std::lock_guard< std::mutex >;
-
 		struct Level
 		{
 			char const* name;
@@ -104,8 +90,9 @@ namespace sc {
 		void log( Level const& level, Args&&... args )
 		{
 			if ( is( level ) ) {
-                Lock lock( mutex_ );
-                detail::logMessage( *output(), tag(), level.name, std::forward< Args >( args )... );
+				std::string message = detail::logBuildMessage( tag(), level.name, std::forward< Args >( args )... );
+				output()->write( message.c_str(), message.length());
+				output()->flush();
 			}
 		}
 

@@ -17,11 +17,11 @@ namespace sc {
 
         ostream& operator<<( ostream& os, ComponentDescription const& description )
         {
-            os << "\"" << description.id << "\" (of type \"" << description.category;
-            if ( !description.nameOrType.empty() ) {
-                os << "." << description.nameOrType;
+            os << "\"" << description.id << "\" (of type \"";
+            if ( !description.category.empty()) {
+                os << description.category << ":";
             }
-            os << "\")";
+            os << description.nameOrType << "\")";
             if ( description.requester != nullptr ) {
                 os << " defined by " << description.requester->describe();
             }
