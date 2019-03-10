@@ -34,9 +34,9 @@ namespace sc {
 
             friend ostream& operator<<( ostream& os, MqttInfo const& info )
             {
-                return os << "MQTT @ " << info.host << ":" << info.port << "/"
+                return os << "MQTT{" << info.host << ":" << info.port << "/"
                           << ( !info.clientId.empty() ? info.clientId : "<anonymous>" )
-                          << ": ";
+                          << "}: ";
             }
         };
 
