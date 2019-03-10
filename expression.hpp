@@ -17,7 +17,6 @@
 #include <typestring.hh>
 
 #include "typeinfo.hpp"
-#include "typetraits.hpp"
 #include "utility_stream.hpp"
 #include "utility_string.hpp"
 
@@ -295,7 +294,7 @@ namespace sc {
             };
 
             template< typename Type >
-            struct ArgumentVisitorImpl< Type, std::enable_if_t< IsIntegral< Type >() > >
+            struct ArgumentVisitorImpl< Type, std::enable_if_t< std::is_integral< Type >::value > >
                     : ArgumentVisitorFallback< Type >
             {
                 static Type invoke( std::string const& function, std::size_t index, std::intmax_t value )
@@ -320,7 +319,7 @@ namespace sc {
             };
 
             template< typename Type >
-            struct ArgumentVisitorImpl< Type, std::enable_if_t< IsBaseOf< ArgParserTag, Type >() > >
+            struct ArgumentVisitorImpl< Type, std::enable_if_t< std::is_base_of< ArgParserTag, Type >::value > >
             {
                 template< typename Other >
                 static Type invoke( std::string const& function, std::size_t index, Other&& value )

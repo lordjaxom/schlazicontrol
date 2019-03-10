@@ -138,7 +138,6 @@ set(SOURCE_FILES ${SOURCE_FILES}
         transition_fade.cpp
         transition_fade.hpp
         typeinfo.hpp
-        typetraits.hpp
         scoped.hpp
         scoped.cpp
         statistics.hpp

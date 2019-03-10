@@ -193,25 +193,25 @@ namespace sc {
         std::runtime_error invalidType( PropertyNode const& node, char const* expectedType );
 
         template< typename Type >
-        bool propertyIsInRange( std::intmax_t value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::intmax_t value, std::enable_if_t< std::is_signed< Type >::value >* = nullptr )
         {
             return value >= std::numeric_limits< Type >::min() && value <= std::numeric_limits< Type >::max();
         }
 
         template< typename Type >
-        bool propertyIsInRange( std::uintmax_t value, std::enable_if_t< IsSigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::uintmax_t value, std::enable_if_t< std::is_signed< Type >::value >* = nullptr )
         {
             return value <= static_cast< std::uintmax_t >( std::numeric_limits< Type >::max() );
         }
 
         template< typename Type >
-        bool propertyIsInRange( std::intmax_t value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::intmax_t value, std::enable_if_t< std::is_unsigned< Type >::value >* = nullptr )
         {
             return value >= 0;
         }
 
         template< typename Type >
-        bool propertyIsInRange( std::uintmax_t value, std::enable_if_t< IsUnsigned< Type >() >* = nullptr )
+        bool propertyIsInRange( std::uintmax_t value, std::enable_if_t< std::is_unsigned< Type >::value >* = nullptr )
         {
             return value <= std::numeric_limits< Type >::max();
         }
@@ -265,7 +265,7 @@ namespace sc {
         };
 
         template< typename Type >
-        struct PropertyConverter< Type, std::enable_if_t< IsIntegral< Type >() > >
+        struct PropertyConverter< Type, std::enable_if_t< std::is_integral< Type >::value > >
         {
             static bool is( PropertyNode const& node )
             {
@@ -288,7 +288,7 @@ namespace sc {
         };
 
         template< typename Type >
-        struct PropertyConverter< Type, std::enable_if_t< IsFloatingPoint< Type >() > >
+        struct PropertyConverter< Type, std::enable_if_t< std::is_floating_point< Type >::value > >
         {
             static bool is( PropertyNode const& node )
             {

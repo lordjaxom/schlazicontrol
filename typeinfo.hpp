@@ -6,8 +6,6 @@
 
 #include <typestring.hh>
 
-#include "typetraits.hpp"
-
 namespace sc {
 
     namespace detail {
@@ -16,9 +14,9 @@ namespace sc {
 
         template< typename Type, typename Enable = void > struct TypeName;
         template<> struct TypeName< std::string > : TypeString< typestring_is( "identifier" ) > {};
-        template< typename Type > struct TypeName< Type, std::enable_if_t< IsIntegral< Type >() > >
+        template< typename Type > struct TypeName< Type, std::enable_if_t< std::is_integral< Type >::value > >
                 : TypeString< typestring_is( "number" ) > {};
-        template< typename Type > struct TypeName< Type, std::enable_if_t< IsFloatingPoint< Type >() > >
+        template< typename Type > struct TypeName< Type, std::enable_if_t< std::is_floating_point< Type >::value > >
                 : TypeString< typestring_is( "decimal" ) > {};
         template< typename Rep, typename Period > struct TypeName< std::chrono::duration< Rep, Period > >
                 : TypeString< typestring_is( "duration" ) > {};
