@@ -1,4 +1,4 @@
-#include <cassert>
+#include <cstring>
 #include <ostream>
 #include <stdexcept>
 
@@ -58,20 +58,26 @@ namespace sc {
         doStatistics( os );
     }
 
+
     /**
      * class ComponentFactory
      */
 
-    ComponentFactory& ComponentFactory::instance()
+    bool operator<( ComponentFactory::Entry const& lhs, ComponentFactory::Entry const& rhs ) noexcept
+    {
+        int r;
+        return ( r = strcmp( lhs.category, rhs.category ) ) < 0 ||
+                ( r == 0 && strcmp( lhs.name, rhs.name ) < 0 );
+    }
+
+    ComponentFactory& ComponentFactory::instance() noexcept
     {
         static ComponentFactory instance;
         return instance;
     }
 
-    ComponentFactory::ComponentFactory()
-        : generatedId_( 924536 )
-    {
-    }
+    ComponentFactory::ComponentFactory() noexcept
+        : generatedId_( 924536 ) {}
 
 	string ComponentFactory::generateId( string const& name )
 	{
@@ -83,21 +89,18 @@ namespace sc {
     unique_ptr< Component > ComponentFactory::create(
             string const& type, string id, Manager& manager, PropertyNode const& properties )
 	{
-		auto it = components_.find( type );
+		auto it = components_.find( type, EntryCompare() );
 		if ( it == components_.end() ) {
 			throw runtime_error( str(
 					"unable to create component \"", id, "\": type \"", type, "\" is not registered" ) );
 		}
-		return it->second( move( id ), manager, properties );
+		return it->factory( move( id ), manager, properties );
 	}
 
-	void ComponentFactory::put( string&& name, Factory&& factory )
+	void ComponentFactory::put( Entry& entry ) noexcept
 	{
-		auto it = components_.emplace( move( name ), move( factory ) );
-		if ( !it.second ) {
-            throw runtime_error( str(
-                    "unable to register component type \"", it.first->first, "\": type already registered" ) );
-		}
+	    auto it = components_.insert( entry );
+	    assert( it.second );
 	}
 
 } // namespace sc

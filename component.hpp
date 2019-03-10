@@ -1,6 +1,7 @@
 #ifndef SCHLAZICONTROL_COMPONENT_HPP
 #define SCHLAZICONTROL_COMPONENT_HPP
 
+#include <cassert>
 #include <functional>
 #include <iosfwd>
 #include <map>
@@ -9,8 +10,11 @@
 #include <tuple>
 #include <utility>
 
+#include <boost/intrusive/set.hpp>
+
 #include "statistics.hpp"
 #include "utility_string.hpp"
+#include "utility/string_view.hpp"
 
 namespace sc {
 
@@ -80,10 +84,31 @@ namespace sc {
 	{
         template< typename Type > friend class ComponentRegistry;
 
-		using Factory = std::function< std::unique_ptr< Component > ( std::string&&, Manager&, PropertyNode const& ) >;
+        using Factory = std::add_pointer_t< std::unique_ptr< Component >( std::string&&, Manager&, PropertyNode const& ) >;
+
+        struct Entry
+        {
+            char const* category;
+            char const* name;
+            Factory factory;
+            boost::intrusive::set_member_hook<> hook;
+        };
+
+        friend bool operator<( Entry const& lhs, Entry const& rhs ) noexcept;
+
+        struct EntryCompare
+        {
+            bool operator()( char const* type, Entry const& entry ) const;
+            bool operator()( Entry const& entry, char const* type ) const;
+        };
+
+        using EntryMember = boost::intrusive::member_hook< Entry, boost::intrusive::set_member_hook<>, &Entry::hook >;
+        using EntrySet = boost::intrusive::set< Entry, EntryMember >;
 
     public:
-        static ComponentFactory& instance();
+        static ComponentFactory& instance() noexcept;
+
+        ComponentFactory( ComponentFactory const& ) = delete;
 
 		std::string generateId( std::string const& type );
 
@@ -91,14 +116,14 @@ namespace sc {
                 std::string const& type, std::string id, Manager& manager, PropertyNode const& properties );
 
 	private:
-		ComponentFactory();
-		ComponentFactory( ComponentFactory const& ) = delete;
+		ComponentFactory() noexcept;
 
-		void put( std::string&& name, Factory&& factory );
+		void put( Entry& entry ) noexcept;
 
-		std::map< std::string, Factory > components_;
+        EntrySet components_;
         std::size_t generatedId_;
 	};
+
 
     /**
      * class ComponentRegistry
@@ -108,25 +133,25 @@ namespace sc {
 	class ComponentRegistry
 	{
 	public:
-		ComponentRegistry( std::string category, std::string name )
-                //: ComponentRegistry( std::move( category ), std::move( name ), str( category, ".", name ) )
-		{
-            using namespace std::placeholders;
-            auto type = category.empty() ? name : str( category, ".", name );
-            auto wrapper = []( auto&& c, auto&& n, auto&& id, auto&& manager, auto&& properties ) {
-                std::unique_ptr< Component > result( new Type( std::move( id ), manager, properties ));
-                result->category_ = &c;
-                result->name_ = &n;
-                return result;
-            };
-            ComponentFactory::instance().put( std::move( type ), std::bind( std::move( wrapper ), std::move( category ), std::move( name ), _1, _2, _3 ) );
-		}
-
-        ComponentRegistry( std::string name )
-                : ComponentRegistry( {}, std::move( name ) )
-                //: ComponentRegistry( {}, name, name )
+		ComponentRegistry( char const* category, char const* name ) noexcept
+                : entry_ { category, name, [=]( auto&& id, auto& manager, auto const& properties ) {
+                    std::unique_ptr< Component > result( new Type( std::move( id ), manager, properties ) );
+                    result->category_ = category;
+                    result->name_ = name;
+                    return result;
+                } }
         {
+            assert( category != nullptr && name != nullptr );
+            ComponentFactory::instance().put( entry_ );
         }
+
+        explicit ComponentRegistry( char const* name ) noexcept
+                : ComponentRegistry( "", name ) {}
+
+        ComponentRegistry( ComponentRegistry const& ) = delete;
+
+    private:
+        ComponentFactory::Entry entry_;
     };
 
 } // namespace sc
