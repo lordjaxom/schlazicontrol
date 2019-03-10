@@ -3,10 +3,11 @@
 
 #include <cstdint>
 
-#include "gpio.hpp"
 #include "core/input.hpp"
 
 namespace sc {
+
+    class WiringPi;
 
 	class GpioInput final
 		    : public Input
@@ -14,18 +15,18 @@ namespace sc {
 	public:
 		GpioInput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-		virtual std::size_t emitsChannels() const override { return 1; }
+		std::size_t emitsChannels() const override { return 1; }
 
     protected:
-		virtual void doStatistics( std::ostream& os ) const override;
+		void doStatistics( std::ostream& os ) const override;
 
 	private:
 		void poll();
 
 		Manager& manager_;
-		GpioDevice device_;
-		std::uint16_t gpioPin_;
-		bool value_;
+		WiringPi& wiringPi_;
+		std::uint16_t pin_;
+		bool value_ {};
 	};
 
 } // namespace sc

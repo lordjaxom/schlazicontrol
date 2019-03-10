@@ -9,8 +9,8 @@
 #include <mosquitto.h>
 
 #include "core/logging.hpp"
-#include "manager.hpp"
-#include "properties.hpp"
+#include "core/manager.hpp"
+#include "core/properties.hpp"
 #include "modules/mqtt/mqtt.hpp"
 
 using namespace std;

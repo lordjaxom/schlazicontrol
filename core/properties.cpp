@@ -46,7 +46,7 @@ namespace sc {
 
     namespace detail {
 
-        string_view to_string( json::value_t type )
+        char const* to_string( json::value_t type )
         {
             switch ( type ) {
                 case json::value_t::null: return "null";
@@ -70,6 +70,12 @@ namespace sc {
             }
         }
 
+        void propertyConversionError( string const& path, char const* typeName, json::exception const& e )
+        {
+            logger.error( "error converting property ", path, " to ", typeName, ": ", e.what() );
+            throw std::runtime_error( str( "property at ", path, " could not be converted to ", typeName ) );
+        }
+
     } // namespace detail
 
     PropertyNode::PropertyNode() = default;
@@ -80,7 +86,7 @@ namespace sc {
     {
     }
 
-    string_view PropertyNode::typeName() const
+    char const* PropertyNode::typeName() const
     {
         return detail::to_string( value_->type() );
     }
@@ -161,57 +167,7 @@ namespace sc {
      */
 
     namespace detail {
-
-        runtime_error invalidType( PropertyNode const& node, char const* expectedType )
-        {
-            return std::runtime_error( str(
-                    "property at ", node.path(), " expected to be of type ", expectedType, " but was ",
-                    node.typeName() ) );
-        }
-
-        bool PropertyConverter< string >::is( PropertyNode const& node )
-        {
-            return node.value_->is_string();
-        }
-
-        string PropertyConverter< string >::unckeckedConvert( PropertyNode const& node )
-        {
-            return *node.value_;
-        }
-
-        bool PropertyConverter< bool >::is( PropertyNode const& node )
-        {
-            return node.value_->is_boolean();
-        }
-
-        bool PropertyConverter< bool >::unckeckedConvert( PropertyNode const& node )
-        {
-            return *node.value_;
-        }
-
-        bool PropertyConverter< chrono::nanoseconds >::is( PropertyNode const& node )
-        {
-            if ( !node.value_->is_string() ) {
-                return false;
-            }
-
-            try {
-                convert( node );
-                return true;
-            }
-            catch ( ... ) {
-                return false;
-            }
-        }
-
-        chrono::nanoseconds PropertyConverter< chrono::nanoseconds >::convert( PropertyNode const& node )
-        {
-            if ( !node.value_->is_string() ) {
-                throw invalidType( node, "duration string" );
-            }
-            return expression::parseDuration( *node.value_ );
-        }
-
+/*
         bool PropertyConverter< Rgb >::is( PropertyNode const& node )
         {
             if ( !node.value_->is_string() ) {
@@ -230,7 +186,16 @@ namespace sc {
             }
             return Rgb( stoul( node.value_->get< string >(), 0, 16 ) );
         }
-
+*/
     } // namespace detail
 
 } // namespace sc
+
+namespace nlohmann {
+
+    void adl_serializer< chrono::nanoseconds >::from_json( json const& src, chrono::nanoseconds& dst )
+    {
+        dst = sc::expression::parseDuration( src );
+    }
+
+} // namespace nlohmann

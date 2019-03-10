@@ -1,6 +1,6 @@
 #include <cstdint>
 
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "transition_color.hpp"
 #include "types.hpp"
 

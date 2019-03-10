@@ -4,7 +4,7 @@
 #include "core/config.hpp"
 #include "core/commandline.hpp"
 #include "core/logging.hpp"
-#include "manager.hpp"
+#include "core/manager.hpp"
 
 #if SCHLAZICONTROL_FORK
 #   include <sys/stat.h>
@@ -77,7 +77,7 @@ static ManagerProcess runMainLoopOrForkProcess( int argc, char* argv[] )
         logger.info( "schlazicontrol exiting" );
     }
     catch ( exception const& e ) {
-        logger.error( e.what() );
+        logger.error( "FATAL: ", e.what() );
     }
     return {};
 }

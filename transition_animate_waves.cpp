@@ -1,4 +1,4 @@
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "transition_animate.hpp"
 #include "types.hpp"
 #include "utility_colorwheel.hpp"

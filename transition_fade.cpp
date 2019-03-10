@@ -3,13 +3,13 @@
 
 #include "connection.hpp"
 #include "event.hpp"
-#include "manager.hpp"
-#include "properties.hpp"
+#include "core/manager.hpp"
+#include "core/properties.hpp"
 #include "scoped.hpp"
 #include "timer.hpp"
 #include "transition_fade.hpp"
 #include "types.hpp"
-#include "utility_algorithm.hpp"
+#include "utility/algorithm.hpp"
 
 using namespace std;
 

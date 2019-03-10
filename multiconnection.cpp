@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <utility>
 
-#include "manager.hpp"
+#include "core/manager.hpp"
 #include "multiconnection.hpp"
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "utility_stream.hpp"
 
 using namespace std;

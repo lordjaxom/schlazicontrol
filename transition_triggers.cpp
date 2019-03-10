@@ -5,7 +5,7 @@
 
 #include "expression.hpp"
 #include "core/logging.hpp"
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "transition_triggers.hpp"
 #include "triggers.hpp"
 
@@ -44,26 +44,26 @@ namespace sc {
                 Value { ChannelValue::fullOnValue(), &ChannelValue::fullOn } ) {}
     };
 
-    static unique_ptr< triggers::Event > parseEvent( string const& event )
+    static unique_ptr< triggers::Event > parseEvent( PropertyNode const& event )
     {
         using namespace expression;
         return parseExpression< triggers::Event >(
-                event,
+                event.as< string >(),
                 Factory< ChangeEvent, ValueParser >( "change" ),
                 Factory< TimeoutEvent, size_t >( "timeout" ));
     }
 
-    static unique_ptr< Outcome > parseOutcome( string const& outcome )
+    static unique_ptr< Outcome > parseOutcome( PropertyNode const& outcome )
     {
         using namespace expression;
         return parseExpression< Outcome >(
-                outcome,
+                outcome.as< string >(),
                 Factory< SetOutcome, ValueParser >( "set" ),
                 Factory< StartTimerOutcome, size_t, chrono::nanoseconds >( "startTimer" ),
                 Factory< StopTimerOutcome, size_t >( "stopTimer" ));
     }
 
-    static vector< unique_ptr< Outcome > > parseOutcomes( PropertyList< string > const& outcomes )
+    static vector< unique_ptr< Outcome > > parseOutcomes( PropertyNode const& outcomes )
     {
         auto first = boost::make_transform_iterator( outcomes.begin(), &parseOutcome );
         auto last = boost::make_transform_iterator( outcomes.end(), &parseOutcome );
@@ -72,8 +72,8 @@ namespace sc {
 
     static Action parseAction( PropertyNode const& action )
     {
-        auto event = parseEvent( action[ eventProperty ].as< string >() );
-        auto outcomes = parseOutcomes( action[ outcomesProperty ].as< string[] >() );
+        auto event = parseEvent( action[ eventProperty ] );
+        auto outcomes = parseOutcomes( action[ outcomesProperty ] );
         return { move( event ), move( outcomes ) };
     }
 

@@ -1,18 +1,25 @@
 #include <algorithm>
+#include <tuple>
 #include <utility>
+
+#include <boost/iterator/zip_iterator.hpp>
 
 #include "core/input.hpp"
 #include "core/logging.hpp"
-#include "manager.hpp"
-#include "output_pwm.hpp"
-#include "utility_algorithm.hpp"
+#include "core/manager.hpp"
+#include "modules/wiringPi/output_pwm.hpp"
+#include "modules/wiringPi/wiringPi.hpp"
+#include "utility/algorithm.hpp"
 
 using namespace std;
+
+using boost::make_zip_iterator;
 
 namespace sc {
 
 	static Logger logger( "output_pwm" );
 
+	static PropertyKey const wiringPiProperty( "wiringPi" );
 	static PropertyKey const gpioPinsProperty( "gpioPins" );
     static PropertyKey const inputProperty( "input" );
 
@@ -20,30 +27,31 @@ namespace sc {
 		: Component( move( id ) )
         , Output( manager, properties[ inputProperty ] )
 		, manager_( manager )
-		, device_( manager_ )
+		, wiringPi_( manager_.get< WiringPi >( *this, properties[ wiringPiProperty ] ) )
+        , pins_( properties[ gpioPinsProperty ].as< vector< uint16_t > >() )
 	{
-		auto gpioPins = properties[ gpioPinsProperty ].as< uint16_t[] >();
-		transform(
-                gpioPins.cbegin(), gpioPins.cend(), back_inserter( gpioPins_ ),
-				[this]( uint16_t gpioPin ) {
-					device_.pinMode( gpioPin, GpioMode::output );
-					device_.softPwmCreate( gpioPin );
-					return gpioPin;
-				} );
+        manager_.readyEvent().subscribe( [this] {
+            for_each( pins_.begin(), pins_.end(), [&]( auto pin ) {
+                wiringPi_.pinMode( pin, WiringPi::output );
+                wiringPi_.softPwmCreate( pin );
+            } );
+        }, true );
     }
 
 	void SoftPwmOutput::set( Input const& input, ChannelBuffer const& values )
 	{
         values_ = values;
-        forEach( [this]( auto const& value, auto const& pin ) {
-                     device_.softPwmWrite( pin, (uint16_t) value.get() );
-                 }, values_.cbegin(), values_.cend(), gpioPins_.cbegin() );
+        auto pin = pins_.begin();
+        for_each( values_.begin(), values_.end(), [&]( auto const& value ) {
+            wiringPi_.softPwmWrite( *pin++, (uint16_t) value.get() );
+        } );
 	}
 
     void SoftPwmOutput::doStatistics( ostream& os ) const
     {
         os << "\n\t\tvalues: " << makeStatistics( values_ );
     }
+
 
     static OutputRegistry< SoftPwmOutput > registry( "softPwm" );
 

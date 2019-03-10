@@ -6,7 +6,7 @@
 
 #include "console.hpp"
 #include "core/logging.hpp"
-#include "manager.hpp"
+#include "core/manager.hpp"
 
 using namespace std;
 using namespace asio;

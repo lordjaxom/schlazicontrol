@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "manager.hpp"
+#include "core/manager.hpp"
 #include "timer.hpp"
 #include "triggers.hpp"
 

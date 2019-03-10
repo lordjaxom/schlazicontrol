@@ -2,8 +2,8 @@
 
 #include "input_console.hpp"
 #include "core/logging.hpp"
-#include "manager.hpp"
-#include "properties.hpp"
+#include "core/manager.hpp"
+#include "core/properties.hpp"
 #include "types.hpp"
 
 using namespace std;

@@ -12,7 +12,7 @@
 
 #include "core/config.hpp"
 #include "event.hpp"
-#include "properties.hpp"
+#include "core/properties.hpp"
 
 namespace sc {
 

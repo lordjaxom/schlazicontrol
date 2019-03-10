@@ -7,7 +7,7 @@
 
 #include "connection.hpp"
 #include "core/input.hpp"
-#include "manager.hpp"
+#include "core/manager.hpp"
 #include "types.hpp"
 
 using namespace std;

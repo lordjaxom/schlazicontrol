@@ -2,7 +2,7 @@
 
 #include "connection.hpp"
 #include "event.hpp"
-#include "manager.hpp"
+#include "core/manager.hpp"
 #include "transition_animate.hpp"
 #include "scoped.hpp"
 #include "types.hpp"

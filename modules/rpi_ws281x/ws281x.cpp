@@ -12,7 +12,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "core/logging.hpp"
-#include "manager.hpp"
+#include "core/manager.hpp"
 #include "types.hpp"
 #include "utility_gamma.hpp"
 #include "ws281x.hpp"

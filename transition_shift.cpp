@@ -1,6 +1,6 @@
 #include <utility>
 
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "transition_shift.hpp"
 #include "types.hpp"
 

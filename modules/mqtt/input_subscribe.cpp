@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <iterator>
+#include <vector>
 
-#include "manager.hpp"
-#include "properties.hpp"
+#include "core/manager.hpp"
+#include "core/properties.hpp"
 #include "modules/mqtt/mqtt.hpp"
 #include "modules/mqtt/input_subscribe.hpp"
 #include "types.hpp"
@@ -19,12 +20,12 @@ namespace sc {
     MqttSubscribe::MqttSubscribe( string&& id, Manager& manager, PropertyNode const& properties )
             : Component( move( id ) )
     {
-        auto const& on = properties[ onProperty ].as< string[] >();
+        auto on = properties[ onProperty ].as< vector< string > >();
         transform( on.cbegin(), on.cend(), inserter( commands_, commands_.end() ), []( auto const& command ) {
             return make_pair( command, 100 );
         } );
 
-        auto const& off = properties[ offProperty ].as< string[] >();
+        auto off = properties[ offProperty ].as< vector< string > >();
         transform( off.cbegin(), off.cend(), inserter( commands_, commands_.end() ), []( auto const& command ) {
             return make_pair( command, 0 );
         } );

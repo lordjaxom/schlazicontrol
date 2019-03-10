@@ -1,7 +1,7 @@
 #include <utility>
 
-#include "manager.hpp"
-#include "properties.hpp"
+#include "core/manager.hpp"
+#include "core/properties.hpp"
 #include "modules/mqtt/mqtt.hpp"
 #include "modules/mqtt/output_publish.hpp"
 #include "types.hpp"

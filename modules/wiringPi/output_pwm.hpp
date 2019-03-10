@@ -5,14 +5,16 @@
 #include <string>
 #include <vector>
 
-#include "gpio.hpp"
 #include "core/output.hpp"
 #include "types.hpp"
 
 namespace sc {
 
-	class Manager;
-	class PropertyNode;
+	class WiringPi;
+
+	/**
+	 * class SoftPwmOutput
+	 */
 
 	class SoftPwmOutput final
 		: public Output
@@ -20,17 +22,17 @@ namespace sc {
 	public:
 		SoftPwmOutput( std::string&& id, Manager& manager, PropertyNode const& properties );
 
-		virtual bool acceptsChannels( std::size_t channels ) const override { return gpioPins_.size() == channels; }
+		bool acceptsChannels( std::size_t channels ) const override { return pins_.size() == channels; }
 
 	protected:
-        virtual void set( Input const& input, ChannelBuffer const& values ) override;
+        void set( Input const& input, ChannelBuffer const& values ) override;
 
-        virtual void doStatistics( std::ostream& os ) const override;
+        void doStatistics( std::ostream& os ) const override;
 
 	private:
 		Manager& manager_;
-		GpioDevice device_;
-		std::vector< std::uint16_t > gpioPins_;
+		WiringPi& wiringPi_;
+		std::vector< std::uint16_t > pins_;
         ChannelBuffer values_;
 	};
 

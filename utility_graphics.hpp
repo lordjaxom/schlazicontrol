@@ -4,11 +4,16 @@
 #include <cstdint>
 #include <array>
 
+#include <nlohmann/json_fwd.hpp>
+
+#include "typeinfo.hpp"
+
 namespace sc {
 
     class Rgb
     {
     public:
+        Rgb();
         explicit Rgb( std::uint32_t value );
         Rgb( std::uint8_t red, std::uint8_t green, std::uint8_t blue );
 
@@ -22,6 +27,12 @@ namespace sc {
     private:
         std::array< std::uint8_t, 3 > values_;
     };
+
+
+    template<> struct TypeName< Rgb > : TypeString< typestring_is( "colour" ) > {};
+
+
+    void from_json( nlohmann::json const& src, Rgb& dst );
 
 } // namespace sc
 

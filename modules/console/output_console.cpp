@@ -1,6 +1,6 @@
 #include "core/logging.hpp"
 #include "output_console.hpp"
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "statistics.hpp"
 
 using namespace std;

@@ -1,7 +1,7 @@
 #include <iterator>
 #include <utility>
 
-#include "properties.hpp"
+#include "core/properties.hpp"
 #include "transition_multiply.hpp"
 #include "types.hpp"
 

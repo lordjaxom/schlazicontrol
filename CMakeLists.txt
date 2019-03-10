@@ -46,14 +46,18 @@ set(SOURCE_FILES
         core/input.hpp
         core/output.cpp
         core/output.hpp
+        core/properties.cpp
+        core/properties.hpp
+        core/manager.cpp
+        core/manager.hpp
         utility/string_view.hpp
         utility/optional.hpp)
 
 find_package(WiringPi)
 if(WiringPi_FOUND)
     set(SOURCE_FILES ${SOURCE_FILES}
-            modules/wiringPi/gpio.cpp
-            modules/wiringPi/gpio.hpp
+            modules/wiringPi/wiringPi.cpp
+            modules/wiringPi/wiringPi.hpp
             modules/wiringPi/input_gpio.cpp
             modules/wiringPi/input_gpio.hpp
             modules/wiringPi/output_pwm.cpp
@@ -113,10 +117,6 @@ set(SOURCE_FILES ${SOURCE_FILES}
         connection.hpp
         event.hpp
         event.cpp
-        manager.cpp
-        manager.hpp
-        properties.cpp
-        properties.hpp
         schlazicontrol.cpp
         types.cpp
         types.hpp
@@ -147,7 +147,6 @@ set(SOURCE_FILES ${SOURCE_FILES}
         trackable.hpp
         utility_stream.hpp
         utility_string.hpp
-        utility_algorithm.hpp
         utility_math.hpp
         utility_valuetable.hpp
         utility_gamma.hpp

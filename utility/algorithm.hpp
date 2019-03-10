@@ -7,11 +7,11 @@ namespace sc {
      * for_each algorithm for arbitrary number of iterators
      */
 
-    template< typename Function, typename InputIt, typename ...InputIts >
-    void forEach( Function function, InputIt first, InputIt last, InputIts... others )
+    template< typename Func, typename InputIt, typename ...InputIts >
+    void forEach( Func&& func, InputIt first, InputIt last, InputIts... others )
     {
         for ( ; first != last ; ++first, void( ++others... ) ) {
-            function( *first, *others... );
+            std::forward< Func >( func )( *first, *others... );
         }
     }
 
@@ -19,11 +19,11 @@ namespace sc {
      * transform algorithm for arbitrary number of iterators
      */
 
-    template< typename Function, typename InputIt, typename OutputIt, typename ...InputIts >
-    OutputIt transform( Function function, InputIt first, InputIt last, OutputIt dest, InputIts... others )
+    template< typename Func, typename InputIt, typename OutputIt, typename ...InputIts >
+    OutputIt transform( Func&& func, InputIt first, InputIt last, OutputIt dest, InputIts... others )
     {
         while ( first != last ) {
-            *dest++ = function( *first++, *others++... );
+            *dest++ = std::forward< Func >( func )( *first++, *others++... );
         }
         return dest;
     }

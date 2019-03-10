@@ -2,9 +2,9 @@
 #include <utility>
 
 #include "core/input.hpp"
-#include "manager.hpp"
+#include "core/manager.hpp"
 #include "output_ws281x.hpp"
-#include "properties.hpp"
+#include "core/properties.hpp"
 
 using namespace std;
 
