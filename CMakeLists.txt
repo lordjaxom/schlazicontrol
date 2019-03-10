@@ -11,7 +11,7 @@ set(THIRDPARTY_HOME "C:/Users/lordjaxom/Projekte/_RASPI_THIRDPARTY")
 
 include(Toolchain.cmake)
 
-set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_61_0")
+set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_68_0")
 include_directories("${BOOST_ROOT}")
 
 set(ASIO_ROOT "${THIRDPARTY_HOME}/asio-1.10.6")
