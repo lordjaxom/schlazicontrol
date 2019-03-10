@@ -4,10 +4,8 @@
 #include <cassert>
 #include <functional>
 #include <iosfwd>
-#include <map>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 
 #include <boost/intrusive/set.hpp>
@@ -31,8 +29,8 @@ namespace sc {
 
         struct ComponentDescription
         {
-            std::string const& category;
-            std::string const& nameOrType;
+            string_view category;
+            string_view nameOrType;
             std::string const& id;
             Component const* requester;
         };
@@ -43,7 +41,7 @@ namespace sc {
 
 	class Component
 	{
-        template< typename Type > friend class ComponentRegistry;
+        friend class ComponentFactory;
 
         using Description = detail::ComponentDescription;
 
@@ -57,8 +55,8 @@ namespace sc {
         virtual ~Component();
 
         std::string const& id() const { return id_; }
-        std::string const& category() const { return *category_; }
-        std::string const& name() const { return *name_; }
+        string_view category() const { return category_; }
+        string_view name() const { return name_; }
 
         Description describe( Component const* requester = nullptr ) const;
 
@@ -72,38 +70,38 @@ namespace sc {
     private:
         std::string id_;
         bool statistics_;
-        std::string const* category_;
-        std::string const* name_;
+        string_view category_;
+        string_view name_;
 	};
 
     /**
      * class ComponentFactory
      */
 
-    class ComponentFactory
-	{
-        template< typename Type > friend class ComponentRegistry;
+    namespace detail {
 
-        using Factory = std::add_pointer_t< std::unique_ptr< Component >( std::string&&, Manager&, PropertyNode const& ) >;
+        using MakeComponent = std::add_pointer_t<
+                std::unique_ptr< Component >( std::string&& id, Manager& manager, PropertyNode const& properties ) >;
 
-        struct Entry
+        struct ComponentEntry
         {
-            char const* category;
-            char const* name;
-            Factory factory;
+            ComponentEntry( string_view category, string_view name, MakeComponent makeComponent ) noexcept;
+
+            string_view category;
+            string_view name;
+            MakeComponent makeComponent;
             boost::intrusive::set_member_hook<> hook;
         };
 
-        friend bool operator<( Entry const& lhs, Entry const& rhs ) noexcept;
+    } // namespace detail
 
-        struct EntryCompare
-        {
-            bool operator()( char const* type, Entry const& entry ) const;
-            bool operator()( Entry const& entry, char const* type ) const;
-        };
+    class ComponentFactory
+	{
+        friend class detail::ComponentEntry;
 
-        using EntryMember = boost::intrusive::member_hook< Entry, boost::intrusive::set_member_hook<>, &Entry::hook >;
-        using EntrySet = boost::intrusive::set< Entry, EntryMember >;
+        using EntryMember = boost::intrusive::member_hook<
+                detail::ComponentEntry, boost::intrusive::set_member_hook<>, &detail::ComponentEntry::hook >;
+        using EntrySet = boost::intrusive::set< detail::ComponentEntry, EntryMember >;
 
     public:
         static ComponentFactory& instance() noexcept;
@@ -118,8 +116,6 @@ namespace sc {
 	private:
 		ComponentFactory() noexcept;
 
-		void put( Entry& entry ) noexcept;
-
         EntrySet components_;
         std::size_t generatedId_;
 	};
@@ -133,25 +129,18 @@ namespace sc {
 	class ComponentRegistry
 	{
 	public:
-		ComponentRegistry( char const* category, char const* name ) noexcept
-                : entry_ { category, name, [=]( auto&& id, auto& manager, auto const& properties ) {
-                    std::unique_ptr< Component > result( new Type( std::move( id ), manager, properties ) );
-                    result->category_ = category;
-                    result->name_ = name;
-                    return result;
-                } }
-        {
-            assert( category != nullptr && name != nullptr );
-            ComponentFactory::instance().put( entry_ );
-        }
+		ComponentRegistry( string_view category, string_view name ) noexcept
+                : entry_( category, name, []( auto&& id, auto& manager, auto const& properties ) {
+                    return std::unique_ptr< Component >( new Type( std::move( id ), manager, properties ) );
+                } ) {}
 
-        explicit ComponentRegistry( char const* name ) noexcept
-                : ComponentRegistry( "", name ) {}
+        explicit ComponentRegistry( string_view category ) noexcept
+                : ComponentRegistry( category, "" ) {}
 
         ComponentRegistry( ComponentRegistry const& ) = delete;
 
     private:
-        ComponentFactory::Entry entry_;
+        detail::ComponentEntry entry_;
     };
 
 } // namespace sc

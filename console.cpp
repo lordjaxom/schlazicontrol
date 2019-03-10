@@ -5,7 +5,7 @@
 #include <asio.hpp>
 
 #include "console.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "manager.hpp"
 
 using namespace std;

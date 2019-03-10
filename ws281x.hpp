@@ -6,7 +6,7 @@
 #include <memory>
 #include <system_error>
 
-#include "component.hpp"
+#include "core/component.hpp"
 #include "forward.hpp"
 
 namespace sc {

@@ -4,7 +4,7 @@
 #include <boost/iterator/transform_iterator.hpp>
 
 #include "expression.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "properties.hpp"
 #include "transition_triggers.hpp"
 #include "triggers.hpp"

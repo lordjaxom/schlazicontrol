@@ -4,7 +4,7 @@
 #include "transition_color.hpp"
 #include "types.hpp"
 
-#include "logging.hpp"
+#include "core/logging.hpp"
 
 using namespace std;
 

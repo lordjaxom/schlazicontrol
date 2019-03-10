@@ -7,7 +7,7 @@
 #include <json/reader.h>
 
 #include "expression.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "properties.hpp"
 #include "utility_string.hpp"
 

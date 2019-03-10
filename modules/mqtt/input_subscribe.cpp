@@ -3,8 +3,8 @@
 
 #include "manager.hpp"
 #include "properties.hpp"
-#include "mqtt.hpp"
-#include "input_subscribe.hpp"
+#include "modules/mqtt/mqtt.hpp"
+#include "modules/mqtt/input_subscribe.hpp"
 #include "types.hpp"
 
 using namespace std;
@@ -45,7 +45,7 @@ namespace sc {
     }
 
 
-    static InputRegistry< MqttSubscribe > registry( "mqtt" );
+    static InputRegistry< MqttSubscribe > registry( "mqtt.subscribe" );
 
 } // namespace sc
 

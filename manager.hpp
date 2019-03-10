@@ -8,12 +8,10 @@
 #include <string>
 #include <utility>
 
+#include <asio/io_context.hpp>
+
 #include "event.hpp"
 #include "properties.hpp"
-
-namespace asio {
-    class io_service;
-} // namespace asio
 
 namespace sc {
 
@@ -30,7 +28,7 @@ namespace sc {
         ManagerProcess();
         ManagerProcess( Component const& component, std::function< void () >&& handler );
 
-        operator bool() const;
+        explicit operator bool() const;
 
         std::string const& name() const { return name_; }
         std::string const& id() const { return id_; }
@@ -55,13 +53,13 @@ namespace sc {
         using PollEvent = Event< void ( std::chrono::nanoseconds ) >;
 
     public:
-        Manager( CommandLine const& commandLine );
+        explicit Manager( CommandLine const& commandLine );
 		Manager( Manager const& ) = delete;
         ~Manager();
 
         std::chrono::nanoseconds updateInterval() const { return updateInterval_; }
 
-		asio::io_service& service();
+		asio::io_context& service();
 
 		template< typename Type >
 		Type& get( Component const& requester, std::string const& id ) const

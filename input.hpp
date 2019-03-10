@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-#include "component.hpp"
+#include "core/component.hpp"
 #include "event.hpp"
 #include "forward.hpp"
 

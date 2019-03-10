@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "component.hpp"
+#include "core/component.hpp"
 #include "forward.hpp"
 
 namespace sc {

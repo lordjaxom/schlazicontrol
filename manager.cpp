@@ -6,16 +6,18 @@
 #include <thread>
 #include <vector>
 
-#include <sys/types.h>
-#include <sys/wait.h>
+#if !defined( WIN32 )
+#   include <sys/types.h>
+#   include <sys/wait.h>
+#   include <unistd.h>
+#endif
 #include <signal.h>
-#include <unistd.h>
 
 #include <asio.hpp>
 
-#include "component.hpp"
+#include "core/component.hpp"
 #include "commandline.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "manager.hpp"
 #include "statistics.hpp"
 #include "types.hpp"
@@ -48,7 +50,7 @@ namespace sc {
             if ( ::waitpid( pid, &status, WNOHANG ) == pid ) {
                 return;
             }
-            this_thread::sleep_for( chrono::milliseconds( 100 ) );
+            this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
             timeoutMs = timeoutMs > 100 ? timeoutMs - 100 : 0;
         }
 
@@ -106,7 +108,7 @@ namespace sc {
      * class Manager
      */
 
-    static PropertyKey const updateIntervalProperty( "updateInterval", 40 );
+    static PropertyKey const updateIntervalProperty( "updateInterval", "40ms" );
     static PropertyKey const statisticsIntervalProperty( "statisticsInterval", "0s" );
     static PropertyKey const componentsProperty( "components" );
     static PropertyKey const componentTypeProperty( "type" );
@@ -115,8 +117,8 @@ namespace sc {
 
     Manager::Manager( CommandLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
-		, updateInterval_( properties_[ updateIntervalProperty ].as< chrono::nanoseconds >() )
-        , statisticsInterval_( properties_[ statisticsIntervalProperty ].as< chrono::nanoseconds >() )
+		, updateInterval_( properties_[ updateIntervalProperty ].as< std::chrono::nanoseconds >() )
+        , statisticsInterval_( properties_[ statisticsIntervalProperty ].as< std::chrono::nanoseconds >() )
         , internals_( new ManagerInternals )
 	{
         for ( auto componentNode : properties_[ componentsProperty ] ) {
@@ -235,7 +237,7 @@ namespace sc {
 
     void Manager::startStatistics()
     {
-        if ( statisticsInterval_ == chrono::nanoseconds::zero() ) {
+        if ( statisticsInterval_ == std::chrono::nanoseconds::zero() ) {
             return;
         }
 

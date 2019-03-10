@@ -5,7 +5,7 @@
 #include <system_error>
 #include <unordered_map>
 
-#include "component.hpp"
+#include "core/component.hpp"
 #include "event.hpp"
 
 namespace sc {

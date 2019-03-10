@@ -2,8 +2,8 @@
 
 #include "manager.hpp"
 #include "properties.hpp"
-#include "mqtt.hpp"
-#include "output_publish.hpp"
+#include "modules/mqtt/mqtt.hpp"
+#include "modules/mqtt/output_publish.hpp"
 #include "types.hpp"
 
 using namespace std;
@@ -34,6 +34,6 @@ namespace sc {
     }
 
 
-    static OutputRegistry< MqttPublish > registry( "mqtt" );
+    static OutputRegistry< MqttPublish > registry( "mqtt.publish" );
 
 } // namespace sc

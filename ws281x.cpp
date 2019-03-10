@@ -11,7 +11,7 @@
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "manager.hpp"
 #include "types.hpp"
 #include "utility_gamma.hpp"
@@ -223,7 +223,7 @@ namespace sc {
 
     struct Ws281xInternals
     {
-        Ws281xInternals( io_service& service )
+        Ws281xInternals( io_context& service )
                 : socket( service )
         {
         }
@@ -282,7 +282,7 @@ namespace sc {
 		tcp::resolver resolver( manager_.service() );
 		async_connect(
                 internals_->socket, resolver.resolve( tcp::resolver::query( "localhost", "9999" ) ),
-				[this] ( error_code ec, tcp::resolver::iterator ) {
+				[this] ( error_code ec, tcp::endpoint const& ) {
 					if ( handleError( ec ) ) {
 						return;
 					}
@@ -304,7 +304,7 @@ namespace sc {
 		int retryMs = 1000;
 
 		auto timer = make_shared< steady_timer >( manager_.service() );
-		timer->expires_from_now( chrono::milliseconds( retryMs ) );
+		timer->expires_from_now( std::chrono::milliseconds( retryMs ) );
 		timer->async_wait( [this, timer] ( error_code ec ) {
 			if ( ec.value() == (int) errc::operation_canceled ) {
 				return;

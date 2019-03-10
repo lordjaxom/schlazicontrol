@@ -2,7 +2,7 @@
 #include <utility>
 
 #include "input.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "manager.hpp"
 #include "output_pwm.hpp"
 #include "utility_algorithm.hpp"

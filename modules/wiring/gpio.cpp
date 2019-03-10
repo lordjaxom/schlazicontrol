@@ -5,7 +5,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "gpio.hpp"
 #include "manager.hpp"
 

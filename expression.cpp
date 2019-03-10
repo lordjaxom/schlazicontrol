@@ -7,7 +7,7 @@
 #include <boost/spirit/include/qi.hpp>
 
 #include "expression.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 
 using CallArgument = sc::expression::detail::CallArgument;
 

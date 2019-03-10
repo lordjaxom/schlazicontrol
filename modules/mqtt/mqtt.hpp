@@ -4,7 +4,7 @@
 #include <functional>
 #include <memory>
 
-#include "component.hpp"
+#include "core/component.hpp"
 
 namespace sc {
 

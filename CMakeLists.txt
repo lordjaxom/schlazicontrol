@@ -2,7 +2,7 @@
 # for the project to work, THIRDPARTY_HOME must be set to the path where dependencies are located
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 project(schlazicontrol)
 
 set(TOOLCHAIN_INCLUDED ON CACHE BOOL "" FORCE)
@@ -11,25 +11,27 @@ set(THIRDPARTY_HOME "C:/Users/lordjaxom/Projekte/_RASPI_THIRDPARTY")
 
 include(Toolchain.cmake)
 
-set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_68_0")
-include_directories("${BOOST_ROOT}")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-set(ASIO_ROOT "${THIRDPARTY_HOME}/asio-1.10.6")
+set(BOOST_ROOT "${THIRDPARTY_HOME}/boost_1_68_0")
+set(Boost_INCLUDE_DIRS "${BOOST_ROOT}")
+
+set(ASIO_ROOT "${THIRDPARTY_HOME}/asio-1.12.1")
 set(asio_DEFINITIONS ASIO_STANDALONE)
-include_directories("${ASIO_ROOT}/include")
+set(asio_INCLUDE_DIRS "${ASIO_ROOT}/include")
+
+# for Raspberry Pi:
+# set(WiringPi_ROOT "${THIRDPARTY_HOME}/wiringPi")
+# for Banana Pi:
+set(WiringPi_ROOT "${THIRDPARTY_HOME}/BPI-WiringPi2/wiringPi")
+
+set(Mosquitto_ROOT "${THIRDPARTY_HOME}/mosquitto-1.5.4/lib")
+
 
 set(JSONCPP_ROOT "${THIRDPARTY_HOME}/jsoncpp-master")
 set(jsoncpp_LIBRARIES jsoncpp)
 include_directories("${JSONCPP_ROOT}/include")
 link_directories("${JSONCPP_ROOT}/src/lib_json")
-
-# for Raspberry Pi:
-# set(WIRINGPI_ROOT "${THIRDPARTY_HOME}/wiringPi")
-# for Banana Pi:
-set(WIRINGPI_ROOT "${THIRDPARTY_HOME}/BPI-WiringPi2")
-set(wiringPi_LIBRARIES wiringPi)
-include_directories("${WIRINGPI_ROOT}/wiringPi")
-link_directories("${WIRINGPI_ROOT}/wiringPi")
 
 set(RPIWS281X_ROOT "${THIRDPARTY_HOME}/rpi_ws281x")
 set(rpiWS281X_LIBRARIES rpi_ws281x)
@@ -39,36 +41,60 @@ link_directories("${RPIWS281X_ROOT}")
 set(TYPESTRING_ROOT "${THIRDPARTY_HOME}/typestring-master")
 include_directories("${TYPESTRING_ROOT}")
 
-set(MOSQUITTO_ROOT "${THIRDPARTY_HOME}/mosquitto-1.5.4")
-set(mosquitto_LIBRARIES mosquitto)
-include_directories("${MOSQUITTO_ROOT}/lib")
-link_directories("${MOSQUITTO_ROOT}")
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 set(SOURCE_FILES
-        utility/string_view.hpp
-        component.cpp
-        component.hpp
+        core/component.cpp
+        core/component.hpp
+        core/logging.cpp
+        core/logging.hpp
+        utility/string_view.hpp)
+
+find_package(WiringPi)
+if (WiringPi_FOUND)
+    set(SOURCE_FILES ${SOURCE_FILES}
+            modules/wiring/gpio.cpp
+            modules/wiring/gpio.hpp
+            modules/wiring/input_gpio.cpp
+            modules/wiring/input_gpio.hpp
+            modules/wiring/output_pwm.cpp
+            modules/wiring/output_pwm.hpp)
+    set(MODULE_INCLUDE_DIRS ${MODULE_INCLUDE_DIRS} ${WiringPi_INCLUDE_DIRS})
+    set(MODULE_LIBRARIES ${MODULE_LIBRARIES} ${WiringPi_LIBRARIES})
+    message("Module wiringPi: true")
+else()
+    message("Module wiringPi: false")
+endif()
+
+find_package(Mosquitto)
+if (Mosquitto_FOUND)
+    set(SOURCE_FILES ${SOURCE_FILES}
+            modules/mqtt/mqtt.cpp
+            modules/mqtt/mqtt.hpp
+            modules/mqtt/input_subscribe.cpp
+            modules/mqtt/input_subscribe.hpp
+            modules/mqtt/output_publish.cpp
+            modules/mqtt/output_publish.hpp)
+    set(MODULE_INCLUDE_DIRS ${MODULE_INCLUDE_DIRS} ${Mosquitto_INCLUDE_DIRS})
+    set(MODULE_LIBRARIES ${MODULE_LIBRARIES} ${Mosquitto_LIBRARIES})
+    message("Module mqtt: true")
+else()
+    message("Module mqtt: false")
+endif()
+
+set(SOURCE_FILES
+        ${SOURCE_FILES}
         connection.cpp
         connection.hpp
         event.hpp
         event.cpp
-        gpio.cpp
-        gpio.hpp
-        input_gpio.cpp
-        input_gpio.hpp
         input.cpp
         input.hpp
-        logging.cpp
-        logging.hpp
         manager.cpp
         manager.hpp
         output.cpp
         output.hpp
-        output_pwm.cpp
-        output_pwm.hpp
         output_ws281x.cpp
         output_ws281x.hpp
         properties.cpp
@@ -128,24 +154,21 @@ set(SOURCE_FILES
         transition_color.cpp
         transition_color.hpp
         transition_color_fill.cpp
-        transition_color_gradient.cpp
-        mqtt.cpp
-        mqtt.hpp
-        input_subscribe.cpp
-        input_subscribe.hpp
-        output_publish.cpp
-        output_publish.hpp)
+        transition_color_gradient.cpp)
 
 add_executable(schlazicontrol ${SOURCE_FILES})
-target_compile_definitions(schlazicontrol PRIVATE ${asio_DEFINITIONS})
-target_link_libraries(schlazicontrol pthread ${jsoncpp_LIBRARIES} ${wiringPi_LIBRARIES} ${rpiWS281X_LIBRARIES} ${mosquitto_LIBRARIES})
-
-#add_custom_command(TARGET schlazicontrol
-#        POST_BUILD
-#        COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:')
-
-#if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-#    add_custom_command(TARGET schlazicontrol
-#            POST_BUILD
-#            COMMAND bash -c 'scp `cygpath -u $<TARGET_FILE:schlazicontrol>` root@schlazicontrol:/usr/local/bin/')
-#endif()
+target_compile_definitions(schlazicontrol PRIVATE
+        ${asio_DEFINITIONS})
+target_include_directories(schlazicontrol PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+        ${Boost_INCLUDE_DIRS}
+        ${asio_INCLUDE_DIRS}
+        ${jsoncpp_INCLUDE_DIRS}
+        ${typestring_INCLUDE_DIRS}
+        ${MODULE_INCLUDE_DIRS})
+target_link_libraries(schlazicontrol
+        pthread
+        ${jsoncpp_LIBRARIES}
+        ${rpiWS281X_LIBRARIES}
+        ${mosquitto_LIBRARIES}
+        ${MODULE_LIBRARIES})

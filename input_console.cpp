@@ -1,7 +1,7 @@
 #include <utility>
 
 #include "input_console.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "manager.hpp"
 #include "properties.hpp"
 #include "types.hpp"

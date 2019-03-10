@@ -8,12 +8,13 @@
 #include <asio.hpp>
 #include <mosquitto.h>
 
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "manager.hpp"
 #include "properties.hpp"
-#include "mqtt.hpp"
+#include "modules/mqtt/mqtt.hpp"
 
 using namespace std;
+using namespace asio;
 
 namespace sc {
 
@@ -133,11 +134,11 @@ namespace sc {
             }
 
             void retryConnect() {
-                auto retryTimeout = chrono::seconds( static_cast< long >( pow( 2, retries_++ ) ) );
+                auto retryTimeout = std::chrono::seconds( static_cast< long >( pow( 2, retries_++ ) ) );
 
                 logger.info( info_, "retrying to connect in ", retryTimeout.count(), " seconds" );
 
-                auto timer = make_shared< asio::steady_timer >( manager_.service(), retryTimeout );
+                auto timer = make_shared< steady_timer >( manager_.service(), retryTimeout );
                 timer->async_wait( [this, timer]( auto ec ) { if ( !ec ) this->connect(); } );
             }
 

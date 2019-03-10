@@ -1,5 +1,5 @@
 #include "event.hpp"
-#include "logging.hpp"
+#include "core/logging.hpp"
 
 using namespace std;
 

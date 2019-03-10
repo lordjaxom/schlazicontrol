@@ -4,7 +4,7 @@
 #include <iterator>
 #include <ostream>
 
-#include "logging.hpp"
+#include "core/logging.hpp"
 #include "types.hpp"
 
 using namespace std;

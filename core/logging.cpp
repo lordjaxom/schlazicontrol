@@ -5,10 +5,12 @@
 #include <iomanip>
 #include <iostream>
 
-#include <sys/types.h>
-#include <unistd.h>
+#if !defined( WIN32 )
+#   include <sys/types.h>
+#   include <unistd.h>
+#endif
 
-#include "logging.hpp"
+#include "core/logging.hpp"
 
 using namespace std;
 
@@ -22,7 +24,11 @@ namespace sc {
 			auto seconds = chrono::duration_cast< chrono::seconds >( timestamp );
 			auto micros = chrono::duration_cast< chrono::microseconds >( timestamp - seconds );
 			time_t tt = seconds.count();
+#if defined( WIN32 )
+            tm* pTm = std::localtime( &tt ); tm& tm = *pTm;
+#else
 			tm tm; ::localtime_r( &tt, &tm );
+#endif
 
 			return os
 					<< setw( 4 ) << setfill( '0' ) << ( tm.tm_year + 1900 ) << "/"
