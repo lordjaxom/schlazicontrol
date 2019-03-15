@@ -71,7 +71,7 @@ namespace sc {
             return forward_as_tuple( lhs.category, lhs.name ) < forward_as_tuple( rhs.category, rhs.name );
         }
 
-        ComponentEntry::ComponentEntry( string_view category, string_view name, MakeComponent makeComponent )
+        ComponentEntry::ComponentEntry( string_view category, string_view name, MakeComponent makeComponent ) noexcept
                 : category( category )
                 , name( name )
                 , makeComponent( makeComponent )

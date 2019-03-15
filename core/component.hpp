@@ -88,7 +88,7 @@ namespace sc {
 
         struct ComponentEntry
         {
-            ComponentEntry( string_view category, string_view name, MakeComponent makeComponent );
+            ComponentEntry( string_view category, string_view name, MakeComponent makeComponent ) noexcept;
 
             string_view category;
             string_view name;
@@ -140,10 +140,10 @@ namespace sc {
         }
 
     public:
-		ComponentRegistry( char const* category, char const* name ) noexcept
+		ComponentRegistry( string_view category, string_view name ) noexcept
                 : entry_( category, name, &makeComponent ) {}
 
-        explicit ComponentRegistry( char const* name ) noexcept
+        explicit ComponentRegistry( string_view name ) noexcept
                 : ComponentRegistry( "", name ) {}
 
         ComponentRegistry( ComponentRegistry const& ) = delete;
