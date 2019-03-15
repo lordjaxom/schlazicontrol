@@ -141,32 +141,6 @@ namespace sc {
 		nlohmann::json value_;
 	};
 
-    /**
-     * property conversion
-     */
-
-    namespace detail {
-/*
-        template<>
-        struct PropertyConverter< Rgb >
-        {
-            static bool is( PropertyNode const& node );
-            static Rgb convert( PropertyNode const& node );
-        };
-
-        template< typename Type, typename Enable >
-        Type PropertyConverter< Type, Enable >::convert( PropertyNode const& node )
-        {
-            try {
-                return boost::lexical_cast< Type >( PropertyConverter< std::string >::convert( node ) );
-            }
-            catch ( boost::bad_lexical_cast const& e ) {
-                throw std::runtime_error( str( "couldn't convert property \"", node.path_, "\" to requested type" ) );
-            }
-        }
-*/
-    } // namespace detail
-
 } // namespace sc
 
 /**

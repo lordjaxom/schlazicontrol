@@ -67,15 +67,6 @@ namespace sc {
 		asio::io_context& service();
 
 		template< typename Type >
-		Type& get( Component const& requester, std::string const& id ) const
-		{
-            auto& component = findComponent( requester, id );
-			Type* result = dynamic_cast< Type* >( &component );
-            checkValidComponent( requester, component, result );
-			return *result;
-		}
-
-		template< typename Type >
         Type& get( Component const& requester, PropertyNode const& node )
         {
             auto& component = node.is< std::string >()

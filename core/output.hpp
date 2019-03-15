@@ -28,8 +28,6 @@ namespace sc {
         static constexpr SingleInputTag singleInput {};
         static constexpr MultipleInputsTag multipleInputs {};
 
-        template< typename = void > Output() {}
-
         template< typename Tag = SingleInputTag >
         Output( Manager& manager, PropertyNode const& inputsNode, Tag tag = {} )
         {

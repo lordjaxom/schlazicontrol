@@ -95,7 +95,7 @@ namespace sc {
         : public ComponentRegistry< Type >
     {
     public:
-        TransitionRegistry( char const* name )
+        explicit TransitionRegistry( char const* name )
                 : ComponentRegistry< Type >( "transition", name )
         {
         }

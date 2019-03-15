@@ -102,7 +102,7 @@ namespace sc {
 
     } // namespace detail
 
-    ComponentFactory& ComponentFactory::instance()
+    ComponentFactory& ComponentFactory::instance() noexcept
     {
         static ComponentFactory instance;
         return instance;
@@ -111,9 +111,9 @@ namespace sc {
     ComponentFactory::ComponentFactory()
         : generatedId_( 924536 ) {}
 
-	string ComponentFactory::generateId( string const& name )
+	string ComponentFactory::generateId( string const& type )
 	{
-        auto id = str( name, ".", generatedId_ );
+        auto id = str( type, ".", generatedId_ );
         generatedId_ = ( generatedId_ - 100000 + 99991 ) % 900000 + 100000;
         return id;
 	}

@@ -110,7 +110,7 @@ namespace sc {
 				boost::intrusive::constant_time_size< false > >;
 
     public:
-        static ComponentFactory& instance();
+        static ComponentFactory& instance() noexcept;
 
         ComponentFactory( ComponentFactory const& ) = delete;
 

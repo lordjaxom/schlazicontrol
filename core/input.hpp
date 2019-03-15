@@ -21,8 +21,6 @@ namespace sc {
     public:
         using InputChangeEvent = Event< void ( ChannelBuffer const& ) >;
 
-        template< typename = void > Input() {}
-
         virtual std::size_t emitsChannels() const = 0;
 
         InputChangeEvent::Interface& inputChangeEvent() { return inputChangeEvent_.interface(); }
