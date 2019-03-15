@@ -1,4 +1,3 @@
-#include <mutex>
 #include <system_error>
 #include <utility>
 
@@ -11,13 +10,10 @@
 #include "modules/wiringPi/wiringPi.hpp"
 #include "wiringPi.hpp"
 
-
 using namespace std;
 using namespace nlohmann;
 
 namespace sc {
-
-    static once_flag initialized;
 
     static int mapPinMode( WiringPi::PinMode mode )
     {
@@ -41,11 +37,11 @@ namespace sc {
     WiringPi::WiringPi( string&& id, Manager& manager, PropertyNode const& properties )
             : Component( move( id ) )
     {
-        call_once( initialized, [] {
+        manager.readyEvent().subscribe( [this] {
             if ( ::wiringPiSetupGpio() == -1 ) {
                 throw system_error( errno, system_category(), "couldn't initialize wiringPi" );
             }
-        } );
+        }, true );
     }
 
     WiringPi::~WiringPi() = default;
