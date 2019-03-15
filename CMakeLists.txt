@@ -35,23 +35,23 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 set(SOURCE_FILES
-        core/config.hpp
         core/commandline.cpp
         core/commandline.hpp
         core/component.cpp
         core/component.hpp
-        core/logging.cpp
-        core/logging.hpp
+        core/config.hpp
         core/input.cpp
         core/input.hpp
+        core/logging.cpp
+        core/logging.hpp
+        core/manager.cpp
+        core/manager.hpp
         core/output.cpp
         core/output.hpp
         core/properties.cpp
         core/properties.hpp
-        core/manager.cpp
-        core/manager.hpp
-        utility/string_view.hpp
-        utility/optional.hpp)
+        utility/optional.hpp
+        utility/string_view.hpp)
 
 find_package(WiringPi)
 if(WiringPi_FOUND)
@@ -110,6 +110,11 @@ if(NOT WIN32)
     message("Module console: true")
 else()
     message("Module console: false")
+endif()
+
+file(GLOB CUSTOM_SOURCE_FILES custom/*.cpp custom/*.hpp)
+if (CUSTOM_SOURCE_FILES)
+    set(SOURCE_FILES ${SOURCE_FILES} ${CUSTOM_SOURCE_FILES})
 endif()
 
 set(SOURCE_FILES ${SOURCE_FILES}
