@@ -88,10 +88,9 @@ endif()
 find_package(RpiWs281x)
 if(RpiWs281x_FOUND)
     set(SOURCE_FILES ${SOURCE_FILES}
-            modules/rpi_ws281x/ws281x.cpp
-            modules/rpi_ws281x/ws281x.hpp
             modules/rpi_ws281x/output_ws281x.cpp
-            modules/rpi_ws281x/output_ws281x.hpp)
+            modules/rpi_ws281x/ws281x.cpp
+            modules/rpi_ws281x/ws281x.hpp)
     set(MODULE_INCLUDE_DIRS ${MODULE_INCLUDE_DIRS} ${RpiWs281x_INCLUDE_DIRS})
     set(MODULE_LIBRARIES ${MODULE_LIBRARIES} ${RpiWs281x_LIBRARIES})
     message("Module rpi_ws281x: true")

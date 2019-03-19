@@ -1,4 +1,5 @@
 #include <csignal>
+#include <cstdint>
 #include <chrono>
 #include <iomanip>
 #include <iterator>
@@ -13,9 +14,9 @@
 
 #include "core/logging.hpp"
 #include "core/manager.hpp"
+#include "modules/rpi_ws281x/ws281x.hpp"
 #include "types.hpp"
 #include "utility_gamma.hpp"
-#include "ws281x.hpp"
 
 #include <ws2811.h>
 
@@ -218,166 +219,195 @@ namespace sc {
 		asio::streambuf outgoing_;
 	};
 
-    /**
-     * class Ws281x
-     */
 
-    struct Ws281xInternals
-    {
-        Ws281xInternals( io_context& service )
-                : socket( service )
-        {
-        }
-
-        ip::tcp::socket socket;
-        asio::streambuf incoming;
-        asio::streambuf outgoing;
-    };
-
-    static PropertyKey const gpioPinProperty( "gpioPin" );
+	static PropertyKey const gpioPinProperty( "gpioPin" );
 	static PropertyKey const ledCountProperty( "ledCount" );
 
-	Ws281x::Ws281x( string&& id, Manager& manager, PropertyNode const& properties )
-            : Component( move( id ) )
-            , manager_( manager )
-            , gpioPin_( properties[ gpioPinProperty ].as< uint16_t >() )
-            , ledCount_( properties[ ledCountProperty ].as< size_t >() )
-            , internals_( new Ws281xInternals( manager_.service() ) )
+	/**
+	 * class Ws281xDirect
+	 */
+
+	class Ws281xDirect final
+			: public Ws281x
 	{
-		manager_.readyEvent().subscribe( [this] { connect(); }, true );
-	}
+	public:
+		Ws281xDirect( string&& id, Manager& manager, PropertyNode const& properties )
+				: Ws281x( move( id ))
+				, wrapper_( properties[ gpioPinProperty ].as< uint16_t >(),
+							properties[ ledCountProperty ].as< size_t >()) {}
 
-    function< bool () > Ws281x::forkedProcess() const
-    {
-        auto gpioPin = gpioPin_;
-        auto ledCount = ledCount_;
-        return [gpioPin, ledCount] { Ws281xServer( gpioPin, ledCount ).run(); return true; };
-    }
+		size_t ledCount() const override { return wrapper_.ledCount(); }
 
-    void Ws281x::send( ChannelBuffer const& values )
-	{
-		assert( values.size() == ledCount_ * 3 );
+		void send( ChannelBuffer const& values ) override
+		{
+			assert( values.size() == wrapper_->ledCount() * 3 );
 
-		if ( !internals_->socket.is_open() ) {
-			return;
+			auto dstIt = wrapper_.pixels();
+			for ( auto it = values.cbegin() ; it != values.cend() ; ) {
+				uint8_t r = GammaTable< ratio< 10, 25 > >::get( RangedType< std::uint8_t >( *it++ ).get() );
+				uint8_t g = GammaTable< ratio< 10, 25 > >::get( RangedType< std::uint8_t >( *it++ ).get() );
+				uint8_t b = GammaTable< ratio< 10, 25 > >::get( RangedType< std::uint8_t >( *it++ ).get() );
+				*dstIt++ = ( r << 16 ) | ( g << 8 ) | b;
+			}
+			wrapper_.update();
 		}
 
-		ostream os( &internals_->outgoing );
-        for ( auto it = values.begin() ; it != values.end() ; ++it ) {
-            uint8_t value = GammaTable< ratio< 10, 25 > >::get( RangedType< std::uint8_t >( *it ).get() );
-			os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) value;
+	protected:
+		void doStatistics( std::ostream& os ) const override {}
+
+	private:
+		Ws281xWrapper wrapper_;
+	};
+
+
+	/**
+	 * class Ws281xClient
+	 */
+
+	class Ws281xClient final
+			: public Ws281x
+	{
+	public:
+		Ws281xClient( string&& id, Manager& manager, PropertyNode const& properties )
+				: Ws281x( move( id ))
+				, manager_( manager )
+				, gpioPin_( properties[ gpioPinProperty ].as< uint16_t >())
+				, ledCount_( properties[ ledCountProperty ].as< size_t >())
+				, socket_( manager_.service())
+		{
+			manager_.readyEvent().subscribe( [this] { connect(); }, true );
 		}
-		os << ws281xSeparator << flush;
 
-		async_write(
-                internals_->socket, internals_->outgoing,
-				[this] ( error_code ec, size_t ) {
-					handleError( ec );
-				} );
-	}
+		size_t ledCount() const override { return ledCount_; }
 
-	void Ws281x::connect()
-	{
-		logger.info( "connecting to ws281xsrv at localhost:9999" );
+		function< bool () > forkedProcess() const override
+		{
+			auto gpioPin = gpioPin_;
+			auto ledCount = ledCount_;
+			return [gpioPin, ledCount] { Ws281xServer( gpioPin, ledCount ).run(); return true; };
+		}
 
-		tcp::resolver resolver( manager_.service() );
-		async_connect(
-                internals_->socket, resolver.resolve( tcp::resolver::query( "localhost", "9999" ) ),
-				[this] ( error_code ec, tcp::endpoint const& ) {
-					if ( handleError( ec ) ) {
-						return;
-					}
+		void send( ChannelBuffer const& values ) override
+		{
+			assert( values.size() == ledCount_ * 3 );
 
-					receiveInitMessage();
-				} );
-	}
-
-	void Ws281x::reconnect()
-	{
-        internals_->socket.close();
-        internals_->incoming.consume( internals_->incoming.size() );
-        internals_->outgoing.consume( internals_->outgoing.size() );
-		retryConnect();
-	}
-
-	void Ws281x::retryConnect()
-	{
-		int retryMs = 1000;
-
-		auto timer = make_shared< steady_timer >( manager_.service() );
-		timer->expires_from_now( std::chrono::milliseconds( retryMs ) );
-		timer->async_wait( [this, timer] ( error_code ec ) {
-			if ( ec.value() == (int) errc::operation_canceled ) {
+			if ( !socket_.is_open() ) {
 				return;
 			}
-			connect();
-		} );
-	}
 
-	void Ws281x::receiveInitMessage()
-	{
-		async_read_until(
-                internals_->socket, internals_->incoming, ws281xSeparator,
-				[this] ( error_code ec, size_t ) {
-					if ( handleError( ec ) ) {
-						return;
-					}
+			ostream os( &outgoing_ );
+			for ( auto const& it : values ) {
+				uint8_t value = GammaTable< ratio< 10, 25 > >::get( RangedType< std::uint8_t >( it ).get() );
+				os << setw( 2 ) << setfill( '0' ) << hex << (unsigned) value;
+			}
+			os << ws281xSeparator << flush;
 
-					auto begin = buffers_begin( internals_->incoming.data() );
-					auto end = buffers_end( internals_->incoming.data() );
-					auto it = search( begin, end, ws281xSeparator, ws281xSeparator + 2 );
-
-					size_t count;
-					try {
-						count = boost::lexical_cast< size_t >( string( begin, it ) );
-					}
-					catch ( boost::bad_lexical_cast const& ) {
-						logger.error( "invalid handshake from ws281xsrv: message not numeric" );
-						reconnect();
-						return;
-					}
-
-					if ( count != ledCount_ ) {
-						logger.error( "ws281xsrv reports ", count, " leds, but ", ledCount_, " expected" );
-						reconnect();
-						return;
-					}
-
-                    internals_->incoming.consume( distance( begin, next( it, 2 ) ) );
-
-					logger.info( "connection to ws281xsrv established" );
-				} );
-	}
-
-	bool Ws281x::handleError( error_code const& ec )
-	{
-		if ( ec ) {
-			logger.error( "error in ws281xsrv communication: ", ec.message() );
-			reconnect();
-			return true;
+			async_write( socket_, outgoing_, [this] ( error_code ec, size_t ) { handleError( ec ); } );
 		}
-		return false;
-	}
 
-	void Ws281x::doStatistics( ostream& os ) const
-	{
-		os << ", connected: " << internals_->socket.is_open();
-	}
+	protected:
+		void doStatistics( std::ostream& os ) const override
+		{
+			os << ", connected: " << socket_.is_open();
+		}
+
+	private:
+		void connect()
+		{
+			logger.info( "connecting to ws281xsrv at localhost:9999" );
+
+			tcp::resolver resolver( manager_.service() );
+			async_connect(
+					socket_, resolver.resolve( tcp::resolver::query( "localhost", "9999" ) ),
+					[this] ( error_code ec, tcp::endpoint const& ) {
+						if ( handleError( ec ) ) {
+							return;
+						}
+						receiveInitMessage();
+					} );
+		}
+
+		void reconnect()
+		{
+			socket_.close();
+			incoming_.consume( incoming_.size() );
+			outgoing_.consume( outgoing_.size() );
+			retryConnect();
+		}
+
+		void retryConnect()
+		{
+			int retryMs = 1000;
+
+			auto timer = make_shared< steady_timer >( manager_.service() );
+			timer->expires_from_now( std::chrono::milliseconds( retryMs ) );
+			timer->async_wait( [this, timer] ( error_code ec ) {
+				if ( ec.value() == (int) errc::operation_canceled ) {
+					return;
+				}
+				connect();
+			} );
+		}
+
+		void receiveInitMessage()
+		{
+			async_read_until(
+					socket_, incoming_, ws281xSeparator,
+					[this] ( error_code ec, size_t ) {
+						if ( handleError( ec ) ) {
+							return;
+						}
+
+						auto begin = buffers_begin( incoming_.data() );
+						auto end = buffers_end( incoming_.data() );
+						auto it = search( begin, end, ws281xSeparator, ws281xSeparator + 2 );
+
+						size_t count;
+						try {
+							count = boost::lexical_cast< size_t >( string( begin, it ) );
+						}
+						catch ( boost::bad_lexical_cast const& ) {
+							logger.error( "invalid handshake from ws281xsrv: message not numeric" );
+							reconnect();
+							return;
+						}
+
+						if ( count != ledCount_ ) {
+							logger.error( "ws281xsrv reports ", count, " leds, but ", ledCount_, " expected" );
+							reconnect();
+							return;
+						}
+
+						incoming_.consume( distance( begin, next( it, 2 ) ) );
+
+						logger.info( "connection to ws281xsrv established" );
+					} );
+		}
+
+		bool handleError( error_code const& ec )
+		{
+			if ( ec ) {
+				logger.error( "error in ws281xsrv communication: ", ec.message() );
+				reconnect();
+				return true;
+			}
+			return false;
+		}
+
+		Manager& manager_;
+		std::uint16_t gpioPin_;
+		std::size_t ledCount_;
+		ip::tcp::socket socket_;
+		asio::streambuf incoming_;
+		asio::streambuf outgoing_;
+	};
+
 
     /**
-     * class Ws281xDevice
+     * registry
      */
 
-	Ws281xDevice::Ws281xDevice( Ws281x& ws281x )
-	    	: ws281x_( ws281x )
-	{
-	}
-
-    void Ws281xDevice::send( ChannelBuffer const& values )
-    {
-        ws281x_.send( values );
-    }
-
-    static ComponentRegistry< Ws281x > registry( "ws281x" );
+    static ComponentRegistry< Ws281xDirect > registryDirect( "ws281x" );
+    static ComponentRegistry< Ws281xClient > registryClient( "ws281xClient" );
 
 } // namespace sc

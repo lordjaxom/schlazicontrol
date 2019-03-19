@@ -10,7 +10,6 @@ namespace sc {
     class Manager;
     class PropertyNode;
     class Transition;
-    class VdcdDevice;
 
     namespace detail {
 
