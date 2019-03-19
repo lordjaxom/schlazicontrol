@@ -90,7 +90,9 @@ if(RpiWs281x_FOUND)
     set(SOURCE_FILES ${SOURCE_FILES}
             modules/rpi_ws281x/output_ws281x.cpp
             modules/rpi_ws281x/ws281x.cpp
-            modules/rpi_ws281x/ws281x.hpp)
+            modules/rpi_ws281x/ws281x.hpp
+            modules/rpi_ws281x/ws281x_wrapper.cpp
+            modules/rpi_ws281x/ws281x_wrapper.hpp)
     set(MODULE_INCLUDE_DIRS ${MODULE_INCLUDE_DIRS} ${RpiWs281x_INCLUDE_DIRS})
     set(MODULE_LIBRARIES ${MODULE_LIBRARIES} ${RpiWs281x_LIBRARIES})
     message("Module rpi_ws281x: true")
@@ -166,16 +168,21 @@ set(SOURCE_FILES ${SOURCE_FILES}
         transition_color_fill.cpp
         transition_color_gradient.cpp)
 
-add_executable(schlazicontrol ${SOURCE_FILES})
-target_compile_definitions(schlazicontrol PRIVATE
-        ${Asio_DEFINITIONS})
-target_include_directories(schlazicontrol PRIVATE
+add_compile_definitions(${Asio_DEFINITIONS})
+
+include_directories(
         ${CMAKE_CURRENT_LIST_DIR}
         ${Boost_INCLUDE_DIRS}
         ${Asio_INCLUDE_DIRS}
         ${Json_INCLUDE_DIRS}
         ${typestring_INCLUDE_DIRS}
         ${MODULE_INCLUDE_DIRS})
-target_link_libraries(schlazicontrol
+link_libraries(
         ${Asio_LIBRARIES}
         ${MODULE_LIBRARIES})
+
+add_executable(schlazicontrol ${SOURCE_FILES})
+
+if (RpiWs281x_FOUND)
+    add_executable(ws281xsrv modules/rpi_ws281x/ws281x_server.cpp)
+endif()
