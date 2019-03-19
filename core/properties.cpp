@@ -27,7 +27,7 @@ namespace sc {
 
             json props;
             ifs >> props;
-            return move( props );
+            return props;
         }
 
     } // namespace detail
