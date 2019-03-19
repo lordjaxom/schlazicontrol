@@ -117,9 +117,9 @@ namespace sc {
     static PropertyKey const updateIntervalProperty( "updateInterval", "40ms" );
     static PropertyKey const statisticsIntervalProperty( "statisticsInterval", "0s" );
     static PropertyKey const componentsProperty( "components" );
-    static PropertyKey const componentTypeProperty( "type" );
-    static PropertyKey const componentIdProperty( "id" );
-    static PropertyKey const componentDisabledProperty( "disabled", false );
+    static PropertyKey const typeProperty( "type" );
+    static PropertyKey const idProperty( "id", "" );
+    static PropertyKey const disabledProperty( "disabled", false );
 
     Manager::Manager( CommandLine const& cmdLine )
 		: properties_( cmdLine.propertiesFile() )
@@ -189,11 +189,14 @@ namespace sc {
     Component* Manager::createComponent( PropertyNode const& properties, Component const* requester )
     {
         auto& factory = ComponentFactory::instance();
-        auto type = properties[ componentTypeProperty ].as< string >();
-        auto disabled = properties[ componentDisabledProperty ].as< bool >();
-        auto id = requester == nullptr || properties.has( "id" )
-                  ? properties[ "id" ].as< string >() : factory.generateId( type );
-        if ( disabled ) {
+
+        auto type = properties[ typeProperty ].as< string >();
+        auto id = properties[ idProperty ].as< string >();
+        if ( id.empty()) {
+            id = factory.generateId( type );
+        }
+
+        if ( properties[ disabledProperty ].as< bool >() ) {
             if ( requester != nullptr ) {
                 throw runtime_error( str( "cannot disable component ", Component::describe( type, id, requester ),
                                           ": only top-level component may be disabled" ) );
@@ -201,7 +204,7 @@ namespace sc {
             return nullptr;
         }
 
-        auto ptr = ComponentFactory::instance().create( type, move( id ), *this, properties );
+        auto ptr = factory.create( type, move( id ), *this, properties );
         auto it = components_.emplace( ptr->id(), move( ptr ) );
         if ( !it.second ) {
             throw runtime_error( str( "unable to create component ",

@@ -50,7 +50,7 @@ namespace sc {
         static Description describe( std::string const& type, std::string const& id,
                                      Component const* requester = nullptr );
 
-        Component();
+        Component(); // declarated for virtual inheritance
 		explicit Component( std::string&& id, bool statistics = true );
         Component( Component const& ) = delete;
         virtual ~Component();
