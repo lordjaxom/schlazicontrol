@@ -93,9 +93,9 @@ namespace sc {
                 mosquitto_loop_stop( mosq_, false );
             }
 
-            void publish( string&& topic, string&& payload, bool retain = false )
+            void publish( string&& topic, string&& payload )
             {
-                Publication publication { move( topic ), move( payload ), retain };
+                Publication publication { move( topic ), move( payload ) };
                 if ( connected_ ) {
                     doPublish( move( publication ) );
                 } else {
@@ -177,7 +177,7 @@ namespace sc {
                     connected_ = true;
                     retries_ = 0;
                     if ( !willTopic_.empty() ) {
-                        this->doPublish( { willTopic_, "YES" } );
+                        this->doPublish( { willTopic_, "YES", true } );
                     }
                     for_each( subscriptions_.begin(), subscriptions_.end(), [&]( auto const& subscription ) {
                         this->doSubscribe( subscription.first );
